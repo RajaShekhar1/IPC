@@ -21,9 +21,6 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
     def generate_tabs(self, recipient, purpose):
         tabs = super(FPPBankDraftFormTemplate, self).generate_tabs(recipient, purpose)
 
-        # if not recipient.is_employee() and not self.data.should_use_call_center_workflow():
-        #    return tabs
-
         # Going forward enrollments will have bank draft data and should grab all account information from that
         if self.has_bank_draft_info():
             # New method that grabs data from the bank draft info entered in on the last step of the wizard

@@ -133,7 +133,7 @@ class CaseService(DBService):
             # Return the active period
             return filter(lambda p: p.currently_active(), periods)[0]
         # Sort by start date descending and return the first one
-        past_periods = filter(lambda p: p.get_start_date() < datetime.now(),
+        past_periods = filter(lambda p: p.get_start_date() < datetime.now() if p.get_start_date() else None,
                               periods)
         if not past_periods:
             return None
@@ -231,8 +231,8 @@ class CaseService(DBService):
         # Eager load enrollment applications, coverages, and associated products
         query = query.outerjoin('enrollment_applications').options(
             db.contains_eager('enrollment_applications'
-                              ).subqueryload('coverages'
-                                             ).joinedload('product')
+                  ).subqueryload('coverages'
+                  ).joinedload('product')
         )
 
         if include_enrollment_links:

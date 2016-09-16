@@ -20,11 +20,13 @@ def get_active_method(settings, signature_time):
     return method
 
 
-def calculate_effective_date(settings, signature_time, enroller_picks_date=None):
+def calculate_effective_date(case, signature_time):
     """
     instantiate effective date calculator, if enroller selects is true, the date has
     already been processed, there should be no calculate effective date
     """
+    settings = case.effective_date_settings
+    
     start_date = None
     end_date = None
     is_ongoing = False
@@ -32,8 +34,12 @@ def calculate_effective_date(settings, signature_time, enroller_picks_date=None)
     ongoing_rule = None
     for effective_date_method in settings:
         if effective_date_method.get('type') == 'open':
-            start_date = parse(effective_date_method['enrollment_period']['start_date'])
-            end_date = parse(effective_date_method['enrollment_period']['end_date'])
+            if 'enrollment_period' not in effective_date_method:
+                start_date = case.enrollment_periods[0].get_start_date()
+                end_date = case.enrollment_periods[0].get_end_date()
+            else:
+                start_date = parse(effective_date_method['enrollment_period']['start_date'])
+                end_date = parse(effective_date_method['enrollment_period']['end_date'])
             open_rule = create_rule(effective_date_method)
         if effective_date_method.get('type') == 'ongoing':
             is_ongoing = True
@@ -44,7 +50,7 @@ def calculate_effective_date(settings, signature_time, enroller_picks_date=None)
     return effective_date_calc.get_effective_date_for_enroll_date(signature_time)
 
 
-def create_rule(settings, enroller_picks_date=None):
+def create_rule(settings):
     """
     Based on a dictionary with effective_date_method and two optional parameters,
     return the instantiated matching rule object.
@@ -194,17 +200,22 @@ class FirstFridayFollowingRule(object):
         self.minimum_days = int(minimum_days)
 
     def get_effective_date(self, enrollment_date):
-        amount_of_days = monthrange(enrollment_date.year, enrollment_date.month)[1] - 1
-        nth_friday = 0
-        fridays = {}
-        for x in range(0, amount_of_days):
-            if (enrollment_date.replace(day=1) + timedelta(days=x)).weekday() == 4:
-                nth_friday += 1
-                fridays[enrollment_date.replace(day=1) + timedelta(days=x)] = nth_friday
-            else:
-                fridays[enrollment_date.replace(day=1) + timedelta(days=x)] = 0
-
-        day_offset = timedelta(days=self.minimum_days)
-        shifted_date = enrollment_date + day_offset
-        distance = (4 - shifted_date.weekday())
-        return roll_date_to_friday(shifted_date, distance, fridays)
+        
+        loop_date = enrollment_date + timedelta(days=self.minimum_days)
+        FRIDAY_DOW_INT = 4
+        while loop_date.weekday() != FRIDAY_DOW_INT:
+            loop_date += timedelta(days=1)
+            
+        # loop_date is now the first friday on or after today + self.minimum_days.
+        # Return the index of which friday it is in the month.
+        friday_index = self.get_friday_index(loop_date)
+        
+        if friday_index >= 5:
+            # Add a week to get to the first friday of the next month
+            loop_date += timedelta(days=7)
+            
+        return loop_date
+        
+    def get_friday_index(self, date):
+        return int(date.day / 7) + 1
+        

@@ -188,7 +188,7 @@ class ProductService(DBService):
                 s['statecode'] for s in states_with_forms
                 ]
 
-        if case:
+        if case and case.product_settings:
             # Apply any overrides that are specified for this case.
             for product_id, overrides in case.product_settings.get('state_overrides', {}).items():
                 if overrides:

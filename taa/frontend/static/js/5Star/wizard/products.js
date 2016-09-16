@@ -322,7 +322,13 @@ var wizard_products = (function () {
 
     self.filter_employee_coverage_options = function (all_options) {
       // Basic options for employee, every 5k up to 100k.
-      return self.filter_base_rate_options(all_options);
+      var basic_options = self.filter_base_rate_options(all_options);
+
+      // If employee is older than 65, and the only option is 2500, use that.
+      if (all_options.length == 1) {
+        return all_options;
+      }
+      return basic_options;
     };
 
     function get_employee_total_cumulative_coverage() {
@@ -389,7 +395,7 @@ var wizard_products = (function () {
       // Similar to spouse filtering above, but limited to 10k and no in-between option appended.
 
       // Get the 5,000 to 100,000 coverage options to start with.
-      var base_options = self.filter_base_rate_options(all_options);
+      var base_options = self.filter_children_base_rate_options(all_options);
 
       // Limit to 50% of employee's current selection, or 10K max.
       // BUT, If the employee has answered yes to any required question, we should not limit the dependent coverage options.
@@ -415,9 +421,16 @@ var wizard_products = (function () {
     };
 
     self.filter_spouse_base_rate_options = function(all_options) {
-      // Add in the new 2500 coverage tier.
+      // Spouse options include increments of 2500.
       return _.filter(all_options, function (o) {
-        return o.face_value % 5000 === 0 || o.face_value == 2500;
+        return o.face_value % 2500 === 0;
+      });
+    };
+
+    self.filter_children_base_rate_options = function(all_options) {
+      // Spouse options include increments of 2500.
+      return _.filter(all_options, function (o) {
+        return o.face_value % 2500 === 0;
       });
     };
 
@@ -482,6 +495,10 @@ var wizard_products = (function () {
   };
   GroupCIProduct.prototype.is_children_coverage_grouped = function() {
     return true;
+  };
+
+  GroupCIProduct.max_emp_age = function () {
+    return 70;
   };
   
   function FPPGovProduct(product_data) {

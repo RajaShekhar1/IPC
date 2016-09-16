@@ -27,7 +27,10 @@ class SFTPService(object):
                                   username=config_defaults.DELL_FTP_USERNAME,
                                   password=config_defaults.DELL_FTP_PASSWORD,
                                   directory=config_defaults.DELL_FTP_WORKING_DIRECTORY,
-                                  pgp_encryption_key=self.encryption_service.get_dell_key())
+                                  # Don't encrypt the files over SFTP.
+                                  pgp_encryption_key=None,
+                                  #pgp_encryption_key=self.encryption_service.get_dell_key()
+        )
 
     def send_file(self, sftp_server, filename, data):
 

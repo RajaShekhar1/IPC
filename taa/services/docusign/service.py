@@ -1160,8 +1160,8 @@ class DocuSignEnvelopeComponent(object):
         tabs = []
 
         # Convert call-center employee signatures to voice-auth statements.
-        if purpose == self.PDF_TABS and self.data.should_use_call_center_workflow() and hasattr(self,
-                                                                                                'template_id') and self.template_id:
+        if (purpose == self.PDF_TABS and (self.data.should_use_call_center_workflow() or self.data.did_finish_signing_in_wizard())
+                and hasattr(self, 'template_id') and self.template_id):
             tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
             for tab_def in tab_definitions:
                 # The PDF Export code currently expects a name of "{}{}".format(tab_type, recip_type)

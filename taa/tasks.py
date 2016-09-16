@@ -1,22 +1,66 @@
 # Celery tasks
 
-import celery
-from taa.services.users import UserService
+import json
+import time
+import traceback
+from datetime import datetime
+from xml.etree import ElementTree
+import os
+import ssl
+from urlparse import urlparse
+
+from celery import Celery
+import flask
+from pysimplesoap.client import SoapClient
+from pysimplesoap.transport import set_http_wrapper
 
 from taa import db, app as taa_app
 from taa.services import LookupService
 from taa.services.enrollments import SelfEnrollmentEmailLog
 from taa.services.enrollments.models import EnrollmentSubmission, SubmissionLog
 from taa.services.enrollments.csv_export import *
-import traceback
-from taa.errors import email_exception
-import time
 
-app = celery.Celery('tasks')
-app.config_from_object('taa.config_defaults')
+#app = celery.Celery('tasks')
+#app.config_from_object('taa.config_defaults')
+
+# http://stackoverflow.com/questions/12044776/how-to-use-flask-sqlalchemy-in-a-celery-task
+class FlaskCelery(Celery):
+    def __init__(self, *args, **kwargs):
+
+        super(FlaskCelery, self).__init__(*args, **kwargs)
+        self.patch_task()
+
+        if 'app' in kwargs:
+            self.init_app(kwargs['app'])
+
+    def patch_task(self):
+        TaskBase = self.Task
+        _celery = self
+
+        class ContextTask(TaskBase):
+            abstract = True
+
+            def __call__(self, *args, **kwargs):
+                if flask.has_app_context():
+                    return TaskBase.__call__(self, *args, **kwargs)
+                else:
+                    with _celery.app.app_context():
+                        return TaskBase.__call__(self, *args, **kwargs)
+
+            def after_return(self, status, retval, task_id, args, kwargs, einfo):
+                db.session.remove()
+                
+        self.Task = ContextTask
+
+    def init_app(self, app):
+        self.app = app
+        self.config_from_object(app.config)
 
 
-@app.task
+celery = FlaskCelery()
+
+
+@celery.task()
 def send_email(email_log_id):
     self_enrollment_email_service = LookupService('SelfEnrollmentEmailService')
 
@@ -58,7 +102,7 @@ FIVE_MINUTES = 5 * 60
 ONE_HOUR = 1 * 60 * 60
 
 
-@app.task
+@celery.task()
 def send_summary_email(standardized_data, wizard_results, enrollment_application_id, body):
     from taa.models import SummaryEmailLog
     enrollment_application_service = LookupService("EnrollmentApplicationService")
@@ -81,7 +125,7 @@ def send_summary_email(standardized_data, wizard_results, enrollment_application
     db.session.commit()
 
 
-@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+@celery.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_enrollment_upload(task, batch_id):
     submission_service = LookupService("EnrollmentSubmissionService")
     errors = submission_service.process_import_submission_batch(batch_id)
@@ -91,36 +135,38 @@ def process_enrollment_upload(task, batch_id):
         task.retry(exc=Exception(errors[0]))
 
 
-@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
 def process_wizard_enrollment(task, enrollment_id):
     submission_service = LookupService("EnrollmentSubmissionService")
-    envelope = submission_service.process_wizard_submission(enrollment_id)
+    try:
+        envelope = submission_service.process_wizard_submission(enrollment_id)
+    except Exception, ex:
+        send_admin_error_email("Error processing wizard submission for enrollment {}".format(enrollment_id), [traceback.format_exc()])
+        task.retry()
     # if not envelope:
     #     send_admin_error_email(u"Error processing wizard enrollment {}".format(enrollment_id), [])
     #     # Go ahead and attempt to reprocess
     #     task.retry(exc=Exception("No envelope created"))
 
 
-def send_admin_error_email(error_message, errors):
+def send_admin_error_email(error_message, error_details):
 
-    tracebacks = '\n<br>'.join([err for err in errors])
-    body = u"{} <br><br>Tracebacks: <br><br>{}".format(
-        error_message, tracebacks.replace('<br>', '\n')
+    details = '\n<br>'.join([err.replace('\n', '<br>') for err in error_details])
+    body = u"{} <br><br>Errors: <br><br>{}".format(
+        error_message, details.replace('<br>', '\n')
     )
 
-    # Get stormpath admins
-    admins = [account for account in UserService().get_admin_users() if account.email.lower() in ['zmason@delmarsd.com', 'bdavis@5starenroll.com']]
-    for account in admins:
-        mailer = LookupService('MailerService')
-        mailer.send_email(
-            to=["{name} <{email}>".format(**{'email': account.email, 'name': account.full_name})],
-            from_email=u"TAA Error <errors@5StarEnroll.com>",
-            subject=u"5Star Import Error ({})".format(taa_app.config['HOSTNAME']),
-            html=body,
-        )
+    from taa import errors
+    mailer = LookupService('MailerService')
+    mailer.send_email(
+        to=[e for e in errors.error_recipients],
+        from_email=u"TAA Error <errors@5StarEnroll.com>",
+        subject=u"5Star Processing Error ({})".format(taa_app.config['HOSTNAME']),
+        html=body,
+    )
 
 
-@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+@celery.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def process_hi_acc_enrollments(task):
     submission_service = LookupService('EnrollmentSubmissionService')
 
@@ -149,10 +195,10 @@ def process_hi_acc_enrollments(task):
         submit_csv_to_dell.delay(submission_id=submit_submission.id)
     except Exception as ex:
         submission_service.set_submissions_status(EnrollmentSubmission.STATUS_FAILURE, submissions, submission_logs)
-        email_exception(taa_app, ex)
+        send_admin_error_email("Error generating HI/ACC submissions for Dell", [traceback.format_exc()])
 
 
-@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+@celery.task(bind=True, default_retry_delay=FIVE_MINUTES)
 def submit_csv_to_dell(task, submission_id):
     """
     Task to submit a csv item to dell for processing
@@ -161,147 +207,191 @@ def submit_csv_to_dell(task, submission_id):
     submission_service = LookupService('EnrollmentSubmissionService')
     submission = submission_service.get_submission_by_id(submission_id)
     log = SubmissionLog()
+    log.processing_time = datetime.now()
     log.enrollment_submission_id = submission_id
     log.status = SubmissionLog.STATUS_PROCESSING
     db.session.add(log)
-
+    db.session.commit()
+    
     try:
-        submission_service.submit_hi_acc_export_to_dell(submission.data)
+        submitted_filename = submission_service.submit_hi_acc_export_to_dell(submission.data)
         submission.status = EnrollmentSubmission.STATUS_SUCCESS
         log.status = SubmissionLog.STATUS_SUCCESS
         log.message = time.strftime(
-            'HI and ACC enrollment applications were successfully submitted to Dell on %x at %X %Z.')
+            '`{}` successfully transmitted to Dell on %x at %X %Z.'.format(submitted_filename))
         db.session.commit()
     except Exception as ex:
         submission.status = EnrollmentSubmission.STATUS_FAILURE
         log.status = SubmissionLog.STATUS_FAILURE
         log.message = 'Error sending CSV to Dell with message "%s"\n%s' % (ex.message, traceback.format_exc())
         db.session.commit()
+
+        send_admin_error_email("Error submitting HI/ACC CSV file to Dell", [traceback.format_exc()])
         task.retry()
 
 
-def generate_pdf(submission_id, coverage_id):
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
+def submit_stp_xml_to_dell(task, submission_id):
     """
-    Task to generate an enrollment PDF
-    """
-    submission_service = LookupService('EnrollmentSubmissionService')
-    submission = submission_service.get_submission_by_id(submission_id)
-    enrollment_record = submission.enrollment_applications[0]
-    coverage = LookupService('EnrollmentApplicationCoverageService').get(coverage_id)
-    return submission_service.render_enrollment_pdf(enrollment_record, is_stp=True, product_id=coverage.product_id)
-
-
-# def generate_xml(submission_id):
-#     """
-#     Task to generate XML STP item
-#     """
-#     submission_service = LookupService('EnrollmentSubmissionService')
-#     submission = submission_service.get_submission_by_id(submission_id)
-#     pdf_bytes = generate_pdf(submission.id)
-#     return submission_service.render_enrollment_xml(submission_id, 'employee', pdf_bytes)
-
-
-# @app.task(bind=True, default_retry_delay=ONE_HOUR)
-# def process_uploaded_stp_enrollments(task):
-#     submission_service = LookupService('EnrollmentSubmissionService')
-#
-#     # Set all the submissions to be processing so they do not get pulled in by another worker thread
-#     submissions = submission_service.get_pending_stp_xml_submission()
-#     if submissions is None or len(submissions) == 0:
-#         return
-#     submission_service.set_submissions_status(EnrollmentSubmission.STATUS_PROCESSING, submissions)
-#
-#     # Create submission logs for each submission and accumulate all the enrollment applications
-#     submission_logs = submission_service.create_logs_for_submissions(submissions, SubmissionLog.STATUS_PROCESSING)
-#     applications = submission_service.get_applications_for_submissions(submissions)
-#     if applications is None or len(applications) == 0:
-#         submission_service.set_submissions_status(EnrollmentSubmission.STATUS_SUCCESS, submissions, submission_logs)
-#         return
-#
-#     try:
-#         xml_data = export_hi_acc_enrollments(applications)
-#         submit_submission = submission_service.create_submission_for_csv(xml_data, applications)
-#         submission_service.set_submissions_status(EnrollmentSubmission.STATUS_SUCCESS, submissions, submission_logs)
-#         submit_csv_to_dell.delay(submission_id=submit_submission.id)
-#     except Exception as ex:
-#         submission_service.set_submissions_status(EnrollmentSubmission.STATUS_FAILURE, submissions, submission_logs)
-#         email_exception(taa_app, ex)
-
-
-def send_stp_xml(xml):
-    # import time
-    from pysimplesoap.client import SoapClient
-    # app['IS_STP_STORE_SOURCE']
-    # app['IS_STP_STORE_RESULT']
-    c = SoapClient(wsdl=app['STP_URL'])
-    # start = time.time()
-    xml = ''
-    # guid = 'SIMULATEDRUN'
-    result = None
-    try:
-        if not taa_app.config['IS_STP_SIMULATE']:
-            result = c.TXlifeProcessor(xml)
-        #     r = result['TXlifeProcessorResult']
-        #     guid = r[r.find('TransRefGUID')+13:r.find('TransRefGUID')+13+36]
-        # print('[SENT] {}'.format(guid))
-    except:
-        pass
-        # print('[FAIL] {}'.format(guid))
-    return result
-    # stop = time.time()
-    # print('took {:.2f} sec'.format(stop - start))
-
-
-@app.task(bind=True, default_retry_delay=ONE_HOUR)
-def submit_stp_xml_to_dell(task, submission_id, product_id):
-    """
-    Task to submit an STP XML item to Dell for processing
+    Task to submit an STP XML item to Dell for processing. XML has already been generated and is ready for delivery.
     """
 
-    submission_service = LookupService('EnrollmentSubmissionService')
-    submission = submission_service.get_submission_by_id(submission_id)
-    
+    submission = db.session.query(EnrollmentSubmission).get(submission_id)
+    data = json.loads(submission.data)
+    coverage_id = data['coverage_id']
+    xml = data['xml']
+
     # Create log for this attempt at processing
     log = SubmissionLog()
-    log.enrollment_submission_id = submission_id
+    log.processing_time = datetime.now()
+    log.enrollment_submission_id = submission.id
     log.status = SubmissionLog.STATUS_PROCESSING
-    
-    # Find the coverage record
-    
-    # Look up the applicant_coverage record
-    coverage_service = LookupService('EnrollmentApplicationCoverageService')
-    coverage = coverage_service.get(coverage_id)
-    
-    pdf_bytes = generate_pdf(submission.id, coverage_id)
-    if coverage.applicant_type != "children":
-        xml = submission_service.render_enrollment_xml(coverage, coverage.applicant_type, pdf_bytes)
-    else:
-        data = EnrollmentApplicationService().get_wrapped_data_for_coverage(coverage)
-        for i, child in enumerate(data['children']):
-            print("Generating child {}".format(i + 1))
-            applicant_type = "child{}".format(i + 1)
-            xml = submission_service.render_enrollment_xml(coverage, applicant_type, pdf_bytes)
-            
-    submission.data = xml
     db.session.add(log)
-
+    db.session.commit()
+    
+    if not xml:
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        log.status = SubmissionLog.STATUS_FAILURE
+        log.message = "No XML in data to transmit."
+        db.session.commit()
+        raise ValueError("Submission ID {}: Attempt to transmit empty XML to Dell, aborting.".format(submission_id))
+    
     try:
-        # submission_service.submit_hi_acc_export_to_dell(submission.data)
-        submission_service.submit_to_dell(submission.data)
+        result = transmit_stp_xml(xml)
+
+        # Success
         submission.status = EnrollmentSubmission.STATUS_SUCCESS
         log.status = SubmissionLog.STATUS_SUCCESS
-        log.message = time.strftime(
-                'STP XML enrollment applications were successfully submitted to Dell on %x at %X %Z.')
+        log.message = json.dumps(result)
         db.session.commit()
+
     except Exception as ex:
         submission.status = EnrollmentSubmission.STATUS_FAILURE
         log.status = SubmissionLog.STATUS_FAILURE
-        log.message = 'Error sending STP XML to Dell with message "%s"\n%s' % (ex.message, traceback.format_exc())
+        log.message = 'Error sending STP XML to Dell with traceback "%s"\n%s' % (ex.message, traceback.format_exc())
         db.session.commit()
-        # task.retry()
+
+        send_admin_error_email("Error transmitting STP XML to Dell, submission {} coverage {}".format(submission_id, coverage_id),
+                               [traceback.format_exc()])
+        task.retry()
 
 
-@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+def transmit_stp_xml(xml):
+    "Make the actual SOAP call to the Dell web service for submitting XML data."
+    
+    # This ssl monkey-patch is to avoid certificate verification.
+    if hasattr(ssl, '_create_unverified_context'):
+        ssl._create_default_https_context = ssl._create_unverified_context
+        
+    # Use a custom transport for the SOAP library code to force it to use the Proximo proxy, if present.
+    proxy = None
+    if os.environ.get('PROXIMO_URL', '') != '':
+        # Use the pycurl transport because its proxy support works with proximo
+        proxy_url = os.environ.get('PROXIMO_URL', '')
+        parsed_url = urlparse(proxy_url)
+        proxy = dict(proxy_host=parsed_url.hostname, proxy_user=parsed_url.username,
+                                  proxy_pass=parsed_url.password, proxy_port=80)
+        
+        # Tell pysimplesoap to use the pycurl transport
+        set_http_wrapper('pycurl')
+    
+    if not taa_app.config['IS_STP_SIMULATE']:
+        client = SoapClient(wsdl=taa_app.config['STP_URL'], proxy=proxy)
+        response_dict = client.TXlifeProcessor(xml)
+    else:
+        response_dict = None
+    
+    return parse_stp_response(response_dict)
+        
+        
+def parse_stp_response(response_dict):
+    '''
+    Example response:
+    {'TXlifeProcessorResult':
+    u'<?xml version="1.0"?><TXLife xmlns="http://ACORD.org/Standards/Life/2"><UserAuthResponse xmlns=""><TransResult><ResultCode tc="1">Success</ResultCode></TransResult></UserAuthResponse><TxLifeResponse xmlns=""><TransRefGUID>f63725d5-3530-4ec7-bb46-81c9b48e1389</TransRefGUID><TransType tc="103">New Business Reqeust</TransType><TransExeDate>2016-08-25</TransExeDate><TransExeTime>15:44:46</TransExeTime><TransMode tc="2">Original</TransMode><TransResult><ResultCode tc="5">Failure - lbweb02-01-mo</ResultCode><ResultInfo><ResultInfoCode tc="99001">Error Loading Company[67].</ResultInfoCode><ResultInfoDesc>Required CompanyNumber or ExtensionCode not found.</ResultInfoDesc></ResultInfo></TransResult></TxLifeResponse></TXLife>'
+    }
+    '''
+    
+    if not response_dict:
+        return dict(
+            status='Not Attempted',
+            message='IS_STP_SIMULATE is TRUE, no STP transmission attempted',
+            guid=None,
+            resp=None)
+    
+    resp = response_dict['TXlifeProcessorResult']
+    
+    doc = ElementTree.fromstring(resp)
+    
+    # Get the GUID
+    guid = doc.findall('./TxLifeResponse/TransRefGUID')[0].text
+    
+    # Get the status
+    e = doc.findall('./TxLifeResponse/TransResult/ResultCode')[0]
+    message = e.text
+    if message.startswith('Failure'):
+        return dict(status='Failure', message=message, guid=guid, resp=resp)
+    else:
+        return dict(status='Success', message=message, guid=guid, resp=resp)
+
+
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
+def submit_pdf_to_dell_sftp(task, submission_id):
+    """
+    Task to submit a PDF to Dell for processing using their SFTP dropbox.
+    """
+    
+    submission = db.session.query(EnrollmentSubmission).get(submission_id)
+    data = json.loads(submission.data)
+    enrollment_id = data['enrollment_id']
+    enrollment = LookupService('EnrollmentApplicationService').get(enrollment_id)
+    product_id = data['product_id']
+    product = LookupService('ProductService').get(product_id)
+    pdf_bytes = submission.binary_data
+    
+    # Create log for this attempt at processing
+    log = SubmissionLog()
+    log.processing_time = datetime.now()
+    log.enrollment_submission_id = submission.id
+    log.status = SubmissionLog.STATUS_PROCESSING
+    db.session.add(log)
+    db.session.commit()
+    
+    if not pdf_bytes:
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        log.status = SubmissionLog.STATUS_FAILURE
+        log.message = "No PDF in data to transmit."
+        db.session.commit()
+        raise ValueError("Submission ID {}: Attempt to transmit empty PDF to Dell, aborting.".format(submission_id))
+    
+    try:
+        filename = 'case-{}_enrollment-{}-{}.pdf'.format(enrollment.case_id, enrollment_id, product.get_base_product_code())
+        transmit_dell_pdf(filename, pdf_bytes)
+        
+        # Success
+        submission.status = EnrollmentSubmission.STATUS_SUCCESS
+        log.status = SubmissionLog.STATUS_SUCCESS
+        log.message = "Successfully sent {} to Dell at {}".format(filename, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        db.session.commit()
+    
+    except Exception as ex:
+        submission.status = EnrollmentSubmission.STATUS_FAILURE
+        log.status = SubmissionLog.STATUS_FAILURE
+        log.message = 'Error sending PDF to Dell SFTP Dropbox with traceback "%s"\n%s' % (ex.message, traceback.format_exc())
+        db.session.commit()
+        
+        send_admin_error_email(
+            "Error transmitting PDF to Dell SFTP Dropbox, submission {} enrollment {} product {}".format(submission_id, enrollment_id, product_id),
+            [traceback.format_exc()])
+        task.retry()
+
+
+def transmit_dell_pdf(filename, pdf_bytes):
+    sftp_service = LookupService('SFTPService')
+    sftp_service.send_file(sftp_service.get_dell_server(), filename, pdf_bytes)
+    
+
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
 def process_paylogix_export(task, submission_id):
     submission_service = LookupService('EnrollmentSubmissionService')
     """:type: taa.services.submissions.EnrollmentSubmissionService"""
@@ -313,11 +403,16 @@ def process_paylogix_export(task, submission_id):
             return
         submission_service.process_paylogix_export(submission)
     except Exception as ex:
-        submission_service.set_submissions_status([submission])
-        task.retry()
+        submission_service.set_submissions_status(EnrollmentSubmission.STATUS_FAILURE, [submission])
+
+        send_admin_error_email(
+            "Error generating CSV for Paylogix, submission {}".format(submission_id),
+            [traceback.format_exc()])
+        
+        # No retry on this task since it will likely fail without intervention.
 
 
-@app.task(bind=True, default_retry_delay=FIVE_MINUTES)
+@celery.task(bind=True, default_retry_delay=ONE_HOUR)
 def process_paylogix_csv_generation(task):
     submission_service = LookupService('EnrollmentSubmissionService')
     """:type: taa.services.submissions.EnrollmentSubmissionService"""
@@ -328,14 +423,19 @@ def process_paylogix_csv_generation(task):
         if not submission:
             return
         export_submission = submission_service.process_paylogix_csv_generation_submission(submission)
-        process_paylogix_export(submission_id=export_submission.id)
+        process_paylogix_export.delay(submission_id=export_submission.id)
     except Exception as ex:
-        submission_service.set_submissions_status([submission], error_message=ex.message)
+        submission_service.set_submissions_status(EnrollmentSubmission.STATUS_FAILURE, [submission], error_message=ex.message)
+
+        send_admin_error_email(
+            "Error transmitting CSV to Paylogix",
+            [traceback.format_exc()])
+        
         task.retry()
 
 
 # Exports that run in the background
-@app.task
+@celery.task()
 def export_user_case_enrollments(export_id):
     enrollment_export_service = LookupService('EnrollmentExportService')
 

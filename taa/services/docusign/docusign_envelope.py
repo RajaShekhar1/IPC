@@ -40,6 +40,12 @@ class EnrollmentDataWrap(object):
     def get(self, key, default=None):
         return self.data.get(key, default)
 
+    def is_preview(self):
+        return self.data.get('is_preview', False)
+
+    def did_decline(self):
+        return self.data.get('did_decline', False)
+
     def is_self_enroll(self):
         if self.data.get("is_third_party"):
             return False
@@ -307,6 +313,10 @@ class EnrollmentDataWrap(object):
 
     def get_covered_children(self):
         covered_children = []
+        
+        if not self.data.get('child_coverages'):
+            return covered_children
+        
         for i, child in enumerate(self.data['children']):
             coverage = self.data['child_coverages'][i]
             if coverage and (coverage.get('face_value') or
@@ -318,6 +328,7 @@ class EnrollmentDataWrap(object):
         return covered_children
 
     def get_child_coverage(self, child_num=0):
+        
         return self.format_coverage(self.data['child_coverages'][child_num])
 
     def get_child_premium(self, child_num=0):
@@ -335,7 +346,7 @@ class EnrollmentDataWrap(object):
             questions = self.data['employee']['soh_questions']
         else:
             questions = self.data['employee_soh_questions']
-        
+
         # Filter out questions only intended for spouse
         return [q for q in questions if not q.get('is_spouse_only')]
 
@@ -348,7 +359,7 @@ class EnrollmentDataWrap(object):
 
         # Filter out questions intended for employee only.
         return [q for q in questions if not q.get('is_employee_only')]
-    
+
     def get_child_soh_questions(self, child_index):
         child = self.data['children'][child_index]
         if 'soh_questions' in child:
@@ -364,7 +375,11 @@ class EnrollmentDataWrap(object):
         if self.should_use_call_center_workflow():
             # Replace employee signature with "John Doe voice auth on file 02:45pm"
             date = self.enrollment_record.signature_time
-            esig = u"{} voice auth on file {}".format(self.get_employee_name(), date.strftime("%l:%M%p"))
+            esig = u"{} voice auth on file {}".format(self.get_employee_name(), date.strftime("%l:%M%p").strip().lower())
+            return self.data.get('emp_sig_txt', esig)
+        elif self.did_finish_signing_in_wizard():
+            date = self.enrollment_record.signature_time
+            esig = u"{} esigned {}".format(self.get_employee_name(), date.strftime("%l:%M%p").strip().lower())
             return self.data.get('emp_sig_txt', esig)
         else:
             return self.data.get('emp_sig_txt', '')
@@ -380,9 +395,9 @@ class EnrollmentDataWrap(object):
         return bool(self.get_employee_esignature())
 
     def get_agent_esignature(self):
-        if self.should_use_call_center_workflow():
+        if self.should_use_call_center_workflow() or self.did_finish_signing_in_wizard():
             date = self.enrollment_record.signature_time
-            esig = u'esign by {} {}'.format(self.get_agent_signing_name(), date.strftime("%l:%M%p"))
+            esig = u'{} esigned {}'.format(self.get_agent_signing_name(), date.strftime("%l:%M%p").strip().lower())
             return self.data.get('agent_sig_txt', esig)
         else:
             return self.data.get('agent_sig_txt', '')
@@ -406,11 +421,12 @@ class EnrollmentDataWrap(object):
         }
 
         # "Shorthand" beneficiary settings
-        if len(self.data.get('employee_beneficiary', '')) > 0:
+        if self.data.get('employee_beneficiary', '') == 'spouse':
             bene_data['employee_primary'] += [
                 self.get_beneficiary_family_member('spouse')
             ]
-        if len(self.data.get('spouse_beneficiary', '')) > 0:
+        if (self.data.get('spouse_beneficiary', '') == 'spouse' or
+                self.data.get('spouse_beneficiary', '') == 'employee'):
             bene_data['spouse_primary'] += [
                 self.get_beneficiary_family_member('employee')
             ]
@@ -421,7 +437,7 @@ class EnrollmentDataWrap(object):
                 bene_data['employee_primary'] += [
                     self.get_beneficiary_dict('employee_beneficiary{}'.format(num))
                 ]
-            if self.data.get('emp_cont_bene{}_name'.format(num)):
+            if self.data.get('employee_contingent_beneficiary{}_name'.format(num)):
                 bene_data['employee_contingent'] += [
                     self.get_beneficiary_dict('employee_contingent_beneficiary{}'.format(num))
                 ]
@@ -519,19 +535,19 @@ class EnrollmentDataWrap(object):
             payment_mode = "{}".format(self.enrollment_record.payment_mode)
         else:
             payment_mode = "{}".format(self.case.payment_mode)
-
+        
         if self.did_employee_select_coverage():
             coverage = self.get_employee_coverage()
 
             premium = self.get_formatted_employee_premium()
             premium_amount = self.get_employee_premium()
-
+            applicant_effective_date = effective_date
         else:
             coverage = 'DECLINED'
             premium = ''
             premium_amount = decimal.Decimal('0.00')
             payment_mode = ''
-            effective_date = ''
+            applicant_effective_date = ''
 
         # Employee data
         applicants.append(dict(
@@ -543,7 +559,7 @@ class EnrollmentDataWrap(object):
             premium=premium_amount,
             formatted_premium=premium,
             mode=payment_mode,
-            effective_date=effective_date,
+            effective_date=applicant_effective_date,
             birthdate=self.get_employee_birthdate(),
             selected_riders=self.data.get('rider_data', {}).get('emp', []),
         ))

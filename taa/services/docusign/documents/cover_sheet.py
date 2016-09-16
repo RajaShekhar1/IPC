@@ -48,7 +48,8 @@ class CoverSheetAttachment(PDFAttachment):
         flowables += self.draw_legal_text()
 
         # Signature line and name
-        flowables += self.draw_signature_line()
+        # Removing this for now to simplify the emailing of this sheet.
+        #flowables += self.draw_signature_line()
 
         # Generate the document using reportlab's PLATYPUS layout api.
         self._doc.leftMargin = .4 * inch
@@ -177,6 +178,7 @@ class CoverSheetAttachment(PDFAttachment):
         # Iterate through the case products to identify declines.
         case_service = LookupService('CaseService')
         product_service = LookupService('ProductService')
+        rider_service = RiderService()
         if self.enrollment_application:
             product_ids = self.enrollment_application.get_enrolled_product_ids()
             product_options = [product_service.get(product_id) for product_id in product_ids]
@@ -188,7 +190,11 @@ class CoverSheetAttachment(PDFAttachment):
 
             product_data = self.get_wrapped_enrollment_data_for_product(product)
 
-            if product in declined_products:
+            if not product_data:
+                product_header = '{} - INELIGIBLE'.format(product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name)
+                applicants = []
+
+            elif product in declined_products:
                 # Show Decline
                 product_header = '{} - DECLINED'.format(product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name)
                 applicants = []
@@ -206,7 +212,6 @@ class CoverSheetAttachment(PDFAttachment):
                     product_header += ' - {}'.format(simple_cov_map.get(coverage_tier, coverage_tier))
 
                 if product.is_fpp():
-                    rider_service = RiderService()
                     riders = rider_service.get_case_level_riders_for_product(product_data.case, product)
                     if riders:
                         product_header += " (with {})".format(', '.join([rider.user_facing_name for rider in riders]))
@@ -221,15 +226,13 @@ class CoverSheetAttachment(PDFAttachment):
 
             for applicant in applicants:
                 # Also include applicant-level rider data if provided
-                applicant_riders = [
-                    r['user_facing_name']
-                    for r in applicant['selected_riders']
-                    if not r['is_group_level']
-                ]
+                applicant_riders = rider_service.get_applicant_level_riders_for_product(
+                        applicant, product_data.case, product)
 
                 name = applicant['name']
                 if applicant_riders:
-                    name += " (with {})".format(', '.join(applicant_riders))
+                    name += " (with {})".format(', '.join([rider.user_facing_name
+                                                           for rider in applicant_riders]))
 
                 table_data += [
                     [

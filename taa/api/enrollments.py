@@ -14,6 +14,7 @@ from taa.services.enrollments.csv_export import export_hi_acc_enrollments
 
 
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
+agent_service = LookupService("AgentService")
 case_service = LookupService("CaseService")
 enrollment_import_service = LookupService("EnrollmentImportService")
 enrollment_import_batch_service = LookupService("EnrollmentImportBatchService")
@@ -33,10 +34,13 @@ def submit_enrollments():
 
     data_format = request.args.get('format') or request.form.get('format', 'flat')
     upload_source = request.args.get('upload_source') or request.form.get('upload_source', 'api')
+    filename = request.args.get("filename") or request.form.get('filename', '')
+    
     if request.data:
         data = StringIO(request.data)
     elif request.files['api-upload-file']:
         data = request.files['api-upload-file']
+        filename = data.filename
     else:
         raise ValueError("No data provided")
 
@@ -48,7 +52,8 @@ def submit_enrollments():
             case_token=case_token,
             auth_token=auth_token,
             user_href=user_href,
-            data_source=upload_source
+            data_source=upload_source,
+            filename=filename,
         )
     except Exception as e:
         enrollment_import_service.send_generic_error_email(user_href)
@@ -166,14 +171,21 @@ def render_batch_item_xml(batch_id, item_id):
         item.enrollment_record_id), as_attachment=True)
 
 
+
+
 @route(bp, '/records/<int:enrollment_record_id>/pdf', methods=['GET'])
 @login_required
 @groups_required(['admins', 'home_office', 'agents'], all=False)
 def generate_enrollment_pdf(enrollment_record_id):
     enrollment = enrollment_application_service.get_or_404(enrollment_record_id)
 
-    # TODO: Verify agent permission if agent
-    # Check that logged-in agent matches enrollment.agent_id or is the case owner. Should be method for this on case.
+    # Check that logged-in agent can view enrollment
+    agent = agent_service.get_logged_in_agent()
+    can_view = (case_service.can_current_user_view_case(enrollment.case) or
+                agent.id == enrollment.agent_id)
+
+    if not can_view:
+        abort(403)
 
     binary_pdf = enrollment_submission_service.render_enrollment_pdf(enrollment)
 
@@ -187,19 +199,22 @@ def generate_enrollment_pdf(enrollment_record_id):
 @login_required
 @groups_required(['admins', 'home_office', 'agents'], all=False)
 def generate_enrollment_xml(enrollment_record_id):
-    item = enrollment_application_service.get_or_404(enrollment_record_id)
-    xml = generate_xml(item, 'employee')
-    response = make_response(xml)
-    response.headers['Content-Type'] = 'text/xml'
-    return response
+    app = enrollment_application_service.get_or_404(enrollment_record_id)
+
+    xmls = enrollment_submission_service.generate_enrollment_xml_docs(app)
+
+    zipstream = enrollment_submission_service.create_xml_zip(xmls)
+
+    return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
+        enrollment_record_id), as_attachment=True)
 
 
 def generate_xml(enrollment_record, form_for='employee'):
     # TODO: NOT called correctly anymore
-    
+
     pdf_bytes = enrollment_submission_service.render_enrollment_pdf(
             enrollment_record)
-    
+
     return enrollment_submission_service.render_enrollment_xml(
             enrollment_record, form_for, pdf_bytes)
 

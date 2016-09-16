@@ -33,6 +33,23 @@ RESULT_CODES = {
 MAX_PRIMARY_BENEFICIARIES = 9
 MAX_CONTINGENT_BENEFICIARIES = 9
 
+# If any of the below words are found in the beneficiary name (whole-word
+# matches only), judge that beneficiary as a trust (organization).
+# NOTE: Must be lower case
+ORGANIZATION_BENEFICIARIES = {
+    'conservator',
+    'conservators',
+    'conservatorship',
+    'estate',
+    'estates',
+    'foundation',
+    'foundations',
+    'trust',
+    'trustee',
+    'trustees',
+    'trusts',
+}
+
 GENDER = {
     'male': '1',
     'female': '2',

@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 
 import base64
+import copy
 import datetime
 import uuid
 
@@ -10,7 +11,7 @@ import re
 from flask import current_app, render_template
 from taa.services.enrollments.enrollment_application import EnrollmentApplicationService
 
-from taa import app
+from taa import app, config_defaults
 from taa.services import RequiredFeature
 from taa.services.products.plan_codes import (get_invalid_plan_code,
                                               get_plan_code)
@@ -35,7 +36,6 @@ enrollment_service = RequiredFeature('EnrollmentApplicationService')
 agent_service = RequiredFeature('AgentService')
 # pdf_service = RequiredFeature('ImagedFormGeneratorService')
 # census_service = RequiredFeature('CensusRecordService')
-
 
 
 def generate_xml(data, enrollment, template, applicant_type='employee', pdf_bytes=None):
@@ -71,6 +71,17 @@ def normalize_phone(phone_val):
     return {'area_code': area_code, 'dial_num': dial_num}
 
 
+def is_beneficiary_organization(name, relationship):
+    if name is None:
+        name = ''
+    if relationship is None:
+        relationship = ''
+    name_parts = name.strip().lower().split(' ')
+    name_matches = ORGANIZATION_BENEFICIARIES.intersection(set(name_parts))
+    rel_parts = relationship.strip().lower().split(' ')
+    rel_matches = ORGANIZATION_BENEFICIARIES.intersection(set(rel_parts))
+    return len(name_matches) > 0 or len(rel_matches) > 0
+
 
 def get_variables(data, enrollment, applicant_type, pdf_bytes):
     """
@@ -80,7 +91,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
     now = datetime.datetime.now()
     submitted_date = now.date().isoformat()
     submitted_time = now.time().isoformat().split('.', 1)[0]
-    
+
     effective_date = data.get_effective_date().strftime('%Y-%m-%d')
 
     if applicant_type == 'employee':
@@ -91,7 +102,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
         enrollee['coverage'] = data['employee_coverage']
         # enrollee['height'] = data['emp_height_inches']
         # enrollee['weight'] = data['emp_weight_pounds']
-        
+
     elif applicant_type == 'spouse':
         try:
             enrollee = data['spouse']
@@ -101,8 +112,8 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             enrollee['coverage'] = data['spouse_coverage']
             # enrollee['height'] = data['sp_height_inches']
             # enrollee['weight'] = data['sp_weight_pounds']
-            enrollee['spouse_disabled_6_months'] = YESNO[data.get('sp_disabled_6_months', 'N')]
-            enrollee['spouse_treated_6_months'] = YESNO[data.get('sp_treated_6_months', 'N')]
+            enrollee['spouse_disabled_6_months'] = YESNO_SOH[data.get('sp_disabled_6_months', 'N')]
+            enrollee['spouse_treated_6_months'] = YESNO_SOH[data.get('sp_treated_6_months', 'N')]
         except KeyError:
             raise ValueError(
                 "Attempted to enroll for spouse, but employee has no "
@@ -150,15 +161,15 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
         questions = data.get_child_soh_questions(child_index)
     else:
         questions = []
-        
+
     # Filter out any questions that are not part of the main QOH section.
     questions = [q for q in questions if not q.get('is_spouse_only') and not q.get('is_employee_only')]
-    
+
     # for q in enrollee['soh_questions']:
     for q in questions:
         q['answer'] = YESNO_SOH.get(q['answer'].lower() if q['answer'] is not None else None)
-    
-    
+
+
     # Bank info
     if data.has_bank_draft_info() and not data.requires_paylogix_export():
         # We have the bank info and we aren't sending it to Paylogix
@@ -182,11 +193,9 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
             'method_code': '5',
             'method': PAYMENT_METHODS['5'],
         }
-        
-    try:
-        is_debug = current_app.config['IS_STP_DEBUG']
-    except:
-        is_debug = True
+
+    is_debug = config_defaults.IS_STP_DEBUG
+
     vars = {
         'applicant_type': applicant_type,
         'meta': {
@@ -243,7 +252,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
 
     vars['employee']['hire_date'] = data['identityToken']
     vars['employee']['actively_at_work'] = data.get_actively_at_work()# or 'Y'
-    vars['employee']['actively_at_work_code'] = YESNO[data.get_actively_at_work()]
+    vars['employee']['actively_at_work_code'] = YESNO_SOH[data.get_actively_at_work()]
 
     policy = get_policy_info(data, applicant_type, enrollee, enrollment.case)
     vars['policy'].update(policy)
@@ -262,7 +271,7 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
     if 'phone' in vars['employee']:
         vars['employee']['phone'] = normalize_phone(vars['employee']['phone'])
 
-    # Add primary beneficiarie(s)
+    # Add beneficiarie(s)
     if enrollee['is_child']:
         # For children, assume employee is primary beneficiary
         vars['enrollee']['beneficiaries'] = {
@@ -297,6 +306,8 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
                 if len(name) == 0:
                     # Name not set -- skip
                     continue
+                is_organization = is_beneficiary_organization(
+                        name, bene['relationship'])
                 first, last = name.split(' ', 1) if ' ' in name else (name, '')
                 vars['enrollee']['beneficiaries'][source].append({
                     'first': first,
@@ -305,6 +316,8 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
                     'birthdate': bene['birthdate'],
                     'percentage': bene['percentage'],
                     'relationship': bene['relationship'].lower(),
+                    'is_organization': is_organization,
+                    'full_name': name,
                 })
 
     vars['relationships'] = {}
@@ -327,14 +340,13 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
                 # Special case -- when specified relationship can't be
                 # identified, use the code for "Other" but retain specified
                 # relationship value
-                relationship = RELATIONSHIP_ROLES.get(None)
+                relationship = copy.copy(RELATIONSHIP_ROLES.get(None))
                 relationship['name'] = beneficiary['relationship']
             vars['relationships'][key].append(relationship)
 
     vars['encoded_pdf'] = (None if pdf_bytes is None
                            else base64.b64encode(pdf_bytes))
-    
-    
+
     return vars
 
 
@@ -346,10 +358,9 @@ def get_riders(data, applicant_type):
 
     if not data.is_import():
         if applicant_type == 'employee':
-            return data.get_selected_employee_riders()
+            return [r['code'] for r in data.get_selected_employee_riders()]
         elif applicant_type == 'spouse':
-            return data.get_selected_spouse_riders()
-
+            return [r['code'] for r in data.get_selected_spouse_riders()]
     else:
         # Get riders from enrollment data
         if applicant_type == 'employee':
@@ -424,19 +435,26 @@ def get_agents(data, enrollment):
     case = enrollment.case
     if case.agent_splits is not None:
         # Case has agent splits
-        # for split in case.agent_splits:
+
+        # There is a writing agent, and potentially other agents that have a split percentage and commission code.
+
         for split in [s for s in case.agent_splits if s.product_id == data.get_product_id()]:
             if split.agent is None:
                 # Writing agent (null agent) is placeholder for enrolling agent
                 agent = data.get_signing_agent()
             else:
                 agent = split.agent
+
+            # Always look up the commission code dynamically,
+            #   since it is on a different record if this is the writing agent.
+            subcount = get_agent_subcount_code(agent.id, case, data.get_product_id()) or ''
+
             if split.split_percentage > 0:
                 agents.append({
                     'first': agent.first,
                     'last': agent.last,
                     'code': agent.agent_code,
-                    'subcode': split.commission_subcount_code,
+                    'subcode': subcount,
                     'commission_percent': split.split_percentage,
                 })
 
@@ -452,75 +470,84 @@ def get_agents(data, enrollment):
     return agents
 
 
+def get_agent_subcount_code(agent_id, case, product_id):
+    'If a code has been entered for this agent, return the code. Otherwise return None.'
+    if not case.agent_splits:
+        return None
+
+    splits = filter(lambda s: s.product_id == product_id and s.agent_id == agent_id and s.commission_subcount_code,
+                    case.agent_splits)
+
+    if splits:
+        return splits[0].commission_subcount_code
+
+    return None
+
+
 def test_wizard_xml():
     from zipfile import ZipFile
     from io import BytesIO
-    from taa import db
+    from taa import db, app
     from taa.services.enrollments.models import EnrollmentApplication
     from taa.services.submissions import EnrollmentSubmissionService
-    apps = db.session.query(EnrollmentApplication).filter(EnrollmentApplication.signature_time >= '2016-08-08'
-          ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
-          ).all()
-    
-    coverages = []
-    for app in apps:
-        census_record = app.census_record
-        other_enrollments = census_record.enrollment_applications
-        for coverage in app.coverages:
-            enrollment = coverage.enrollment
-            case = enrollment.case
-            splits = case.agent_splits
-            for split in splits:
-                agent = split.agent
-            
-            if coverage.product.can_submit_stp():
-                coverages.append(coverage)
 
-    print("Processing {} coverages: ".format(len(coverages)))
+    with app.app_context():
 
-    zipstream = BytesIO()
-    app_pdfs = set()
-    with ZipFile(zipstream, 'w') as zip:
-        for coverage in coverages:
-            print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
-                                                                          coverage.product.name))
-            
-            if coverage.enrollment.id not in app_pdfs:
-                # Generate and write out the PDF
-                pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
-                                                                                 product_id=coverage.product_id)
-                zip.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, coverage.product.get_base_product_code()), pdf_bytes)
-                app_pdfs.add(coverage.enrollment.id)
-            
+        apps = db.session.query(EnrollmentApplication
+                                ).filter(EnrollmentApplication.signature_time >= '2016-08-08'
+              ).options(db.subqueryload('coverages').joinedload('enrollment').joinedload('case').joinedload('owner_agent')
+              ).all()
 
-            xmls = []
-            if coverage.applicant_type == 'children':
-                # Generate one for each child
-                data = EnrollmentApplicationService().get_wrapped_data_for_coverage(coverage)
-                for i, child in enumerate(data['children']):
-                    print("Generating child {}".format(i + 1))
-                    applicant_type = "child{}".format(i)
+        coverages = []
+        for enrollment_record in apps:
+            for coverage in enrollment_record.coverages:
+                if coverage.product.can_submit_stp():
+                    coverages.append(coverage)
+
+        print("Processing {} coverages: ".format(len(coverages)))
+
+        zipstream = BytesIO()
+        app_pdfs = set()
+        with ZipFile(zipstream, 'w') as zip_:
+            for coverage in coverages:
+                print("Processing app #{}, applicant {}, product '{}'".format(coverage.enrollment.id, coverage.applicant_type,
+                                                                              coverage.product.name))
+
+                if (coverage.enrollment.id, coverage.product_id) not in app_pdfs:
+                    # Generate and write out the PDF
+                    pdf_bytes = EnrollmentSubmissionService().render_enrollment_pdf(coverage.enrollment, is_stp=True,
+                                                                                     product_id=coverage.product_id)
+                    zip_.writestr('enrollment_{}-{}.pdf'.format(coverage.enrollment.id, coverage.product.get_base_product_code()), pdf_bytes)
+                    app_pdfs.add((coverage.enrollment.id, coverage.product_id))
+
+                xmls = []
+                if coverage.applicant_type == 'children':
+                    # Generate one for each child
+                    data = EnrollmentApplicationService().get_wrapped_data_for_coverage(coverage)
+                    for i, child in enumerate(data['children']):
+                        print("Generating child {}".format(i + 1))
+                        applicant_type = "child{}".format(i)
+                        xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
+                        if xml:
+                            xmls.append((xml, applicant_type))
+                else:
+
+                    applicant_type = coverage.applicant_type
                     xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
                     if xml:
                         xmls.append((xml, applicant_type))
-            else:
-                
-                applicant_type = coverage.applicant_type
-                xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=None)
-                if xml:
-                    xmls.append((xml, applicant_type))
-            
-            for xml, applicant_type in xmls:
-    
-                fn = 'enrollment_{}-{}-{}.xml'.format(coverage.enrollment.id, coverage.product.get_base_product_code(), applicant_type)
-                zip.writestr(fn, xml.encode('latin-1'))
-            
-    print("Writing Zip file...")
-    f = open('out.zip', 'w+')
-    f.write(zipstream.getvalue())
-    f.close()
-    print("Done")
+
+                for xml, applicant_type in xmls:
+
+                    fn = 'enrollment_{}-{}-{}.xml'.format(coverage.enrollment.id, coverage.product.get_base_product_code(), applicant_type)
+                    zip_.writestr(fn, xml.encode('latin-1'))
+
+        print("Writing Zip file...")
+        f = open('out.zip', 'w+')
+        f.write(zipstream.getvalue())
+        f.close()
+        print("Done")
+
 
 if __name__ == "__main__":
     test_wizard_xml()
-

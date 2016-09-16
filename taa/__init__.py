@@ -85,6 +85,10 @@ def create_app(bind=None):
     from assets import init_app as init_assets
     init_assets(app)
 
+    # Initialize Celery task extension
+    from taa.tasks import celery
+    celery.init_app(app)
+
     return app
 
 

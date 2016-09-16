@@ -8,7 +8,7 @@ class PGPEncryptionService(object):
         self._gpg = None
 
     def get_dell_key(self):
-        return PGPEncryptionKey(config_defaults.DELL_PGP_KEY, config_defaults.DELL_FTP_PGP_KEY_ID)
+        return PGPEncryptionKey(config_defaults.DELL_FTP_PGP_KEY, config_defaults.DELL_FTP_PGP_KEY_ID)
     
     def get_paylogix_key(self):
         return PGPEncryptionKey(config_defaults.PAYLOGIX_PGP_KEY, config_defaults.PAYLOGIX_PGP_KEY_ID)

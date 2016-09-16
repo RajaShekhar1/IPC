@@ -103,7 +103,7 @@
                 </Policy>
             </Holding>
             <Party id="Party_PrimaryInsured">
-                <GovtID>{{ enrollee.ssn }}</GovtID>
+                <GovtID>{{ enrollee.ssn|default('')|replace('-', '') }}</GovtID>
                 <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
                 <Person DataRep="Partial">
                     <FirstName>{{ enrollee.first }}</FirstName>
@@ -188,7 +188,7 @@
                 </Risk>
             </Party>
             <Party id="Party_Owner">
-                <GovtID>{{ employee.ssn }}</GovtID>
+                <GovtID>{{ employee.ssn|default('')|replace('-', '') }}</GovtID>
                 <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
                 <Person DataRep="Partial">
                     <FirstName>{{ employee.first }}</FirstName>
@@ -226,7 +226,7 @@
                 </Risk>
             </Party>
             <Party id="Party_Payor">
-                <GovtID>{{ employee.ssn }}</GovtID>
+                <GovtID>{{ employee.ssn|default('')|replace('-', '') }}</GovtID>
                 <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
                 <Person DataRep="Partial">
                     <FirstName>{{ employee.first }}</FirstName>
@@ -263,7 +263,14 @@
             {% for beneficiary in enrollee.beneficiaries.beneficiary -%}
             <Party id="Party_PrimaryBene_{{ loop.index }}">
                 <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
-                <GovtID>{{ beneficiary.ssn }}</GovtID>
+                <GovtID>{{ beneficiary.ssn|default('')|replace('-', '') }}</GovtID>
+                {% if beneficiary.is_organization -%}
+                <Organization>
+                    <AbbrName>
+                        {{ beneficiary.full_name }}
+                    </AbbrName>
+                </Organization>
+                {% else -%}
                 <Person DataRep="Partial">
                     <FirstName>{{ beneficiary.first }}</FirstName>
                     {% if beneficiary.middle -%}
@@ -272,11 +279,19 @@
                     <LastName>{{ beneficiary.last }}</LastName>
                     <BirthDate>{{ beneficiary.birthdate }}</BirthDate>
                 </Person>
+                {% endif -%}
             </Party>
             {% endfor -%}
             {% for beneficiary in enrollee.beneficiaries.contingent_beneficiary -%}
             <Party id="Party_ContingentBene_{{ loop.index }}">
                 <GovtIDTC tc="1">Social Security Number US</GovtIDTC>
+                {% if beneficiary.is_organization -%}
+                <Organization>
+                    <AbbrName>
+                        {{ beneficiary.full_name }}
+                    </AbbrName>
+                </Organization>
+                {% else -%}
                 <Person DataRep="Partial">
                     <FirstName>{{ beneficiary.first }}</FirstName>
                     {% if beneficiary.middle -%}
@@ -284,9 +299,7 @@
                     {% endif -%}
                     <LastName>{{ beneficiary.last }}</LastName>
                 </Person>
-{#                <Organization>#}
-{#                    <AbbrName></AbbrName>#}
-{#                </Organization>#}
+                {% endif -%}
             </Party>
             {% endfor -%}
             <Party id="Party_PrimaryAgent">

@@ -8,6 +8,8 @@
     <table class="table table-striped">
       <tr>
         <th>ID</th>
+        <th>Source</th>
+        <th>Filename</th>
         <th>Stormpath User</th>
         <th>Case ID</th>
         <th>Timestamp</th>
@@ -19,6 +21,8 @@
       <tr>
         <td data-bind="text: import_batch.id">
         </td>
+        <td data-bind="text: import_batch.source"></td>
+        <td data-bind="text: import_batch.filename"></td>
         <td data-bind="text: import_batch.user_name"></td>
         <td><a target="_blank" data-bind="text: import_batch.case_id, attr: {href: '/enrollment-case/'+import_batch.case_id+'#reports'}"></a></td>
         <td data-bind="text: import_batch.format_time()"></td>
@@ -152,6 +156,8 @@
     self.case_id = batch_data.case_id;
     self.num_processed = batch_data.num_processed;
     self.num_errors = batch_data.num_errors;
+    self.source = batch_data.source;
+    self.filename = batch_data.filename;
 
     self.format_time = function() {
       return moment.utc(batch_data.timestamp).local().format("ddd MMM Do YYYY h:mm:ss a");

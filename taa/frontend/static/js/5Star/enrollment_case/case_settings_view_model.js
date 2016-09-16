@@ -1710,8 +1710,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       periods.push(open.serialize(), ongoing.serialize());
     }
     if (self.ongoing_enrollment_status() && !self.open_enrollment_status()) {
-      // FIND_LATER
-      self.ongoing_enrollment_type();
       var period = self.get_ongoing_enrollment_period();
       periods.push(period.serialize());
     }

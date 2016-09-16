@@ -20,7 +20,7 @@ enrollment_application_submission_association_table = db.Table('enrollment_appli
 
 
 class EnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions', 'emails']
+    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions', 'emails', 'summary_emails']
 
 
 class EnrollmentApplication(EnrollmentSerializer, db.Model):
@@ -55,6 +55,8 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     APPLICATION_STATUS_DECLINED = u'declined'
     APPLICATION_STATUS_VOIDED = u'voided'
     application_status = db.Column(db.Unicode(32))
+    is_preview = db.Column(db.Boolean, nullable=False, server_default='0',
+                           default=False)
     # Payment mode
     payment_mode = db.Column(db.Integer(), nullable=True)
     METHOD_INPERSON = u'in_person'
@@ -385,7 +387,7 @@ class SummaryEmailLog(SummaryEmailSerializer, db.Model):
     STATUS_FAILURE = u'failure'
     STATUS_SUCCESS = u'success'
 
-    enrollment_application = db.relationship('EnrollmentApplication', backref='emails')
+    enrollment_application = db.relationship('EnrollmentApplication', backref='summary_emails')
 
 
 
@@ -402,6 +404,9 @@ def get_batch_case_id(batch):
 
 
 def get_batch_user(batch):
+    if batch.user_href:
+        return batch.user_href
+    
     auth_token = batch.auth_token
     if not auth_token:
         return None
@@ -441,6 +446,8 @@ class EnrollmentImportBatch(EnrollmentImportBatchSerializer, db.Model):
     num_processed = db.Column(db.Integer)
     num_errors = db.Column(db.Integer)
     log_hash = db.Column(db.Unicode(64), index=True)
+    user_href = db.Column(db.Unicode, index=True)
+    filename = db.Column(db.Unicode)
 
 
 class EnrollmentImportBatchItemSerializer(JsonSerializable):
@@ -470,7 +477,13 @@ class EnrollmentImportBatchItem(EnrollmentImportBatchItemSerializer, db.Model):
 
 
 class EnrollmentSubmissionItemSerializer(JsonSerializable):
-    __json_hidden__ = ['product', 'data', 'enrollment_applications']
+    __json_hidden__ = [
+        'product',
+        'data',
+        'binary_data',
+        'enrollment_applications',
+        'submission_logs',
+    ]
 
 
 class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
@@ -487,6 +500,7 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     TYPE_DELL_CSV_GENERATION = u'HI and ACC CSV Generation'
     TYPE_DELL_EXPORT = u'HI and ACC CSV submission to Dell'
     TYPE_DELL_STP_XML = u'STP XML submission to Dell'
+    TYPE_DELL_PDF_SFTP = u'PDF submission to Dell via SFTP'
     TYPE_DOCUSIGN = u'Submit to Docusign'
     TYPE_STATIC_BENEFIT = u'Static Benefit'
     TYPE_PAYLOGIX_CSV_GENERATION = u'Paylogix CSV Generation'
@@ -500,8 +514,9 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     status = db.Column(db.Unicode(64), server_default=STATUS_PENDING)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     product = db.relationship('Product')
-    submission_logs = db.relationship('SubmissionLog', back_populates='enrollment_submission')
+    submission_logs = db.relationship('SubmissionLog', order_by="SubmissionLog.processing_time", back_populates='enrollment_submission')
     data = db.Column(db.UnicodeText)
+    binary_data = db.Column(db.Binary, nullable=True)
     submission_type = db.Column(db.Unicode(64))
 
     def is_successful(self):
@@ -526,7 +541,7 @@ class SubmissionLog(SubmissionLogItemSerializer, db.Model):
 
     # Database Columns
     id = db.Column(db.Integer, primary_key=True)
-    enrollment_submission_id = db.Column(db.Integer, db.ForeignKey('enrollment_submissions.id'))
+    enrollment_submission_id = db.Column(db.Integer, db.ForeignKey('enrollment_submissions.id'), index=True)
     enrollment_submission = db.relationship('EnrollmentSubmission', back_populates='submission_logs')
     processing_time = db.Column(db.DateTime, server_default=db.func.now())
     status = db.Column(db.Unicode(64), server_default=STATUS_SUCCESS)

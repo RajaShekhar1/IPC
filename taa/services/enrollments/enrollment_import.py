@@ -15,7 +15,7 @@ class EnrollmentImportService(object):
     product_service = RequiredFeature("ProductService")
     soh_service = RequiredFeature("StatementOfHealthQuestionService")
 
-    def process_enrollment_data(self, data, data_format, data_source, case_token=None, auth_token=None, user_href=None):
+    def process_enrollment_data(self, data, data_format, data_source, case_token=None, auth_token=None, user_href=None, filename=None):
         processor = EnrollmentProcessor()
         try:
             processor.process_enrollment_import_request(
@@ -24,13 +24,15 @@ class EnrollmentImportService(object):
                 data_source=data_source,
                 case_token=case_token,
                 auth_token=auth_token,
+                user_href=user_href,
+                filename=filename,
             )
         except TAAFormError:
             # TODO: There might be some logic needed here
             pass
 
         if user_href:
-            processor.send_status_email(user_href)
+            processor.send_status_email(user_href, filename)
         return processor
 
     def standardize_imported_data(self, data, method='api_import'):
@@ -144,10 +146,11 @@ class EnrollmentImportService(object):
 
         # Riders
         for prefix, long_prefix in [('emp', 'employee'), ('sp', 'spouse')]:
-            for rider_code in RiderService().get_import_rider_codes():
-                has_rider = data.get('{}_rider_{}'.format(prefix, rider_code.lower()))
-                if has_rider:
-                    out_data['rider_data'][prefix].append({'code': rider_code})
+            for rider in RiderService().get_riders_for_product(product):
+                has_rider = data.get('{}_rider_{}'.format(prefix, rider.code.lower()))
+                # TODO: Check this is right to compare == 'Y'
+                if has_rider == 'Y':
+                    out_data['rider_data'][prefix].append(rider.to_json())
 
         return out_data
 

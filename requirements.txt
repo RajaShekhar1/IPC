@@ -75,7 +75,7 @@ python-editor==1.0
 python-gnupg==0.3.8
 python-mimeparse==0.1.4
 python-subunit==1.1.0
-pytz==2016.3
+pytz==2016.6.1
 pywkher==1.0.4
 PyYAML==3.11
 reportlab==3.1.44
@@ -85,7 +85,7 @@ selenium==2.53.2
 sentinels==0.0.6
 six==1.10.0
 soap2py==1.16
-SQLAlchemy==1.0.12
+SQLAlchemy==1.0.14
 SQLAlchemy-Utils==0.32.5
 stormpath==2.3.1
 sparkpost==1.2.0
@@ -101,3 +101,4 @@ xmltodict==0.10.1
 Werkzeug==0.11.9
 pysftp==0.2.9
 paramiko==2.0.1
+pycurl==7.43.0

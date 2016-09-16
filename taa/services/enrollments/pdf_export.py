@@ -213,11 +213,11 @@ class FormTemplateTabRepository(object):
         return bool(self.get_template(template_id))
 
     def get_template(self, template_id):
-        if template_id in self.template_cache:
-            return self.template_cache[template_id]
+        #if template_id in self.template_cache:
+        #    return self.template_cache[template_id]
 
         template = FormTemplate.query.filter(FormTemplate.template_id.ilike(template_id)).first()
-        self.template_cache[template_id] = template
+        #self.template_cache[template_id] = template
         return template
 
 
