@@ -541,7 +541,7 @@ class SubmissionLog(SubmissionLogItemSerializer, db.Model):
 
     # Database Columns
     id = db.Column(db.Integer, primary_key=True)
-    enrollment_submission_id = db.Column(db.Integer, db.ForeignKey('enrollment_submissions.id'))
+    enrollment_submission_id = db.Column(db.Integer, db.ForeignKey('enrollment_submissions.id'), index=True)
     enrollment_submission = db.relationship('EnrollmentSubmission', back_populates='submission_logs')
     processing_time = db.Column(db.DateTime, server_default=db.func.now())
     status = db.Column(db.Unicode(64), server_default=STATUS_SUCCESS)
