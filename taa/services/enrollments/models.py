@@ -20,7 +20,7 @@ enrollment_application_submission_association_table = db.Table('enrollment_appli
 
 
 class EnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions', 'emails']
+    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions', 'emails', 'summary_emails']
 
 
 class EnrollmentApplication(EnrollmentSerializer, db.Model):
@@ -514,7 +514,7 @@ class EnrollmentSubmission(EnrollmentSubmissionItemSerializer, db.Model):
     status = db.Column(db.Unicode(64), server_default=STATUS_PENDING)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'))
     product = db.relationship('Product')
-    submission_logs = db.relationship('SubmissionLog', back_populates='enrollment_submission')
+    submission_logs = db.relationship('SubmissionLog', order_by="SubmissionLog.processing_time", back_populates='enrollment_submission')
     data = db.Column(db.UnicodeText)
     binary_data = db.Column(db.Binary, nullable=True)
     submission_type = db.Column(db.Unicode(64))

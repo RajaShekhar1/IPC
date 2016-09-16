@@ -59,7 +59,9 @@ class EnrollmentSubmissionService(object):
         
         if submission_type:
             q = q.filter(EnrollmentSubmission.submission_type == submission_type)
-            
+        
+        q = q.order_by(db.desc(EnrollmentSubmission.created_at))
+        
         return q.all()
     
     def get_submission(self, submission_id):

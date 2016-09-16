@@ -2,104 +2,157 @@
 
 
 {% block content %}
-  <div class="container">
+
+  <div class="container" data-bind="visible: true" style="display: none;">
     <h3>Submissions</h3>
 
-    <div>
-      <label>Start Date: <input type="date" name="start_date" data-bind="value: filter_start_date" /> </label>
-      <label>End Date: <input type="date" name="end_date" data-bind="value: filter_end_date" /> </label>
-      <label>Submission Type:
-        <select type="date" name="submission_type" data-bind="value: filter_submission_type, options: submission_type_options, optionsCaption: '(Select Type)'">
-        </select>
-      </label>
-    </div>
+    <div data-bind="if: viewing_submission() === null">
+      <div>
+        <label>Start Date: <input type="date" name="start_date" data-bind="value: filter_start_date" /> </label>
+        <label>End Date: <input type="date" name="end_date" data-bind="value: filter_end_date" /> </label>
+        <label>Submission Type:
+          <select type="date" name="submission_type" data-bind="value: filter_submission_type, options: submission_type_options, optionsCaption: '(Select Type)'">
+          </select>
+        </label>
+      </div>
 
-    <table class="table table-striped" id="submissions">
+      <table class="table table-striped" id="submissions" data-bind="visible: !is_loading()">
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Status</th>
+            <th>Time</th>
+            <th>Submission Type</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody data-bind="foreach: submissions">
+          <tr>
+            <td data-bind="text: id"></td>
+            <td><span class="label"
+                      data-bind="text: status_display, css: get_submission_status_label_class(status)"></span></td>
+            <td data-bind="text: time"></td>
+            <td data-bind="text: type_display"></td>
+            <td>
+              <button class="btn btn-xs" data-bind="click: function() {$parent.view_submission($data)}">View
+                View Submission
+              </button>
+            </td>
+          </tr>
+
+  {#      <!-- Logs Dropdown -->#}
+  {#      <tr class="collapse" data-bind="css: 'logs_' + $data.id">#}
+  {#        <td></td>#}
+  {#        <td colspan="5"><h5>Logs for Submission <span data-bind="text: id"></span></h5></td>#}
+  {#      </tr>#}
+  {#      <tr class="collapse" data-bind="css: 'logs_' + $data.id">#}
+  {#        <th></th>#}
+  {#        <th>Id</th>#}
+  {#        <th>Status</th>#}
+  {#        <th>Time</th>#}
+  {#        <th>Message</th>#}
+  {#        <th></th>#}
+  {#      </tr>#}
+  {#      <!-- ko foreach: logs -->#}
+  {#      <tr class="collapse" data-bind="css: 'logs_' + $parent.id">#}
+  {#        <td></td>#}
+  {#        <td data-bind="text: id"></td>#}
+  {#        <td><span class="label"#}
+  {#                  data-bind="text: _.capitalize(status), css: get_submission_status_label_class(status)"></span>#}
+  {#        </td>#}
+  {#        <td data-bind="text: format_datetime(time)"></td>#}
+  {#        <td><pre data-bind="text: message"></pre></td>#}
+  {#        <td></td>#}
+  {#      </tr>#}
+  {#      <!-- /ko -->#}
+  {##}
+  {#      <!-- Applications Dropdown -->#}
+  {#      <tr class="collapse" data-bind="css: 'applications_' + $data.id">#}
+  {#        <td></td>#}
+  {#        <td colspan="5"><h5>Applications for Submission <span data-bind="text: id"></span></h5></td>#}
+  {#      </tr>#}
+  {#      <tr class="collapse" data-bind="css: 'applications_' + $data.id">#}
+  {#        <th></th>#}
+  {#        <th>Id</th>#}
+  {#        <th>Case</th>#}
+  {#        <th>Employee</th>#}
+  {#        <th>Products</th>#}
+  {#        <th></th>#}
+  {#        <th></th>#}
+  {#      </tr>#}
+  {#      <!-- ko foreach: applications -->#}
+  {#      <tr class="collapse" data-bind="css: 'applications_' + $parent.id">#}
+  {#        <td></td>#}
+  {#        <td data-bind="text: id"></td>#}
+  {#        <td data-bind="with: $data.case"><a target="_blank"#}
+  {#            data-bind="attr: { 'href': '/enrollment-case/' + id}, text: company_name"></a></td>#}
+  {#        <td data-bind="with: $data.census_record"><a target="_blank"#}
+  {#            data-bind="attr: { 'href': '/enrollment-case/' + case_id + '/census/' + id}, text: employee_first + ' ' + employee_last"></a></td>#}
+  {#        <td data-bind="text: create_product_display_string($data.case)"></td>#}
+  {#        <td></td>#}
+  {#        <td></td>#}
+  {#      </tr>#}
+  {#      <!-- /ko -->#}
+        </tbody>
+      </table>
+  </div>
+
+  <div data-bind="if: is_loading">Loading...</div>
+
+  <div class="container" data-bind="with: viewing_submission, visible: !is_loading()">
+
+    <ol class="breadcrumb">
+      <li class=""><a data-bind="click: function() {$parent.exit_submission_view()}">Search Submissions</a></li>
+      <li class="active" data-bind="text: 'Submission '+id"></li>
+    </ol>
+    <br>
+
+    <h4><span data-bind="text: type_display"></span></h4>
+    <h5> Created <span data-bind="text: time"></span></h5>
+    <h5>Status: <span class="label" data-bind="text: status, css: get_submission_status_label_class(status)"></span></h5>
+
+    <h5>Logs:</h5>
+    <table class="table table-bordered table-striped">
       <thead>
-      <tr>
-        <th>Id</th>
-        <th>Status</th>
-        <th>Time</th>
-        <th>Submission Type</th>
-        <th>Product</th>
-        <th></th>
-        <th></th>
-      </tr>
+        <tr>
+          <th>Date Attempted</th>
+          <th>Status</th>
+          <th>Message</th>
+        </tr>
       </thead>
-      <tbody data-bind="foreach: submissions">
-      <tr>
-        <td data-bind="text: id"></td>
-        <td><span class="label"
-                  data-bind="text: status_display, css: get_submission_status_label_class(status)"></span></td>
-        <td data-bind="text: time"></td>
-        <td data-bind="text: type_display"></td>
-        <td data-bind="text: product"></td>
-        <td>
-          <button class="btn btn-xs" data-bind="click: toggle_showing_applications, visible: has_applications">View
-            Applications
-          </button>
-        </td>
-        <td>
-          <button class="btn btn-xs" data-bind="click: toggle_showing_logs, visible: has_logs">View Logs</button>
-        </td>
-      </tr>
-
-      <!-- Logs Dropdown -->
-      <tr class="collapse" data-bind="css: 'logs_' + $data.id">
-        <td></td>
-        <td colspan="5"><h5>Logs for Submission <span data-bind="text: id"></span></h5></td>
-      </tr>
-      <tr class="collapse" data-bind="css: 'logs_' + $data.id">
-        <th></th>
-        <th>Id</th>
-        <th>Status</th>
-        <th>Time</th>
-        <th>Message</th>
-        <th></th>
-      </tr>
-      <!-- ko foreach: logs -->
-      <tr class="collapse" data-bind="css: 'logs_' + $parent.id">
-        <td></td>
-        <td data-bind="text: id"></td>
-        <td><span class="label"
-                  data-bind="text: _.capitalize(status), css: get_submission_status_label_class(status)"></span>
-        </td>
-        <td data-bind="text: format_datetime(time)"></td>
-        <td><pre data-bind="text: message"></pre></td>
-        <td></td>
-      </tr>
-      <!-- /ko -->
-
-      <!-- Applications Dropdown -->
-      <tr class="collapse" data-bind="css: 'applications_' + $data.id">
-        <td></td>
-        <td colspan="5"><h5>Applications for Submission <span data-bind="text: id"></span></h5></td>
-      </tr>
-      <tr class="collapse" data-bind="css: 'applications_' + $data.id">
-        <th></th>
-        <th>Id</th>
-        <th>Case</th>
-        <th>Employee</th>
-        <th>Products</th>
-        <th></th>
-        <th></th>
-      </tr>
-      <!-- ko foreach: applications -->
-      <tr class="collapse" data-bind="css: 'applications_' + $parent.id">
-        <td></td>
-        <td data-bind="text: id"></td>
-        <td data-bind="with: $data.case"><a target="_blank"
-            data-bind="attr: { 'href': '/enrollment-case/' + id}, text: company_name"></a></td>
-        <td data-bind="with: $data.census_record"><a target="_blank"
-            data-bind="attr: { 'href': '/enrollment-case/' + case_id + '/census/' + id}, text: employee_first + ' ' + employee_last"></a></td>
-        <td data-bind="text: create_product_display_string($data.case)"></td>
-        <td></td>
-        <td></td>
-      </tr>
-      <!-- /ko -->
+      <tbody data-bind="foreach: $parent.submission_logs">
+        <tr>
+          <td data-bind="text: processing_time"></td>
+          <td data-bind=""><span class="label" data-bind="text: status, css: get_submission_status_label_class(status)"></span></td>
+          <td><pre style="max-width: 600px" data-bind="text: message"></pre></td>
+        </tr>
       </tbody>
     </table>
+    <h5>Applications:</h5>
+    <table class="table table-bordered table-striped">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Products</th>
+
+        </tr>
+      </thead>
+      <tbody data-bind="foreach: $parent.submission_apps">
+        <tr>
+          <td><a  data-bind="text: id, attr: {href: census_page_link}"></a></td>
+          <td data-bind="text: employee_first + ' ' + employee_last"></td>
+          <td ></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h5>Data</h5>
+    <div><a target="_blank" data-bind="attr: {href: '/submissions/'+id+'/data'}">Download Data</a></div>
   </div>
+
+</div>
+
 {% endblock %}
 
 {% block page_js %}
@@ -147,44 +200,133 @@
       self.status_display = _.capitalize(self.status);
       self.label_class = get_submission_status_label_class(self.status);
 
-      self.logs = _.chain(submission.submission_logs)
-          .map(function (log) {
-            log.time = moment(log.processing_time);
-            return log;
-          })
-          .sortByOrder(['time'], ['desc'])
-          .value();
-      self.applications = _.chain(submission.enrollment_applications)
-          .sortBy('id')
-          .value();
+{#      self.logs = _.chain(submission.submission_logs)#}
+{#          .map(function (log) {#}
+{#            log.time = moment(log.processing_time);#}
+{#            return log;#}
+{#          })#}
+{#          .sortByOrder(['time'], ['desc'])#}
+{#          .value();#}
+{#      self.applications = _.chain(submission.enrollment_applications)#}
+{#          .sortBy('id')#}
+{#          .value();#}
 
-      self.has_logs = self.logs.length > 0;
-      self.has_applications = self.applications.length > 0;
+{#      self.has_logs = self.logs.length > 0;#}
+{#      self.has_applications = self.applications.length > 0;#}
 
       // Functions
-      self.toggle_showing_logs = function toggle_showing_logs() {
-        $('.logs_' + self.id).collapse('toggle');
-      };
-      self.toggle_showing_applications = function toggle_showing_applications() {
-        $('.applications_' + self.id).collapse('toggle');
-      }
+{#      self.toggle_showing_logs = function toggle_showing_logs() {#}
+{#        $('.logs_' + self.id).collapse('toggle');#}
+{#      };#}
+{#      self.toggle_showing_applications = function toggle_showing_applications() {#}
+{#        $('.applications_' + self.id).collapse('toggle');#}
+{#      }#}
     }
 
     function SubmissionsViewModel(submissions) {
       'use strict';
       var self = this;
 
+      self.is_loading = ko.observable(true);
       self.submissions = ko.observableArray();
+      self.viewing_submission = ko.observable(null);
+      self.submission_logs = ko.observableArray();
+      self.submission_apps = ko.observableArray();
 
-      self.fetch_submissions = function() {
+
+      self.filter_start_date = ko.observable(moment().subtract(30, 'days').format("YYYY-MM-DD"));
+      self.filter_end_date = ko.observable();
+      self.filter_submission_type = ko.observable();
+
+      var TYPE_DELL_CSV_GENERATION = 'HI and ACC CSV Generation';
+      var TYPE_DELL_EXPORT = 'HI and ACC CSV submission to Dell';
+      var TYPE_DELL_STP_XML = 'STP XML submission to Dell';
+      var TYPE_DELL_PDF_SFTP = 'PDF submission to Dell via SFTP';
+      var TYPE_DOCUSIGN = 'Submit to Docusign';
+      var TYPE_STATIC_BENEFIT = 'Static Benefit';
+      var TYPE_PAYLOGIX_CSV_GENERATION = 'Paylogix CSV Generation';
+      var TYPE_PAYLOGIX_EXPORT = 'Paylogix Export';
+
+      self.submission_type_options = [
+        TYPE_DELL_CSV_GENERATION,
+              TYPE_DELL_EXPORT,
+              TYPE_DELL_STP_XML,
+              TYPE_DELL_PDF_SFTP,
+              TYPE_STATIC_BENEFIT,
+              TYPE_PAYLOGIX_CSV_GENERATION,
+              TYPE_PAYLOGIX_EXPORT
+      ];
+
+      self.fetch_submissions = ko.computed(function() {
+        self.is_loading(true);
+        var params = {};
+        if (self.filter_start_date() && moment(self.filter_start_date()).isValid()) {
+          params.start_date = moment(self.filter_start_date()).format("YYYY-MM-DD");
+        }
+        if (self.filter_end_date() && moment(self.filter_end_date()).isValid()) {
+          params.end_date = moment(self.filter_end_date()).format("YYYY-MM-DD");
+        }
+        if (self.filter_submission_type) {
+          params.submission_type = self.filter_submission_type();
+        }
         $.getJSON('/submissions', params).then(function(resp) {
-          _.map(resp.data, function (submission) { return new SubmissionViewModel(submission); }
-        }})
+          var submissions = _.map(resp.data, function (submission) { return new SubmissionViewModel(submission); });
+          self.submissions(submissions);
+          self.is_loading(false);
+
+        });
+      });
+
+      self.view_submission = function (submission) {
+        self.viewing_submission(submission);
+        self.is_loading(true);
+        var apps_req = $.getJSON('/submissions/'+submission.id+'/applications');
+        var logs_req = $.getJSON('/submissions/'+submission.id+'/logs');
+        $.when(apps_req, logs_req
+          ).then(function(apps_resp, logs_resp) {
+            self.submission_apps(_.map(apps_resp[0].data, function (app_data) {
+              return new SubmissionApp(app_data)
+            }));
+            self.submission_logs(_.map(logs_resp[0].data, function (log_data) {
+              return new SubmissionLog(log_data);
+            }));
+          }).done(function() {
+            self.is_loading(false)
+          });
+      };
+
+      self.exit_submission_view = function () {
+        self.viewing_submission(null);
+        self.submission_logs([]);
+        self.submission_apps([]);
       }
+
     }
+
+    var SubmissionApp = function(data) {
+      var self = this;
+      self.app_data = JSON.parse(data.standardized_data);
+
+      self.id = data.id;
+      self.census_page_link = "/enrollment-case/" + data.case_id + "/census/" + data.census_record_id;
+      self.employee_first = self.app_data[0].employee.first;
+      self.employee_last = self.app_data[0].employee.last;
+    };
+
+    var SubmissionLog = function(data, submission) {
+      var self = this;
+
+      self.submission = submission;
+
+      self.id = data.id;
+      self.processing_time = data.processing_time;
+      self.status = data.status;
+      self.message = data.message;
+    };
 
     var viewModel = new SubmissionsViewModel();
     window.viewModel = viewModel;
+    window.viewModel.fetch_submissions();
     ko.applyBindings(viewModel);
   </script>
 {% endblock %}

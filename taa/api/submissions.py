@@ -50,12 +50,16 @@ def get_submission_logs(submission_id):
 
 
 
-@route(blueprint, '/<submission_id>/applications', methods=['GET'])
+@route(blueprint, '/<submission_id>/data', methods=['GET'])
 @login_required
 @groups_required(['admins'], all=False)
 def get_submission_data(submission_id):
-    response = make_response(enrollment_submission_service.get_submission_data(submission_id))
+    data = enrollment_submission_service.get_submission_data(submission_id)
+    if not data:
+        return "No data"
+    response = make_response(data)
     response.headers['Content-Type'] = 'application/octet-stream'
+    response.headers['Content-Disposition'] = 'attachment; filename="submission_data_{}.txt"'.format(submission_id)
     return response
 
 
