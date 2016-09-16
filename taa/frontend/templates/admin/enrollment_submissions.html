@@ -191,7 +191,7 @@
       self.submission_apps = ko.observableArray();
 
 
-      self.filter_start_date = ko.observable(moment().subtract(14, 'days').format("YYYY-MM-DD"));
+      self.filter_start_date = ko.observable(moment().subtract(7, 'days').format("YYYY-MM-DD"));
       self.filter_end_date = ko.observable();
       self.filter_submission_type = ko.observable();
       self.filter_submission_status = ko.observable();
