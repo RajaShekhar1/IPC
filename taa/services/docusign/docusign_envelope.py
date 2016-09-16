@@ -313,6 +313,10 @@ class EnrollmentDataWrap(object):
 
     def get_covered_children(self):
         covered_children = []
+        
+        if not self.data.get('child_coverages'):
+            return covered_children
+        
         for i, child in enumerate(self.data['children']):
             coverage = self.data['child_coverages'][i]
             if coverage and (coverage.get('face_value') or
@@ -324,6 +328,7 @@ class EnrollmentDataWrap(object):
         return covered_children
 
     def get_child_coverage(self, child_num=0):
+        
         return self.format_coverage(self.data['child_coverages'][child_num])
 
     def get_child_premium(self, child_num=0):
@@ -530,19 +535,19 @@ class EnrollmentDataWrap(object):
             payment_mode = "{}".format(self.enrollment_record.payment_mode)
         else:
             payment_mode = "{}".format(self.case.payment_mode)
-
+        
         if self.did_employee_select_coverage():
             coverage = self.get_employee_coverage()
 
             premium = self.get_formatted_employee_premium()
             premium_amount = self.get_employee_premium()
-
+            applicant_effective_date = effective_date
         else:
             coverage = 'DECLINED'
             premium = ''
             premium_amount = decimal.Decimal('0.00')
             payment_mode = ''
-            effective_date = ''
+            applicant_effective_date = ''
 
         # Employee data
         applicants.append(dict(
@@ -554,7 +559,7 @@ class EnrollmentDataWrap(object):
             premium=premium_amount,
             formatted_premium=premium,
             mode=payment_mode,
-            effective_date=effective_date,
+            effective_date=applicant_effective_date,
             birthdate=self.get_employee_birthdate(),
             selected_riders=self.data.get('rider_data', {}).get('emp', []),
         ))

@@ -335,13 +335,13 @@ def initialize_rates_from_files(rates):
 
     # Build rate table for children (currently hardcoded)
     # Group CI
-    rates.from_string("age,2500,5000,10000\n-1,0.19,0.37,0.75", 'Group CI',
+    rates.from_string("age,2500,5000,7500,10000\n-1,0.19,0.37,0.56,0.75", 'Group CI',
                       MODES_BY_NAME['weekly'], TYPE_COVERAGE)
-    rates.from_string("age,2500,5000,10000\n-1,0.37,0.75,1.50", 'Group CI',
+    rates.from_string("age,2500,5000,7500,10000\n-1,0.37,0.75,1.12,1.50", 'Group CI',
                       MODES_BY_NAME['biweekly'], TYPE_COVERAGE)
-    rates.from_string("age,2500,5000,10000\n-1,0.41,0.81,1.62", 'Group CI',
+    rates.from_string("age,2500,5000,7500,10000\n-1,0.41,0.81,1.22,1.62", 'Group CI',
                       MODES_BY_NAME['semimonthly'], TYPE_COVERAGE)
-    rates.from_string("age,2500,5000,10000\n-1,0.81,1.62,3.25", 'Group CI',
+    rates.from_string("age,2500,5000,7500,10000\n-1,0.81,1.62,2.44,3.25", 'Group CI',
                       MODES_BY_NAME['monthly'], TYPE_COVERAGE)
 
 

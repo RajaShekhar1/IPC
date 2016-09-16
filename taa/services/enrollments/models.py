@@ -404,6 +404,9 @@ def get_batch_case_id(batch):
 
 
 def get_batch_user(batch):
+    if batch.user_href:
+        return batch.user_href
+    
     auth_token = batch.auth_token
     if not auth_token:
         return None
@@ -443,6 +446,8 @@ class EnrollmentImportBatch(EnrollmentImportBatchSerializer, db.Model):
     num_processed = db.Column(db.Integer)
     num_errors = db.Column(db.Integer)
     log_hash = db.Column(db.Unicode(64), index=True)
+    user_href = db.Column(db.Unicode, index=True)
+    filename = db.Column(db.Unicode)
 
 
 class EnrollmentImportBatchItemSerializer(JsonSerializable):

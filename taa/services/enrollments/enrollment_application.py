@@ -1,4 +1,5 @@
 import StringIO
+from datetime import date as date_type
 from datetime import datetime
 import json
 from decimal import Decimal
@@ -306,7 +307,10 @@ class EnrollmentApplicationService(DBService):
             if data['did_decline'] or enrollment.is_preview:
                 effective_date = None
             elif enroller_effective_date:
-                effective_date = dateutil.parser.parse(enroller_effective_date)
+                if isinstance(enroller_effective_date, date_type) or isinstance(enroller_effective_date, datetime):
+                    effective_date = enroller_effective_date
+                else:
+                    effective_date = dateutil.parser.parse(enroller_effective_date)
             else:
                 # This usually means we sourced this from an  import file without explicit effective dates set.
                 #  Compute according to the case settings.
