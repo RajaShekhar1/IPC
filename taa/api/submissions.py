@@ -24,8 +24,10 @@ def get_submissions():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     submission_type = request.args.get('submission_type')
-
-    return enrollment_submission_service.search_submissions(start_date=start_date, end_date=end_date, submission_type=submission_type)
+    submission_status = request.args.get('submission_status')
+    
+    return enrollment_submission_service.search_submissions(start_date=start_date, end_date=end_date, submission_type=submission_type,
+                                                            submission_status=submission_status)
 
 
 @route(blueprint, '/<submission_id>', methods=['GET'])

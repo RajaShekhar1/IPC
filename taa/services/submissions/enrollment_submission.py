@@ -49,7 +49,7 @@ class EnrollmentSubmissionService(object):
     def _should_submit_to_dell(self, case):
         return case.is_stp
 
-    def search_submissions(self, start_date=None, end_date=None, submission_type=None):
+    def search_submissions(self, start_date=None, end_date=None, submission_type=None, submission_status=None):
         q = db.session.query(EnrollmentSubmission)
         
         if start_date:
@@ -59,6 +59,9 @@ class EnrollmentSubmissionService(object):
         
         if submission_type:
             q = q.filter(EnrollmentSubmission.submission_type == submission_type)
+        
+        if submission_status:
+            q = q.filter(EnrollmentSubmission.status == submission_status)
         
         q = q.order_by(db.desc(EnrollmentSubmission.created_at))
         
