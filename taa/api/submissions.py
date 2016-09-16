@@ -19,23 +19,28 @@ blueprint = Blueprint('submissions', __name__, url_prefix='/submissions')
 @login_required
 @groups_required(['admins'], all=False)
 def get_submissions():
-    
+    MAX_RESULTS = 500
     
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     submission_type = request.args.get('submission_type')
     submission_status = request.args.get('submission_status')
-    
-    return enrollment_submission_service.search_submissions(start_date=start_date, end_date=end_date, submission_type=submission_type,
+
+    all_submissions = enrollment_submission_service.search_submissions(start_date=start_date, end_date=end_date, submission_type=submission_type,
                                                             submission_status=submission_status)
 
-
+    if len(all_submissions) > MAX_RESULTS:
+        return {'clipped_length': len(all_submissions), 'submissions': all_submissions[:MAX_RESULTS]}
+    else:
+        return {'submissions': all_submissions}
+    
 @route(blueprint, '/<submission_id>', methods=['GET'])
 @login_required
 @groups_required(['admins'], all=False)
 def get_submission(submission_id):
+    
     return enrollment_submission_service.get_submission(submission_id)
-
+    
 
 @route(blueprint, '/<submission_id>/applications', methods=['GET'])
 @login_required
