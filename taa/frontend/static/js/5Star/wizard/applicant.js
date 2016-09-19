@@ -246,6 +246,7 @@ var wizard_applicant = (function () {
     this.should_show_spouse = should_show_spouse;
     this.should_show_children = should_show_children;
     this.get_valid_applicants_for_coverage = ko.pureComputed(this._get_valid_applicants_for_coverage, this);
+    this.get_valid_applicant_groups_for_coverage = ko.pureComputed(this._get_valid_applicant_groups_for_coverage, this);
     this.get_valid_applicants = ko.pureComputed(this._get_valid_applicants, this);
 
     // Create a default employee and spouse
@@ -272,6 +273,20 @@ var wizard_applicant = (function () {
         _.each(this.get_valid_children(), function(child) {
           applicants.push(child);
         });
+      }
+      return applicants;
+    },
+    _get_valid_applicant_groups_for_coverage: function() {
+      // Same as above, but group the children.
+      var applicants = [];
+      if (this.has_valid_employee()) {
+        applicants.push(this.get_employee());
+      }
+      if (this.should_show_spouse() && this.has_valid_spouse()) {
+        applicants.push(this.get_spouse());
+      }
+      if (this.should_show_children() && this.has_valid_children()) {
+        applicants.push(this.get_children_group());
       }
       return applicants;
     },

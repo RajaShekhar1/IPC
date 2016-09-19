@@ -58,6 +58,55 @@ CoverageOption.display_benefit_option = function (item) {
   return item.format_for_dropdown();
 };
 
+// This should used as a way to view a summary of a group coverage.
+function GroupedCoverageVM(applicant_group, applicant_options) {
+  var self = this;
+
+  self.applicant_group = applicant_group;
+  self.applicant_options = applicant_options;
+
+  self.get_total_premium = function () {
+    return self.premium;
+  };
+
+  self.format_premium = function () {
+    return "GroupedCoverageVM premium ";
+    return format_premium_value(self.premium);
+  };
+
+  self.format_premium_option = function () {
+    return "GroupedCoverageVM premium opt";
+    return self.format_premium() + " " + self.payment_mode().display_lowercase();
+  };
+  self.format_face_value = function () {
+    return "GroupedCoverageVM face val";
+    return format_face_value(self.face_value);
+  };
+  self.format_face_option = function () {
+    return "GroupedCoverageVM face opt";
+    return self.format_face_value() + " face amount";
+  };
+  self.format_for_dropdown = function () {
+    if (self.is_by_face) {
+      return self.format_face_option();
+    } else {
+      return self.format_premium_option();
+    }
+  };
+  self.is_valid = function () {
+    return true;
+  };
+
+  self.serialize_data = function () {
+    return {
+      premium: self.premium,
+      face_value: self.face_value
+    };
+  };
+
+}
+
+
 function CICoverageOption(wrapped_option) {
   var self = this;
   self.is_by_face = wrapped_option.is_by_face;

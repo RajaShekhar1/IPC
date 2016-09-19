@@ -752,16 +752,22 @@ var wizard_viewmodel = (function () {
     },
 
     // This raw method should not be used outside this class.
-    __get_coverage_for_applicant: function (applicant) {
+    __get_coverage_for_applicant: function (app) {
       var self = this;
 
-      // special case for group of children; if a group of children is passed, we add up the coverage.
-      // if (applicant.is_group()) {
-      //   var coverages = _.map(applicant.children(), function(child) {
-      //     return self.__get_coverage_for_applicant(child);
-      //   });
-      //
-      // }
+      // special case for group of children; if a group of children is passed, we display it differently.
+      if (app.is_group() && self.product.is_children_coverage_grouped()) {
+        // return the first child's coverage for the group product
+        //return this.__get_coverage_for_applicant(this.get_child_applicants()[0]);
+
+        var coverages = _.map(app.applicants(), function(child) {
+          return self.__get_coverage_for_applicant(child);
+        });
+        return new ApplicantGroupCoverageSelectionVM(app, coverages);
+
+      } else if (app.is_group() && !self.product.is_children_coverage_grouped()) {
+
+      }
 
       // if (applicant.type === wizard_applicant.Applicant.ChildType) {
       //   applicant = this.applicant_list.get_children_group();
@@ -770,17 +776,17 @@ var wizard_viewmodel = (function () {
       // TODO: If the applicant is not valid for this product, return a special null coverage?
 
       // TODO: If this product requires child grouping, and this applicant is a child, do something different here...
-      if (self.product.is_children_coverage_grouped() && applicant.type === wizard_applicant.Applicant.ChildType && !applicant.is_group()) {
-        // for now, return group coverage
-        return this.__get_coverage_for_applicant(this.get_child_applicants()[0]);
-      }
+      // if (self.product.is_children_coverage_grouped() && app.type === wizard_applicant.Applicant.ChildType && !app.is_group()) {
+      //   // for now, return group coverage
+      //   return this.__get_coverage_for_applicant(this.get_child_applicants()[0]);
+      // }
 
       var applicant_coverage;
-      if (applicant._id in this._applicant_coverage_viewmodels) {
-        applicant_coverage = this._applicant_coverage_viewmodels[applicant._id];
+      if (app._id in this._applicant_coverage_viewmodels) {
+        applicant_coverage = this._applicant_coverage_viewmodels[app._id];
       } else {
-        var new_selection_instance = new ApplicantCoverageSelectionVM(applicant, this);
-        this._applicant_coverage_viewmodels[applicant._id] = new_selection_instance;
+        var new_selection_instance = new ApplicantCoverageSelectionVM(app, this);
+        this._applicant_coverage_viewmodels[app._id] = new_selection_instance;
         applicant_coverage = new_selection_instance;
       }
 
@@ -789,8 +795,17 @@ var wizard_viewmodel = (function () {
 
     _get_covered_children: function () {
       var self = this;
-      //var coverage = this.get_coverage_for_applicant(this.applicant_list.get_children_group());
 
+      var coverage = this.get_coverage_for_applicant(this.applicant_list.get_children_group());
+      if (coverage.coverage_option().is_valid()) {
+        // Return only valid children with coverage.
+        return _.filter(this.applicant_list.get_children(), function (child) {
+          return child.is_valid();
+        });
+      } else {
+        return [];
+      }
+    // TEMP CODE
       var child_applicants = self.get_child_applicants();
       var valid_covered_children = _.filter(child_applicants, function(child) {
           var coverage = self.get_coverage_for_applicant(child);
@@ -1023,6 +1038,36 @@ var wizard_viewmodel = (function () {
 
   };
 
+  // Covers most of the interface as ApplicantCoverageSelectionVM, but works for display the coverage of a group of applicants.
+  //   Anything that needs to work with the coverage amounts should use individuals, not groups. This VM is only intended to
+  //    make displaying group summaries easier.
+  function ApplicantGroupCoverageSelectionVM(applicant_group, coverages) {
+    var self = this;
+
+    self.applicant_group = applicant_group;
+    self.applicant = applicant_group;
+    self.coverages = coverages;
+
+    self.did_select_option = ko.pureComputed(function() {
+      return true;
+    });
+
+    self.format_face_value = ko.pureComputed(function() {
+      return "Face Value Group";
+    });
+
+    self.format_premium_option = ko.pureComputed(function() {
+      return "Premium Group";
+    });
+
+    self.get_selected_coverage = ko.pureComputed(function() {
+      return new GroupedCoverageVM(self.applicant_group, self.coverages);
+    })
+
+  }
+
+
+
   function CoverageSummaryVM(product_coverages, applicant_list) {
     this.product_coverages = product_coverages;
     this.applicant_list = applicant_list;
@@ -1034,7 +1079,7 @@ var wizard_viewmodel = (function () {
     }, this);
 
     this.valid_applicants = ko.pureComputed(function () {
-      return this.applicant_list.get_valid_applicants_for_coverage();
+      return this.applicant_list.get_valid_applicant_groups_for_coverage();
 
     }, this);
 
