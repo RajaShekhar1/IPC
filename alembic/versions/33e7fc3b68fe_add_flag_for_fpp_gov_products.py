@@ -37,15 +37,6 @@ def upgrade():
             where(FppGov.c.code==op.inline_literal('FPP-Gov')).\
             values({'name': 'FPP-White', 'is_fpp_gov': op.inline_literal(True)})
         )
-    # Add FPP-Gray and FPP-Blue
-    op.execute(FppGov.insert().values(name='FPP-Gray', code='FPPTIY',
-                                      is_fpp_gov=op.inline_literal(True),
-                                      visible_to_agents=op.inline_literal(False),
-                                      brochure_url='http://5starlifeinsurance.com/wp-content/uploads/2015/02/5Star-Life-FPP-TI-brochure.pdf'))
-    op.execute(FppGov.insert().values(name='FPP-Blue', code='FPPTIB',
-                                      is_fpp_gov=op.inline_literal(True),
-                                      visible_to_agents=op.inline_literal(False),
-                                      brochure_url='http://5starlifeinsurance.com/wp-content/uploads/2015/02/5Star-Life-FPP-TI-brochure.pdf'))
     session.commit()
 
 

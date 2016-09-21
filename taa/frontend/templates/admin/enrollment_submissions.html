@@ -80,13 +80,15 @@
                     <tr>
                       <th>ID</th>
                       <th>Name</th>
+                      <th>Case</th>
                       <th>Products</th>
                     </tr>
                   </thead>
                   <tbody data-bind="foreach: $root.submission_apps">
                     <tr>
-                      <td><a  data-bind="text: id, attr: {href: census_page_link}"></a></td>
-                      <td data-bind="text: employee_first + ' ' + employee_last"></td>
+                      <td data-bind="text: id"></td>
+                      <td><a data-bind="text: employee_first + ' ' + employee_last, attr: {href: census_page_link}"></a></td>
+                      <td><a data-bind="text: case_name, attr: {href: case_page_link}"></a></td>
                       <td data-bind="text: get_products()"></td>
                     </tr>
                   </tbody>
@@ -273,6 +275,17 @@
 
     }
 
+    var cases_cache = {};
+    function load_case(case_id, cb) {
+      if (!(case_id in cases_cache)) {
+        // Load case data.
+        cases_cache[case_id] = $.getJSON("/cases/" + case_id);
+      }
+      cases_cache[case_id].then(function(resp_json) {
+        cb(resp_json.data);
+      });
+    }
+
     var SubmissionApp = function(data) {
       var self = this;
       self.data = data;
@@ -288,9 +301,17 @@
       self.app_data = JSON.parse(data.standardized_data);
 
       self.id = data.id;
+      self.case_name = ko.observable("loading...");
+      // Go fetch the case name if needed.
+      load_case(data.case_id, function(case_data) {
+        self.case_name(case_data.company_name);
+      });
+
+
       self.census_page_link = "/enrollment-case/" + data.case_id + "/census/" + data.census_record_id;
       self.employee_first = self.app_data.emp_first || self.app_data[0].employee.first;
       self.employee_last = self.app_data.emp_last  || self.app_data[0].employee.last;
+      self.case_page_link = "/enrollment-case/" + data.case_id + "#enrollment";
     };
 
     var SubmissionLog = function(data, submission) {
