@@ -214,6 +214,11 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
     soh_answers = db.Column(db.UnicodeText)
 
     def get_annualized_premium(self):
+        
+        # Short-circuit here if this is a covered applicant but does not pay premium (included in EE premium, for example)
+        if self.is_premium_included():
+            return decimal.Decimal('0.00')
+        
         if self.annual_premium is not None:
             return self.annual_premium
         elif self.monthly_premium is not None:
@@ -228,6 +233,10 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
             return decimal.Decimal('0.00')
 
     def get_premium(self):
+        # Short-circuit here if this is a covered applicant but does not pay premium (included in EE premium, for example)
+        if self.is_premium_included():
+            return decimal.Decimal('0.00')
+        
         if self.annual_premium is not None:
             return self.annual_premium
         elif self.monthly_premium is not None:
@@ -241,10 +250,15 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
         else:
             return decimal.Decimal('0.00')
 
+    def is_premium_included(self):
+        # In HI/ACC products, the employee's premium covers other family members if coverage_selection is a certain value.
+        return self.product.is_employee_premium_only() and self.applicant_type in [self.APPLICANT_TYPE_CHILD,
+                                                                                   self.APPLICANT_TYPE_SPOUSE]
+    
     def did_enroll(self):
         return self.coverage_status == self.COVERAGE_STATUS_ENROLLED
-
-
+    
+    
 class SelfEnrollmentLinkSerializer(JsonSerializable):
     __json_hidden__ = ['census_record', 'case', 'emails', 'self_enrollment_setup']
 

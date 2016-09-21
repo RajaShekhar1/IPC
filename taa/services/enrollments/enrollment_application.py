@@ -454,8 +454,17 @@ class EnrollmentApplicationService(DBService):
                     else_=0
                 )
             ],
-            ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
-                    ).correlate(EnrollmentApplication).label('total_premium'),
+            ).where(db.and_(
+                EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id,
+                # Filter out coverages where the premium shouldn't count.
+                # Either no coverage_selection, or count only the employee coverage if it is a product
+                # with coverage selection.
+                db.or_(EnrollmentApplicationCoverage.coverage_selection == None,
+                       db.and_(EnrollmentApplicationCoverage.coverage_selection != None,
+                               EnrollmentApplicationCoverage.applicant_type == 'employee')
+                       )
+                )
+            ).correlate(EnrollmentApplication).label('total_premium'),
             db.select(
                 [EnrollmentApplicationCoverage.effective_date]
             ).where(EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
