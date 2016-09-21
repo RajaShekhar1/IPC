@@ -484,9 +484,9 @@ class EnrollmentSubmissionService(object):
             submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
 
         for application in applications:
-            standardized_data = enrollments.load_standardized_data_from_application(application)
-            if any(EnrollmentDataWrap(d, application.case, application).requires_paylogix_export() for d in
-                   standardized_data):
+            wrapped_data = self.enrollment_application_service.get_wrapped_enrollment_data(application)
+            #standardized_data = enrollments.load_standardized_data_from_application(application)
+            if any(d.requires_paylogix_export() and not d.did_decline() for d in wrapped_data):
                 submission.enrollment_applications.append(application)
         db.session.commit()
 
