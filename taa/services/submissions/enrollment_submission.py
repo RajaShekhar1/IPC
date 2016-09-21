@@ -65,7 +65,7 @@ class EnrollmentSubmissionService(object):
         
         q = q.order_by(db.desc(EnrollmentSubmission.created_at))
         
-        return q.all()
+        return q
     
     def get_submission(self, submission_id):
         submission = db.session.query(EnrollmentSubmission).get(submission_id)

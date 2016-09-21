@@ -26,13 +26,14 @@ def get_submissions():
     submission_type = request.args.get('submission_type')
     submission_status = request.args.get('submission_status')
 
-    all_submissions = enrollment_submission_service.search_submissions(start_date=start_date, end_date=end_date, submission_type=submission_type,
+    all_submissions_query = enrollment_submission_service.search_submissions(start_date=start_date, end_date=end_date, submission_type=submission_type,
                                                             submission_status=submission_status)
 
-    if len(all_submissions) > MAX_RESULTS:
-        return {'clipped_length': len(all_submissions), 'submissions': all_submissions[:MAX_RESULTS]}
+    total_submissions = all_submissions_query.count()
+    if total_submissions > MAX_RESULTS:
+        return {'clipped_length': total_submissions, 'submissions': all_submissions_query.limit(MAX_RESULTS).all()}
     else:
-        return {'submissions': all_submissions}
+        return {'submissions': all_submissions_query.all()}
     
 @route(blueprint, '/<submission_id>', methods=['GET'])
 @login_required
