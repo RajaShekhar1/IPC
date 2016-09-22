@@ -30,25 +30,27 @@ class RunCaseReportCommand(Command):
         
         cases = db.session.query(Case
             ).filter(name_filter
-            ).options(db.joinedload('enrollment_applications').subqueryload('coverages')
+            #).options(db.joinedload('enrollment_applications').subqueryload('coverages')
             ).all()
         
         header_row = ['Case ID', 'Case Name', 'Case Token', 'Case URL', '# Apps', '# Coverages', '# STP Submissions']
         
         data = []
-        for case in cases:
-            print("Getting data for case #{}".format(case.id))
-            apps = case.enrollment_applications
+        for i, case in enumerate(cases):
+            print("Getting data for case #{} {}/{}".format(case.id, i+1, len(cases)))
+            #apps = case.enrollment_applications
+            num_apps = db.session.query(EnrollmentApplication).filter_by(case_id=case.id).count()
+            num_coverages = db.session.query(EnrollmentApplicationCoverage).filter(EnrollmentApplicationCoverage.enrollment.has(case_id=case.id)).count()
+            num_submissions = db.session.query(EnrollmentSubmission).filter(EnrollmentSubmission.enrollment_applications.any(EnrollmentApplication.case_id == case.id)).count()
+            
             data.append([
                 case.id,
                 case.company_name,
                 case.case_token,
                 "https://5starenroll.com/enrollment-case/{}".format(case.id),
-                len(apps),
-                sum(len(app.coverages) for app in apps),
-                sum(len([s for s in app.enrollment_submissions
-                         if s.submission_type == EnrollmentSubmission.TYPE_DELL_STP_XML])
-                    for app in apps),
+                num_apps,
+                num_coverages,
+                num_submissions,
             ])
         
         stream = io.BytesIO()
