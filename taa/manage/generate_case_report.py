@@ -37,6 +37,7 @@ class RunCaseReportCommand(Command):
         
         data = []
         for case in cases:
+            print("Getting data for case #{}".format(case.id))
             apps = case.enrollment_applications
             data.append([
                 case.id,
