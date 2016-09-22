@@ -58,7 +58,10 @@ class RunCaseReportCommand(Command):
             writer.writerow(row)
         email_data = standard_b64encode(stream.getvalue())
         
-        send_email([email_address], "5Star Case Report", text="See attached case report.", attachments=[dict(
+        print(stream.getvalue())
+        
+        send_email([email_address], "5Star Case Report {}".format(datetime.now().strftime('%Y-%m-%d')),
+                   text="See attached case report.", attachments=[dict(
             data=email_data,
             type='text/csv',
             name='report.csv'
