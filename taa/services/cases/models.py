@@ -39,7 +39,7 @@ class CaseSerializer(JsonSerializable):
         'partner_agents': lambda agents, _: [a for a in agents],
         'can_enroll': lambda _, case: case.can_enroll()
     }
-    __json_hidden__ = ['census_records', 'enrollment_records', 'batches', 'logo_image_data']
+    __json_hidden__ = ['census_records', 'enrollment_records', 'batches', 'logo_image_data', 'enrollment_applications']
 
 
 class Case(CaseSerializer, db.Model):

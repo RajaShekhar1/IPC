@@ -20,7 +20,7 @@ enrollment_application_submission_association_table = db.Table('enrollment_appli
 
 
 class EnrollmentSerializer(JsonSerializable):
-    __json_hidden__ = ['census_record', 'case', 'enrollment_submissions', 'emails', 'summary_emails']
+    __json_hidden__ = ['census_record', 'case', 'case_nonlazy', 'enrollment_submissions', 'emails', 'summary_emails']
 
 
 class EnrollmentApplication(EnrollmentSerializer, db.Model):
@@ -31,6 +31,8 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     case_id = db.Column(db.Integer, db.ForeignKey('cases.id'), nullable=True, index=True)
     case = db.relationship('Case', backref=db.backref('enrollment_records',
                                                       lazy='dynamic'))
+    case_nonlazy = db.relationship('Case', backref=db.backref('enrollment_applications'))
+    
     census_record_id = db.Column(db.Integer, db.ForeignKey('case_census.id'),
                                  nullable=False, index=True)
     census_record = db.relationship('CaseCensus',

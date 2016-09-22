@@ -28,7 +28,7 @@ class EnrollmentImportService(object):
                 filename=filename,
             )
         except TAAFormError:
-            # TODO: There might be some logic needed here
+            # No need to do anything for this kind, errors are saved inside processor.
             pass
 
         if user_href:
