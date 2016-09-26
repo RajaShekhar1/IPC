@@ -442,3 +442,8 @@ def export_user_case_enrollments(export_id):
     enrollment_export_service.process_export(export_id)
 
 
+@celery.task(bind=True)
+def schedule_case_report(task, email_address):
+    from taa.manage.generate_case_report import generate_case_report
+    generate_case_report(email_address)
+    
