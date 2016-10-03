@@ -65,7 +65,7 @@ class EnrollmentSubmissionService(object):
         
         q = q.order_by(db.desc(EnrollmentSubmission.created_at))
         
-        return q.all()
+        return q
     
     def get_submission(self, submission_id):
         submission = db.session.query(EnrollmentSubmission).get(submission_id)
@@ -105,20 +105,20 @@ class EnrollmentSubmissionService(object):
         
 
 
-    def submit_to_docusign(self, enrollment_application):
-        envelope = self.docusign_service.get_existing_envelope(enrollment_application)
-        if not envelope:
-            # Create the envelope
-            standardized_data = json.loads(enrollment_application.standardized_data)
-            in_person_signer, envelope = self.docusign_service.create_multiproduct_envelope(standardized_data,
-                                                                                            enrollment_application.case,
-                                                                                            enrollment_application)
-
-            # Save envelope ID on enrollment
-            self.enrollment_application_service.save_docusign_envelope(enrollment_application, envelope)
-
-        db.session.commit()
-        return True
+    # def submit_to_docusign(self, enrollment_application):
+    #     envelope = self.docusign_service.get_existing_envelope(enrollment_application)
+    #     if not envelope:
+    #         # Create the envelope
+    #         standardized_data = json.loads(enrollment_application.standardized_data)
+    #         in_person_signer, envelope = self.docusign_service.create_multiproduct_envelope(standardized_data,
+    #                                                                                         enrollment_application.case,
+    #                                                                                         enrollment_application)
+    #
+    #         # Save envelope ID on enrollment
+    #         self.enrollment_application_service.save_docusign_envelope(enrollment_application, envelope)
+    #
+    #     db.session.commit()
+    #     return True
 
     def submit_STP_to_dell(self, enrollment_application):
         """
@@ -286,11 +286,13 @@ class EnrollmentSubmissionService(object):
         """
         self._mark_item_processing(batch_item)
 
-        # TODO: submit must determine to send to docusign or dell
-        # get PDF:
-        # api/enrollments.py > binary_pdf = enrollment_submission_service.render_enrollment_pdf(item.enrollment_record)
-        EnrollmentSubmissionProcessor().submit_to_docusign(batch_item.enrollment_record)
-
+        # Generate all the submissions that are not queued up in batches.
+        self.create_all_submissions(batch_item.enrollment_record)
+        
+        # Generate any submissions that are batched.
+        self.create_submissions_for_application(batch_item.enrollment_record)
+        
+        # Success
         self._mark_item_success(batch_item)
 
     def render_enrollment_pdf(self, enrollment_record, is_stp=False, product_id=None):
@@ -406,19 +408,6 @@ class EnrollmentSubmissionService(object):
 
         return query.all()
 
-    def create_docusign_submission_for_application(self, application):
-        """
-        Create and submit a submission for Docusign
-        """
-        if 'Group CI' not in [p for p in application.case.products]:
-            return None
-
-        submission = EnrollmentSubmission(submission_type=EnrollmentSubmission.TYPE_DOCUSIGN)
-        submission.enrollment_applications.append(application)
-        db.session.add(submission)
-        db.session.commit()
-        return submission
-
     def create_dell_csv_generation_submission_for_application(self, application):
         """
         Create or add an application to the next pending csv generation submission if the product should be in the next
@@ -495,9 +484,9 @@ class EnrollmentSubmissionService(object):
             submission = self.create_submission(EnrollmentSubmission.TYPE_PAYLOGIX_CSV_GENERATION)
 
         for application in applications:
-            standardized_data = enrollments.load_standardized_data_from_application(application)
-            if any(EnrollmentDataWrap(d, application.case, application).requires_paylogix_export() for d in
-                   standardized_data):
+            wrapped_data = self.enrollment_application_service.get_wrapped_enrollment_data(application)
+            #standardized_data = enrollments.load_standardized_data_from_application(application)
+            if any(d.requires_paylogix_export() and not d.did_decline() for d in wrapped_data):
                 submission.enrollment_applications.append(application)
         db.session.commit()
 
@@ -513,26 +502,19 @@ class EnrollmentSubmissionService(object):
 
     def create_submissions_for_application(self, application):
         """
-        Create submissions for necessary products for the given EnrollmentApplication
+        Create batched submissions for necessary products for the given EnrollmentApplication
         """
         submissions = list()
         """:type: list[EnrollmentSubmission]"""
 
-        # Create or add to pending CSV generation submission. None if its case doesn't contain and HI or ACC products
+        # Create or add to pending CSV generation submission. None if there are no HI or ACC products enrolled.
         submission = self.create_dell_csv_generation_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
-
         
         submission = self.create_paylogix_csv_generation_submission(application)
         if submission is not None:
             submissions.append(submission)
-
-        # TODO: Uncomment this when the docusign submission is fully switched over to this
-        # Create a docusign submission. None if its case doesn't have Group CI as one of its products
-        # submission = self.create_docusign_submission_for_application(application)
-        # if submission is not None:
-        #     submission.append(submission)
 
         return submissions
 
