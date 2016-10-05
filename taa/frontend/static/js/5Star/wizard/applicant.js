@@ -238,10 +238,12 @@ var wizard_applicant = (function () {
     };
   };
 
+  // Within this module, track a single, private child group.
+  var _children_group = null;
+
   var ApplicantList = function(initial_list, should_show_spouse, should_show_children) {
     this.applicants = ko.observableArray(initial_list || []);
     this.children = ko.pureComputed(this.get_children, this);
-    this._children_group = null;
 
     this.should_show_spouse = should_show_spouse;
     this.should_show_children = should_show_children;
@@ -308,10 +310,10 @@ var wizard_applicant = (function () {
     },
 
     get_children_group: function() {
-      if (this._children_group === null) {
-        this._children_group = new ApplicantGroup({type: Applicant.ChildType}, this.children);
+      if (_children_group === null) {
+        _children_group = new ApplicantGroup({type: Applicant.ChildType}, this.children);
       }
-      return this._children_group;
+      return _children_group;
     },
 
     has_valid_employee: function() {

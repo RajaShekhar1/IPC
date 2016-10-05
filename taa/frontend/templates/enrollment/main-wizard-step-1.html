@@ -671,7 +671,7 @@
 
       <!--ko if: !product_coverage.did_decline()-->
       <td class="selectable" data-bind="
-              with: $parents[2].get_applicant_coverage_option_for_product(applicant, product),
+              with: $root.coverage_vm.get_applicant_coverage_for_product(applicant, product),
               click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data}
               ">
@@ -679,14 +679,7 @@
         <span>Select Coverage</span>
         <!--/ko-->
         <!--ko if: $root.coverage_vm.get_applicant_coverage_for_product(applicant, product_coverage.product).did_select_option()-->
-        <div data-bind="ifnot: $parent.product.has_simple_coverage()">
-          <strong data-bind="html: format_face_value()"></strong>
-          <div data-bind="html: format_premium_option()"></div>
-        </div>
-        <div data-bind="if: $parent.product.has_simple_coverage()">
-          <strong data-bind="text: $parent.get_coverage_status(applicant)"></strong>
-          <br data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType">
-          <span data-bind="visible: applicant.type === wizard_applicant.Applicant.EmployeeType, text: format_premium_option()"></span>
+        <div data-bind="html: product_coverage.get_coverage_summary(applicant)">
         </div>
         <!--/ko-->
       </td>
@@ -749,6 +742,7 @@
       <td class="text-center" data-bind="text: $parents[1].format_total_premium_for_applicant(applicant)"></td>
     </tr>
     <!--/ko-->
+    </tbody>
     {# Totals #}
     <tfoot>
     <tr>
@@ -775,7 +769,6 @@
       <th class="text-center" data-bind="text: $parent.format_grand_total_premium()"></th>
     </tr>
     </tfoot>
-    </tbody>
   </table>
 </script>
 
@@ -787,9 +780,9 @@
                                   data: applicant_coverage}">
     </li>
   </ul>
-  <div class="price" data-bind="visible: get_total_premium() > 0.0">
+  <div class="price" data-bind="visible: get_total_premium($parents[1].applicant_coverage_selections()) > 0.0">
         <span class="label label-lg label-inverse arrowed-in arrowed-in-right">
-          <span data-bind="text: formatted_total_premium()"></span>
+          <span data-bind="text: formatted_total_premium($parents[1].applicant_coverage_selections())"></span>
           <small>
             <span data-bind="text: formatted_payment_mode()"></span>
           </small>

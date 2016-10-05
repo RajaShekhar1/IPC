@@ -91,6 +91,20 @@ var wizard_products = (function () {
       return 23;
     },
 
+    is_valid_applicant: function(applicant) {
+      var self = this;
+
+      if (applicant.type === wizard_applicant.Applicant.EmployeeType) {
+        return this.is_valid_employee(applicant);
+      } else if (applicant.type === wizard_applicant.Applicant.SpouseType) {
+        return this.is_valid_spouse(applicant);
+      } else if (applicant.type === wizard_applicant.Applicant.ChildType && applicant.is_group()) {
+        return _.all(applicant.applicants(), function(a) { return self.is_valid_child(a);});
+      } else {
+        return this.is_valid_child(applicant);
+      }
+    },
+
     is_valid_employee: function (employee) {
       // Only age matters for most products
       var age = employee.get_age();
