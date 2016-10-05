@@ -263,15 +263,20 @@ def edit_census_record(case_id, census_record_id):
     is_admin = agent_service.can_manage_all_cases(current_user)
 
     standardized_data = enrollment_service.get_standardized_enrollment_json(census_record)
-    products = {product_service.get(product.get('product_id')).name: product.get('did_decline') for product in
-                standardized_data if product.get('product_id')}
+    #products = {product_service.get(product.get('product_id')).name: product.get('did_decline') for product in
+    #            standardized_data if product.get('product_id')}
     enrollment_records = enrollment_service.get_enrollment_records_for_census(census_record.case, census_record.id)
 
     enroll_data = []
     for enrollment_data in enrollment_records:
+        enrollment = enrollment_service.get(int(enrollment_data['enrollment_id']))
+        wrapped_data = enrollment_service.get_wrapped_enrollment_data(enrollment)
+        
         data = []
-        for product_num in range(1, 6 + 1):
-            formatted = format_enroll_data(enrollment_data, product_num, products=products)
+        #for product_num in range(1, 6 + 1):
+        for product_data in wrapped_data:
+            
+            formatted = format_enroll_data(enrollment, enrollment_data, product_data)
             if formatted:
                 data.append(formatted)
         enroll_data += data
@@ -298,43 +303,56 @@ def edit_census_record(case_id, census_record_id):
     return render_template('agent/census_record.html', **vars)
 
 
-def format_enroll_data(enrollment_data, product_number, products=None):
-    if enrollment_data["product_{}_name".format(product_number)]:
-        if products:
-            status = get_status_for_enrollment_data(products[enrollment_data["product_{}_name".format(product_number)]])
-        else:
-            status = format_status(enrollment_data["application_status"])
-        
-        # # TODO: This is fragile and needs to be fixed
-        # product_name = enrollment_data["product_{}_name".format(product_number)]
-        # product = product_service.search(by_name=product_name)[-1]
-        # query = db.session.query(EnrollmentApplicationCoverage).filter(
-        #     and_(EnrollmentApplicationCoverage.enrollment_application_id == enrollment_data['enrollment_id'],
-        #          EnrollmentApplicationCoverage.product_id == product.id)).all()[-1]
-        # if query:
-        #     effective_date = query.effective_date
-        # else:
-        effective_date = None
+def format_enroll_data(enrollment, enrollment_data, wrapped_data):
+    
+    # Find the product number in the enrollment_data export
+    product = wrapped_data.get_product()
+    product_name = product.name
+    
+    product_number = None
+    for i in range(1, 6+1):
+        if enrollment_data['product_{}_name'.format(i)] == product_name:
+            product_number = i
+            break
+    
+    if not product_number:
+        return
+    
+    #if enrollment_data["product_{}_name".format(product_number)]:
 
+    
+    #if product_data:
+    #    status = get_status_for_enrollment_data(products[enrollment_data["product_{}_name".format(product_number)]])
+    #else:
+    #    status = format_status(enrollment_data["application_status"])
+    
+    # # TODO: This is fragile and needs to be fixed
+    # product_name = enrollment_data["product_{}_name".format(product_number)]
+    # product = product_service.search(by_name=product_name)[-1]
+    # query = db.session.query(EnrollmentApplicationCoverage).filter(
+    #     and_(EnrollmentApplicationCoverage.enrollment_application_id == enrollment_data['enrollment_id'],
+    #          EnrollmentApplicationCoverage.product_id == product.id)).all()[-1]
+    # if query:
+    #     effective_date = query.effective_date
+    # else:
+    effective_date = None
 
-        data = dict(
-            id=enrollment_data['enrollment_id'],
-            product_name=enrollment_data["product_{}_name".format(product_number)],
-            time=enrollment_data["signature_time"],
-            coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp", "sp", "ch"]],
-            effective_date=effective_date,
-            status=status,
-            total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
-                         ["emp", "sp", "ch"], 0),
-            envelope_id=enrollment_data['docusign_envelope_id'],
-            agent_id=enrollment_data['agent_id'],
-            is_docusign_signed=enrollment_data["signature_method"] == EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN,
-            is_self_signed=enrollment_data['signature_method'] == EnrollmentApplication.SIGNATURE_METHOD_WIZARD,
-        )
-    else:
-        data = None
+    status = 'Enrolled' if not wrapped_data.did_decline() else 'Declined'
 
-    return data
+    return dict(
+        id=enrollment.id,
+        product_name=product_name,
+        time=enrollment.signature_time,
+        coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp", "sp", "ch"]],
+        effective_date=effective_date,
+        status=status,
+        total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
+                     ["emp", "sp", "ch"], 0),
+        envelope_id=enrollment_data['docusign_envelope_id'],
+        agent_id=enrollment_data['agent_id'],
+        is_docusign_signed=enrollment_data["signature_method"] == EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN,
+        is_self_signed=enrollment_data['signature_method'] == EnrollmentApplication.SIGNATURE_METHOD_WIZARD,
+    )
 
 
 def get_status_for_enrollment_data(did_decline):
