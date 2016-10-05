@@ -311,7 +311,7 @@
           <div class="row" data-bind="visible: current_product().product.can_decline()">
             <div class="col-xs-12 text-center red">
               <div class="decline-option">
-                <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I decline to enroll in
+                <label><input type="checkbox" data-bind="checked: current_product().did_decline"> I waive enrollment in
                   <span data-bind="text: current_product().format_product_name()"></span> at this time
                 </label>
               </div>
@@ -340,7 +340,7 @@
           <div class="row" data-bind="visible: !$root.coverage_vm.has_multiple_products()">
             <div class="col-xs-12 text-center red" data-bind="if: $root.can_decline">
               <div class="decline-option">
-                <label><input type="checkbox" value="declined" data-bind="checked: $root.did_decline"> I decline to enroll in any of the
+                <label><input type="checkbox" value="declined" data-bind="checked: $root.did_decline"> I waive enrollment in any of the
                   5Star
                   products at this time</label>
               </div>
@@ -665,7 +665,7 @@
       <!--ko if: product_coverage.did_decline-->
       <td class="selectable" data-bind="click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data}">
-        <strong>Declined</strong>
+        <strong>Waived</strong>
       </td>
       <!--/ko-->
 
@@ -723,7 +723,7 @@
       <!--ko foreach: {data: $parent.product_coverages, as: 'product_coverage'} -->
       <!--ko if: product_coverage.did_decline-->
       <td class="text-center">
-        <strong>Declined</strong>
+        <strong>Waived</strong>
       </td>
       <!--/ko-->
 

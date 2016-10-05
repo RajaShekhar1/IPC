@@ -337,7 +337,7 @@ def format_enroll_data(enrollment, enrollment_data, wrapped_data):
     # else:
     effective_date = None
 
-    status = 'Enrolled' if not wrapped_data.did_decline() else 'Declined'
+    status = 'Enrolled' if not wrapped_data.did_decline() else 'Waived'
 
     return dict(
         id=enrollment.id,
@@ -362,6 +362,8 @@ def get_status_for_enrollment_data(did_decline):
 
 
 def format_status(status):
+    if status == 'declined':
+        return 'Waived'
     return capitalize_words(status.replace('_', ' '))
 
 
