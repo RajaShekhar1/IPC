@@ -1210,7 +1210,7 @@ var wizard_viewmodel = (function () {
             } else if (opt.option.is_valid()) {
               coverage_descriptions.push("<div>" + opt.applicant.first() + ": <strong>" + opt.option.format_face_value() + "</strong></div>")
             } else {
-              coverage_descriptions.push("<div>"+opt.applicant.first()+": <strong>Declined</strong></div>")
+              coverage_descriptions.push("<div>"+opt.applicant.first()+": <strong>- no benefit -</strong></div>")
             }
 
           });
