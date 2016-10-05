@@ -746,7 +746,8 @@ var wizard_viewmodel = (function () {
 
       return _.filter(this.applicant_coverage_selections(), function (acov) {
         var applicant = acov.applicant;
-        return (
+
+        return this.product.is_valid_applicant(applicant) && (
           (applicant.type === wizard_applicant.Applicant.EmployeeType &&
               this.applicant_list.has_valid_employee() //&&
               //this.product.is_valid_employee(applicant)
@@ -776,6 +777,7 @@ var wizard_viewmodel = (function () {
     // This raw method should not be used outside this class.
     __get_coverage_for_applicant: function (app) {
       var self = this;
+
 
       // special case for group of children; if a group of children is passed, we display it differently.
       if (app.is_group() && self.product.is_children_coverage_grouped()) {
@@ -936,6 +938,12 @@ var wizard_viewmodel = (function () {
       } else if (this.applicant.type === wizard_applicant.Applicant.ChildType && !this.product_coverage.root.should_include_children_in_table()) {
         return null_coverage;
       }
+
+      // Product validation of coverage
+      if (!this.applicant.is_group() && !this.product.is_valid_applicant(applicant)) {
+        return null_coverage;
+      }
+
 
       if (this.product.has_simple_coverage()) {
         return this.product_coverage.selected_simple_coverage_option();
@@ -1164,6 +1172,17 @@ var wizard_viewmodel = (function () {
     self.display_coverage_summary = ko.pureComputed(function() {
       var coverage_opt;
 
+
+      if (!self.product_coverage.product.is_valid_applicant(self.applicant)) {
+        return "Ineligible";
+      }
+
+      var applicant_coverage = self.product_coverage.get_coverage_for_applicant(self.applicant);
+      if (!applicant_coverage.did_select_option()) {
+        return "Select Coverage";
+      }
+
+
       if (self.product_coverage.product.has_simple_coverage()) {
         var status = self.product_coverage.get_coverage_status(applicant);
         var out = "<strong>"+ status +"</strong>";
@@ -1186,7 +1205,7 @@ var wizard_viewmodel = (function () {
           var ineligible_descriptions = [];
           _.each(coverage_options, function(opt) {
 
-            if (!product_coverage.product.is_valid_applicant(applicant)) {
+            if (!product_coverage.product.is_valid_applicant(opt.applicant)) {
               ineligible_descriptions.push("<div>"+opt.applicant.first()+": <strong>Ineligible</strong></div>");
             } else if (opt.option.is_valid()) {
               coverage_descriptions.push("<div>" + opt.applicant.first() + ": <strong>" + opt.option.format_face_value() + "</strong></div>")

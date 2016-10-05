@@ -99,7 +99,7 @@ var wizard_products = (function () {
       } else if (applicant.type === wizard_applicant.Applicant.SpouseType) {
         return this.is_valid_spouse(applicant);
       } else if (applicant.type === wizard_applicant.Applicant.ChildType && applicant.is_group()) {
-        return _.all(applicant.applicants(), function(a) { return self.is_valid_child(a);});
+        return _.any(applicant.applicants(), function(a) { return self.is_valid_child(a);});
       } else {
         return this.is_valid_child(applicant);
       }

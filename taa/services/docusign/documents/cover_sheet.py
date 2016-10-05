@@ -183,7 +183,7 @@ class CoverSheetAttachment(PDFAttachment):
             product_ids = self.enrollment_application.get_enrolled_product_ids()
             product_options = [product_service.get(product_id) for product_id in product_ids]
         else:
-            product_options = case_service.get_products_for_case(self.data.case)
+            product_options = case_service.get_ordered_products_for_case(self.data.case)
         state = self.enrollment_data.get('enrollState')
         declined_products = self.get_declined_products()
         for i, product in enumerate(product_service.filter_products_by_enrollment_state(product_options, state)):
