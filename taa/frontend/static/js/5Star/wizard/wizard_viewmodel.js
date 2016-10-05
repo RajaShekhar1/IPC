@@ -1,7 +1,5 @@
 var wizard_viewmodel = (function () {
 
-  ko.options.deferUpdates = true;
-
   // Simple data-binding to initialize the UX Wizard widget.
   ko.bindingHandlers.wizard = {
     init: function (element, val_accessor) {
