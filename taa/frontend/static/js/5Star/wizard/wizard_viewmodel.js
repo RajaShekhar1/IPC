@@ -25,7 +25,7 @@ var wizard_viewmodel = (function () {
 
     this.multiproduct_wizard_widget = ko.observable(null);
 
-    this.applicants_in_table = ko.computed(function () {
+    this.applicants_in_table = ko.pureComputed(function () {
       var applicants_in_table = [];
       if (this.applicants.has_valid_employee()) {
         applicants_in_table.push(this.applicants.get_employee());
@@ -50,7 +50,7 @@ var wizard_viewmodel = (function () {
     this.payment_mode = ko.observable(
       payment_mode_module.select_initial_payment_mode(case_data, this.payment_modes)
     );
-    this.can_change_payment_mode = ko.computed(function () {
+    this.can_change_payment_mode = ko.pureComputed(function () {
       return payment_mode_module.can_change_payment_mode(case_data);
     });
     this.is_payment_mode_valid = ko.pureComputed(this._is_payment_mode_valid, this);
@@ -765,6 +765,26 @@ var wizard_viewmodel = (function () {
       }, this);
     },
 
+    get_covered_applicants: function() {
+      // Ungroups any groups
+      var self = this;
+      var covered_applicants = _.map(self.valid_applicant_coverage_selections(), function(acov) {
+        return acov.applicant;
+      });
+      var out = [];
+      _.each(covered_applicants, function(applicant) {
+        if (applicant.is_group()) {
+          _.each(applicant.applicants, function(a) {
+            out.push(a);
+          })
+        } else {
+          out.push(applicant);
+        }
+      });
+
+      return out;
+    },
+
     get_coverage_for_applicant: function (applicant) {
       return this.__get_coverage_for_applicant(applicant);
       //return _.find(this.valid_applicant_coverage_selections(), function(acov) {
@@ -856,20 +876,6 @@ var wizard_viewmodel = (function () {
 
       }
 
-
-
-    // TEMP CODE
-
-      //
-      // var coverage = this.get_coverage_for_applicant(child);
-      // if (coverage.coverage_option().is_valid()) {
-      //   // Return only valid children with coverage.
-      //   return _.filter(this.applicant_list.get_children(), function (child) {
-      //     return child.is_valid();
-      //   });
-      // } else {
-      //   return [];
-      // }
     },
 
     get_total_premium: function () {

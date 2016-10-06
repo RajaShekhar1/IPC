@@ -419,7 +419,7 @@ StandardHealthQuestion.prototype.does_applicant_need_to_answer = function (appli
     return this.does_spouse_need_to_answer();
   }
   if (applicant.type === wizard_applicant.Applicant.ChildType) {
-    if (!applicant.applicants) {
+    if (!applicant.is_group()) {
       return this.does_child_need_to_answer(applicant);
     } else {
       return _.any(applicant.applicants(), function (child) {
