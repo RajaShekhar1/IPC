@@ -53,7 +53,8 @@ DOCUSIGN_API_USERNAME = env_get_text('DOCUSIGN_API_USERNAME', 'cb64545b-0bb7-4e7
 DOCUSIGN_API_PASSWORD = env_get_text('DOCUSIGN_API_PASSWORD', '12121212')
 # Trailing slash required
 DOCUSIGN_API_ENDPOINT = env_get_text('DOCUSIGN_API_ENDPOINT',
-                                     "https://demo.docusign.net/restapi/v2/accounts/%s/" % DOCUSIGN_API_ACCOUNT_ID)
+                                     "")
+                                     #"https://demo.docusign.net/restapi/v2/accounts/%s/" % DOCUSIGN_API_ACCOUNT_ID)
 
 DOCUSIGN_LIVE_CC_RECIPIENTS = env_get_bool('DOCUSIGN_LIVE_CC_RECIPIENTS', False)
 if DOCUSIGN_LIVE_CC_RECIPIENTS:

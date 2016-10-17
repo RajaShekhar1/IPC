@@ -9,7 +9,11 @@ class GroupCITemplate(DocuSignServerTemplate):
     def __init__(self, recipients, enrollment_data, use_docusign_renderer):
 
         product_type = enrollment_data.get_product_code()
-        state = enrollment_data["enrollState"]
+        
+        # Use the case situs state to select the form for this product.
+        #state = enrollment_data["enrollState"]
+        state = enrollment_data.case.situs_state
+        
         template_id = get_template_id(product_type, state)
 
         DocuSignServerTemplate.__init__(self, template_id, recipients, use_docusign_renderer)
