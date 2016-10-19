@@ -2,3 +2,18 @@ body {
   background-color: #ffffff;
 }
 
+
+.btn-cyan {
+    color: #ffffff;
+    background-color: #00bcd4!important;
+    border-color: #00bcd4;
+}
+.btn-cyan:hover,
+.btn-cyan:focus,
+.btn-cyan:active,
+.btn-cyan.active,
+.open .dropdown-toggle.btn-cyan {
+  color: #ffffff;
+  background-color: #008ba4!important;
+  border-color: #00bcd4;
+}

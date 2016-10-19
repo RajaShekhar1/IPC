@@ -31,7 +31,7 @@
         </div>
         <br>
         <div class="row">
-            <div class="col-sm-offset-3 col-sm-6">
+            <div class="col-sm-6">
                 
                 {{ render_simple_widget(
                         title="Cases", 
@@ -41,6 +41,17 @@
                         button_url=url_for("manage_cases")) 
                 }}
                 
+            </div>
+            <div class="col-sm-6">
+
+                {{ render_simple_widget(
+                        title="Transmittals",
+                        body_html='<p class="lead">View and filter report of file & data submissions to various 3rd parties, including success, fail, and pending status.</p>',
+                        button_text="View Transmittals",
+                        button_classes="btn btn-cyan btn-lg",
+                        button_url=url_for("view_submission_logs"))
+                }}
+
             </div>
         </div>
         <!-- /.row -->
