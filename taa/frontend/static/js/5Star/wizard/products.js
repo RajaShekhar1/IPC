@@ -457,10 +457,10 @@ var wizard_products = (function () {
     // Need to validate age and is_smoker is valid
     var age = employee.get_age();
     var valid = (age >= this.min_emp_age() && age <= this.max_emp_age());
-    valid &= employee.is_smoker() != null;
-    valid &= employee.has_valid_weight();
-    valid &= employee.has_valid_height();
-    valid &= employee.has_valid_gender();
+    // valid &= employee.is_smoker() != null;
+    // valid &= employee.has_valid_weight();
+    // valid &= employee.has_valid_height();
+    // valid &= employee.has_valid_gender();
 
     return valid;
   };
@@ -468,10 +468,10 @@ var wizard_products = (function () {
   GroupCIProduct.prototype.is_valid_spouse = function (spouse) {
     var age = spouse.get_age();
     var valid = (age >= this.min_sp_age() && age <= this.max_sp_age());
-    valid &= spouse.is_smoker() != null;
-    valid &= spouse.has_valid_weight();
-    valid &= spouse.has_valid_height();
-    valid &= spouse.has_valid_gender();
+    // valid &= spouse.is_smoker() != null;
+    // valid &= spouse.has_valid_weight();
+    // valid &= spouse.has_valid_height();
+    // valid &= spouse.has_valid_gender();
     return valid;
   };
 
