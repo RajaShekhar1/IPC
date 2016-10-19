@@ -543,7 +543,7 @@ class EnrollmentDataWrap(object):
             premium_amount = self.get_employee_premium()
             applicant_effective_date = effective_date
         else:
-            coverage = 'DECLINED'
+            coverage = 'WAIVED'
             premium = ''
             premium_amount = decimal.Decimal('0.00')
             payment_mode = ''
@@ -572,7 +572,7 @@ class EnrollmentDataWrap(object):
                 applicant_payment_mode = payment_mode
                 applicant_effective_date = effective_date
             else:
-                coverage = 'DECLINED'
+                coverage = 'WAIVED'
                 premium = ''
                 premium_amount = decimal.Decimal('0.00')
                 applicant_payment_mode = ''
@@ -616,7 +616,7 @@ class EnrollmentDataWrap(object):
                 relationship="child",
                 name=child['first'],
                 last_name=child['last'],
-                coverage=self.get_child_coverage(i) if is_covered else 'DECLINED',
+                coverage=self.get_child_coverage(i) if is_covered else 'WAIVED',
                 coverage_tier=None,
                 premium=premium_amount,
                 formatted_premium=premium,
