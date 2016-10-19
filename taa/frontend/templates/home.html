@@ -10,24 +10,40 @@
         <div class="row">
             <div class="col-sm-6">
                 {{ render_simple_widget(
-                        title="Enrollment Cases",
-                        body_html='<p class="lead">All enrollments are conducted within a group case. Configure group settings, manage census data, and view enrollment reports here.</p><p class="lead">Enrollments may be enroller-assisted or self-serve via email or web link (based on the case setup).</p>
-		<p><i class="icon-warning-sign bigger-120 orange"></i> Note: Self-enrollment applications still require Agent signature.  See your inbox.</p>',
+                        title="Enrollment",
+                        body_html='''<p class="lead">
+                          All enrollments are conducted within a case setup specifically for
+                          a given group. Launch enrollment sessions, access group census data,
+                          and view enrollment reports (if available) here.
+                          </p>
+                          <p class="lead">
+                          Enrollments may be enroller-assisted or self-serve via email / web
+                          link (depending on the case setup).
+                          </p>
+                          <p>
+                          <i class="icon-warning-sign bigger-120 orange"></i>
+                          Note: Self-enrollment applications still require Agent signature,
+                          accessed via your inbox.
+                          </p>''',
                         button_text="Enrollment Cases",
                         button_classes="btn btn-success btn-lg btn-enrollment",
                         button_url=url_for("manage_cases")
-                   ) 
+                   )
                 }}
             </div>
             <div class="col-sm-6">
                 {{ render_simple_widget(
-                        title="Agent Signing",
-                        body_html='''<p class="lead">All applications require signature by agent.
-                        Applications without your agent signature will be routed to your "signing inbox" for finalizing
-                        any pending applications with your confirmation and signature.</p>
-                            <p><i class="icon-warning-sign bigger-120 orange"></i> Applications will not be not
-                                submitted for processing until your signature is complete on the document.
-                            </p>''',
+                        title="Agent Inbox",
+                        body_html='''<p class="lead">
+                          All applications require signature by agent. Self-serve applications
+                          will be routed to your "signing inbox" to finalize any pending
+                          applications with your confirmation and signature.
+                          </p>
+                          <p>
+                          <i class="icon-warning-sign bigger-120 orange"></i>
+                          Note: Applications will not be not submitted for processing until
+                          your signature is complete on the document.
+                          </p>''',
                         button_text="Access agent signing inbox",
                         button_classes="btn btn-lg btn-warning",
                         button_url=url_for('inbox')
@@ -38,7 +54,7 @@
         <br>
         <!-- /.row -->
     </div>
-    
+
 </div><!-- /.row -->
 
 
