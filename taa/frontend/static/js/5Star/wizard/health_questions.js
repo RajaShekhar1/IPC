@@ -422,7 +422,7 @@ StandardHealthQuestion.prototype.does_applicant_need_to_answer = function (appli
     if (!applicant.is_group()) {
       return this.does_child_need_to_answer(applicant);
     } else {
-      return _.any(applicant.applicants(), function (child) {
+      return _.any(applicant.valid_applicants(), function (child) {
         return this.does_child_need_to_answer(child);
       }, this);
     }

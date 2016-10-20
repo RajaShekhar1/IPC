@@ -217,7 +217,7 @@ var wizard_viewmodel = (function () {
         }
 
         if (!pcov.product.is_children_coverage_grouped() && applicant.is_group()) {
-          _.each(applicant.applicants(), function(child) {
+          _.each(applicant.valid_applicants(), function(child) {
             var applicant_coverage = pcov.get_coverage_for_applicant(child);
             if (!applicant_coverage) {
               return format_premium_value(0.0);
@@ -774,7 +774,7 @@ var wizard_viewmodel = (function () {
       var out = [];
       _.each(covered_applicants, function(applicant) {
         if (applicant.is_group()) {
-          _.each(applicant.applicants, function(a) {
+          _.each(applicant.valid_applicants(), function(a) {
             out.push(a);
           })
         } else {
@@ -864,7 +864,7 @@ var wizard_viewmodel = (function () {
         var ungrouped_valid_covered_children = [];
         _.each(valid_covered_children, function(child) {
           if (child.is_group()) {
-            _.each(child.applicants, function(group_child){
+            _.each(child.valid_applicants(), function(group_child){
               ungrouped_valid_covered_children.push(group_child);
             })
           } else {
@@ -983,7 +983,7 @@ var wizard_viewmodel = (function () {
       if (this.applicant.is_group()) {
         if (!this.product.is_children_coverage_grouped()) {
           // for each child, get the ApplicantCoverage.did_select_option() result.
-          var valid_children = _.filter(self.applicant.applicants(), function(child) {
+          var valid_children = _.filter(self.applicant.valid_applicants(), function(child) {
             return self.product_coverage.product.is_valid_child(child);
           });
 
@@ -1205,7 +1205,7 @@ var wizard_viewmodel = (function () {
             !self.product_coverage.product.is_children_coverage_grouped()) {
 
           // Individual child coverage;
-          var coverage_options = _.map(self.applicant.applicants(), function(a) {
+          var coverage_options = _.map(self.applicant.valid_applicants(), function(a) {
             return {option: product_coverage.get_coverage_for_applicant(a).coverage_option(), applicant: a};
           });
 

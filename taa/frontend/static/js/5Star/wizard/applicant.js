@@ -188,6 +188,9 @@ var wizard_applicant = (function () {
     self.is_group = function() {
       return true;
     };
+    self.valid_applicants = ko.pureComputed(function() {
+      return _.filter(self.applicants, function(applicant) {return applicant.is_valid();});
+    });
 
     self.name = ko.pureComputed(function() {
       var non_empty_name_applicants = _.filter(self.applicants(), function(applicant) {
