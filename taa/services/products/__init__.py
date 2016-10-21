@@ -436,16 +436,23 @@ class ProductService(DBService):
         from taa.services.cases.models import case_products
         return db.session.query(Product).join(case_products).join(Case).filter(Case.id == case_id).order_by(case_products.c.ordinal).all()
 
-    def filter_products_by_enrollment_state(self, product_options, state, case=None):
+    def filter_products_by_enrollment_state(self, product_options, state, case):
         product_state_mapping = self.get_product_states(product_options, case)
 
         # Keep all group-level products (static benefit and group ci)
         # Filter out individual products that are not allowed in this state.
         def is_allowed_in_state(product, state):
+            
             if product.is_static_benefit():
                 return True
+            
+            if product.does_situs_state_determine_form():
+                state_to_use = case.situs_state
             else:
-                return state in product_state_mapping.get(product.id, [])
+                state_to_use = state
+                
+            return state_to_use in product_state_mapping.get(product.id, [])
+            
         return filter(lambda p: is_allowed_in_state(p, state), product_options)
 
 

@@ -237,15 +237,23 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     from taa.services.products import StatementOfHealthQuestionService
     soh_questions = {}
     for product in products:
-        soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, state)
+        if product.does_situs_state_determine_form():
+            question_state = case.situs_state
+        else:
+            question_state = state
+        soh_questions[product.id] = StatementOfHealthQuestionService().get_health_questions(product, question_state)
 
     spouse_questions = {}
     employee_questions = {}
     health_question_service = LookupService('StatementOfHealthQuestionService')
     """:type: taa.services.products.StatementOfHealthQuestionService"""
     for product in products:
-        employee_questions[product.id] = health_question_service.get_employee_questions(product, state)
-        spouse_questions[product.id] = health_question_service.get_spouse_questions(product, state)
+        if product.does_situs_state_determine_form():
+            question_state = case.situs_state
+        else:
+            question_state = state
+        employee_questions[product.id] = health_question_service.get_employee_questions(product, question_state)
+        spouse_questions[product.id] = health_question_service.get_spouse_questions(product, question_state)
 
     # New wizard formatting for multiproduct.
     applicants = []
@@ -276,9 +284,10 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         if table is not None:
             height_weight_tables[product.get_base_product_code()] = table
 
+
     # Show products this applicant is allowed to enroll.
     product_options = product_service.filter_products_from_membership(case, record)
-    product_options = product_service.filter_products_by_enrollment_state(product_options, state, case=case)
+    product_options = product_service.filter_products_by_enrollment_state(product_options, state, case)
     product_settings = case.product_settings if case.product_settings else {}
     product_effective_date_list = get_product_effective_dates(product_settings, effective_date)
     wizard_data = dict(

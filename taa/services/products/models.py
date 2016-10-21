@@ -130,6 +130,10 @@ class Product(ProductJsonSerializable, db.Model):
         # Temporary solution to identify products that include output in PDFs
         return self.is_fpp() or self.get_base_product_code() in [Product.TYPE_GROUP_CI, Product.TYPE_STATIC_BENEFIT]
 
+    def does_situs_state_determine_form(self):
+        # These
+        return self.get_base_product_code() in [Product.TYPE_GROUP_CI, Product.TYPE_ACC, Product.TYPE_HI]
+
     def requires_dell_csv_submission(self):
         return self.get_base_product_code() in [Product.TYPE_HI, Product.TYPE_ACC]
 
