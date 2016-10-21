@@ -23,7 +23,7 @@ class EnrollmentReportService(object):
         for census_record in census_records:
             enrollment_applications += [dict(enrollment=e,
                                              coverages=group_coverages_by_product(e.coverages))
-                                        for e in census_record.enrollment_applications]
+                                        for e in census_record.enrollment_applications if not e.is_preview]
         report_data['company_name'] = case.company_name
         # Enrollment methods used
         report_data['enrollment_methods'] = self._find_enrollment_methods(enrollment_applications)
@@ -178,9 +178,10 @@ class EnrollmentReportService(object):
 def merge_enrollments(census_record):
     all_coverages = []
     for enrollment in census_record.enrollment_applications:
-        all_coverages += enrollment.coverages
+        if not enrollment.is_preview:
+            all_coverages += enrollment.coverages
     enrollments_with_timestamp = [
-        app for app in census_record.enrollment_applications if app.signature_time
+        app for app in census_record.enrollment_applications if app.signature_time and not app.is_preview
         ]
     if enrollments_with_timestamp:
         most_recent_enrollment = max(enrollments_with_timestamp,
