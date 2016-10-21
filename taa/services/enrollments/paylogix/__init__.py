@@ -42,24 +42,32 @@ def get_deduction_week(application_date):
 def get_week_from_date(draft_date):
     # Get Nth Friday, where N is between 1 and 4 (5's roll over to 1)
     # Most reliable way is to count the fridays between the 1st and the given date
-    
-    # If a Friday isn't given, advance to the next Friday
-    if draft_date.isoweekday() != FRIDAY:
-        draft_date += datetime.timedelta(days=FRIDAY - draft_date.isoweekday())
-        
-    # Beginning with the 1st, count the Fridays, including the given date.
-    day = 1
-    num_fridays = 0
-    for day_of_month in range(day, draft_date.day + 1):
-        check_date = datetime.datetime(draft_date.year, draft_date.month, day_of_month)
-        if check_date.isoweekday() == FRIDAY:
-            num_fridays += 1
+
+    num_fridays = get_friday_index(draft_date)
     
     if num_fridays >= 5:
         # Rollover to 1
         return 1
     else:
         return num_fridays
+
+
+def get_friday_index(date):
+    "Given a date, find the next Friday (if not a Friday), and return an index 1 through 5 of which Friday of the month it is."
+    
+    # If a Friday isn't given, advance to the next Friday
+    if date.isoweekday() != FRIDAY:
+        date += datetime.timedelta(days=FRIDAY - date.isoweekday())
+    
+    # Beginning with the 1st, count the Fridays, including the given date.
+    day = 1
+    num_fridays = 0
+    for day_of_month in range(day, date.day + 1):
+        check_date = datetime.datetime(date.year, date.month, day_of_month)
+        if check_date.isoweekday() == FRIDAY:
+            num_fridays += 1
+            
+    return num_fridays
 
 
 def get_draft_day(application_date):
