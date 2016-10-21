@@ -118,6 +118,23 @@ Feature: Allow different types of effective dates to be computed automatically b
 
 
 
+  Scenario Outline: Use the "Friday grouping" method
+    Given I have a case without an enrollment period but it has ongoing enrollments
+    And the 'ongoing' effective date is set to 'Friday grouping' with parameter '2'
+    When I enroll an applicant on '<enroll_date>'
+    Then I should see the effective date is '<effective_date>'
+
+    Examples:
+      | enroll_date | effective_date |
+      | 10/1/2016   | 10/7/2016      |
+      | 10/19/2016  | 10/21/2016     |
+      | 10/20/2016  | 10/28/2016     |
+      | 10/21/2016  | 10/28/2016     |
+
+
+
+
+
 
 
 
