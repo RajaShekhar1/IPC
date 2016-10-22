@@ -32,7 +32,7 @@ function format_enrollment_status_text(status) {
   if (status === "enrolled") {
     return "Enrolled";
   } else if (status === "declined") {
-    return "Declined";
+    return "Waived";
   } else if (status === "pending_employee") {
     return "Pending Employee";
   } else if (status === "pending_agent") {
@@ -52,7 +52,7 @@ function format_enrollment_status_html(status) {
     } else if (status_text === "Pending Employee" || status_text === "Pending Agent") {
       return "<span class='enroll-status pending icon glyphicon glyphicon-pencil'></span><span class='enroll-status pending'>" + status_text + "</span>";
     } else {
-      return "<span class='ace-icon glyphicon glyphicon-remove error'></span> <span class='enroll-status declined'> Declined</span>";
+      return "<span class='ace-icon glyphicon glyphicon-remove error'></span> <span class='enroll-status declined'> Waived</span>";
     }
   }
 }

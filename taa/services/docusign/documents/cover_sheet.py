@@ -141,7 +141,7 @@ class CoverSheetAttachment(PDFAttachment):
     def draw_summary_table(self):
         flowables = [
             self.get_spacer(),
-            Paragraph("Enrolled / Declined Benefits", bold_style2),
+            Paragraph("Enrolled / Waived Benefits", bold_style2),
         ]
 
         table_data = [
@@ -186,7 +186,7 @@ class CoverSheetAttachment(PDFAttachment):
             product_options = case_service.get_products_for_case(self.data.case)
         state = self.enrollment_data.get('enrollState')
         declined_products = self.get_declined_products()
-        for i, product in enumerate(product_service.filter_products_by_enrollment_state(product_options, state)):
+        for i, product in enumerate(product_service.filter_products_by_enrollment_state(product_options, state, self.case)):
 
             product_data = self.get_wrapped_enrollment_data_for_product(product)
 
@@ -196,7 +196,7 @@ class CoverSheetAttachment(PDFAttachment):
 
             elif product in declined_products:
                 # Show Decline
-                product_header = '{} - DECLINED'.format(product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name)
+                product_header = '{} - WAIVED'.format(product.get_brochure_name() if product.get_brochure_name() else product.get_base_product().name)
                 applicants = []
             else:
                 # Show product name, also tier if a simple_coverage option, and riders if riders are included.

@@ -67,6 +67,26 @@ directly with python will give you more output on the terminal and also allow yo
 set pdb breakpoints with pdb.set\_trace().
     
 
+Loading a Postgres Backup onto a developer machine
+-------------------
+
+Backup dumps from Heroku Postgres (or command line pgdump with custom formatting) can be restored into a database by following these steps:
+ 
+ - Drop the database you want to replace if it exists:
+ 
+   `sudo -u postgres dropdb <DB Name>`
+   
+ - Create a clean DB:
+
+   `sudo -u postgres createdb -T template0 -E utf-8 <DB Name>`
+   
+ - Restore the backup into the named database
+ 
+   `sudo -u taa pg_restore -O -d <target DB name> <Backup Filename>`
+
+There will be a handful of errors concerning plpgsql and pg_stat_statements that can be safely ignored.
+
+
 Running tests
 -------------------
 
