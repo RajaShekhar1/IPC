@@ -846,7 +846,7 @@ var wizard_viewmodel = (function () {
         if (coverage.is_valid()) {
           // Return only valid children with coverage.
           return _.filter(this.applicant_list.get_children(), function (child) {
-            return child.is_valid();
+            return child.is_valid() && self.product.is_valid_child(child);
           });
         } else {
           return [];
@@ -1097,10 +1097,10 @@ var wizard_viewmodel = (function () {
       }
 
       // If this is a child group, and children coverage is
-      if (this.applicant.type === wizard_applicant.Applicant.ChildType && this.product.is_fpp_product()) {
-        var num_valid_children = window.vm.applicant_list.get_valid_children().length;
-        return this.coverage_option().premium * num_valid_children;
-      }
+      // if (this.applicant.type === wizard_applicant.Applicant.ChildType && this.product.is_fpp_product()) {
+      //   var num_valid_children = window.vm.applicant_list.get_valid_children().length;
+      //   return this.coverage_option().premium * num_valid_children;
+      // }
 
       return this.coverage_option().premium;
     },
@@ -2713,7 +2713,7 @@ var wizard_viewmodel = (function () {
       var num_initial_children = self.children().length;
       var last_name = self.employee().last() || "";
       if (num_initial_children == 0) {
-        var num_blank_children_forms = (2 - num_initial_children);
+        var num_blank_children_forms = (1 - num_initial_children);
         for (var i = 0; i < num_blank_children_forms; i += 1) {
           var ch = wizard_applicant.create_applicant({
             last: last_name,

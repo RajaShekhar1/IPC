@@ -95,10 +95,11 @@ function Recommendation(name, applicant_type, coverage_option, product) {
   };
 
   self.get_total_premium = function() {
+    // No longer multiply here now that we show a row for each child for FPP
     // FPP products multiply by # children.
-    if (self.product.is_fpp_product() && self.applicant_type === wizard_applicant.Applicant.ChildType) {
-      return self.recommended_coverage.premium * window.vm.coverage_vm.applicants.get_valid_children().length;
-    }
+    // if (self.product.is_fpp_product() && self.applicant_type === wizard_applicant.Applicant.ChildType) {
+    //   return self.recommended_coverage.premium * window.vm.coverage_vm.applicants.get_valid_children().length;
+    // }
 
     return self.recommended_coverage.premium;
   };

@@ -189,7 +189,7 @@ var wizard_applicant = (function () {
       return true;
     };
     self.valid_applicants = ko.pureComputed(function() {
-      return _.filter(self.applicants, function(applicant) {return applicant.is_valid();});
+      return _.filter(self.applicants(), function(applicant) {return applicant.is_valid();});
     });
 
     self.name = ko.pureComputed(function() {
