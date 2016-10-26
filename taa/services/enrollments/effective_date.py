@@ -3,6 +3,8 @@ from datetime import timedelta
 from dateutil.parser import parse
 from calendar import monthrange
 
+from taa.services.enrollments.paylogix import get_friday_index
+
 
 def get_active_method(settings, signature_time):
     signature_time = signature_time.replace(hour=0, minute=0, second=0)
@@ -217,5 +219,6 @@ class FirstFridayFollowingRule(object):
         return loop_date
         
     def get_friday_index(self, date):
-        return int(date.day / 7) + 1
+        # This function takes a date and returns an int 1 to 4, so it includes the rollover logic we want (from 5 to 1).
+        return get_friday_index(date)
         

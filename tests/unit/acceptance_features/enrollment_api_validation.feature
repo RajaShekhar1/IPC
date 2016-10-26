@@ -126,7 +126,9 @@ Feature: Validate an enrollment record submitted via API.
 
     Examples:
       | column_name   | bad_value | error_type       | error_field   |
-      | emp_ssn       | ABC123    | invalid_ssn      | emp_ssn       |
+      # WE ARE NOT VALIDATING SSN AT THE MOMENT TO ALLOW BLANK SSNs
+      #| emp_ssn       | ABC123    | invalid_ssn      | emp_ssn       |
+
       # Dates must be ISO-8601-ish. Try pyiso8601 maybe?
       | emp_birthdate | Jan 1st   | invalid_date     | emp_birthdate |
       | emp_coverage  | 33,000k   | invalid_coverage | emp_coverage  |
@@ -193,7 +195,8 @@ Feature: Validate an enrollment record submitted via API.
 
     Examples:
       | sp_first | sp_last | sp_birthdate | sp_ssn      | error_type   | error_field  |
-      | Jane     | Doe     | 1990-01-01   |             | missing_data | sp_ssn       |
+      # WE ARE NOT REQUIRING SP SSN unless they select coverage
+      #| Jane     | Doe     | 1990-01-01   |             | missing_data | sp_ssn       |
       | Jane     | Doe     |              | 123-12-1234 | missing_data | sp_birthdate |
       | Jane     |         | 1990-01-01   | 123-12-1234 | missing_data | sp_last      |
       |          | Doe     | 1990-01-01   | 123-12-1234 | missing_data | sp_first     |
