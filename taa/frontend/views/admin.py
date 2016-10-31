@@ -235,7 +235,7 @@ def create_submission_dictionary_for_submissions_view(submission):
 
 
 @app.route('/enrollment-submissions', methods=['GET'])
-@groups_required(['admins'])
+@groups_required(['admins', 'home_office'], all=False)
 def view_submission_logs():
     
     return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu())
