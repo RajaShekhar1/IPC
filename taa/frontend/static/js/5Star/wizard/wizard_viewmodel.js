@@ -854,13 +854,12 @@ var wizard_viewmodel = (function () {
 
       } else {
 
-        var child_applicants = self.get_child_applicants();
-        var valid_covered_children = _.filter(child_applicants, function(child) {
+        var valid_covered_children = _.filter(self.get_child_applicants(), function(child) {
             var coverage = self.get_coverage_for_applicant(child);
             return coverage.coverage_option().is_valid();
         });
 
-        // Un-group groups
+        // Un-group groups TODO: I think this is not possible in this branch anymore, remove?
         var ungrouped_valid_covered_children = [];
         _.each(valid_covered_children, function(child) {
           if (child.is_group()) {
