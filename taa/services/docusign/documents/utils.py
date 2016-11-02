@@ -37,8 +37,14 @@ def create_attachment_header(title, enrollment_data):
     employee_ssn = enrollment_data['employee']['ssn']
     masked_ssn = mask_ssn(employee_ssn)
 
+    product = enrollment_data.get_product()
+    if product.is_fpp():
+        product_title = '5Star Family Protection Plan Application'
+    else:
+        product_title = "{} Application".format(product.get_short_name())
+    
     return [
-        Paragraph("5Star Family Protection Plan Application", style),
+        Paragraph(product_title, style),
         Paragraph(title, bold_style),
         Spacer(0, .2*inch),
         Paragraph(u"Employer/Group: {}".format(group_name), style),
