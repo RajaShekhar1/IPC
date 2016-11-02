@@ -207,8 +207,6 @@ var wizard_viewmodel = (function () {
     },
 
     format_total_premium_for_applicant: function (applicant) {
-      var self = this;
-
       var applicant_total = 0.0;
       _.each(this.product_coverage_viewmodels(), function (pcov) {
         if (pcov.did_decline()) {
@@ -216,25 +214,7 @@ var wizard_viewmodel = (function () {
           return true;
         }
 
-        if (!pcov.product.is_children_coverage_grouped() && applicant.is_group()) {
-          _.each(applicant.valid_applicants(), function(child) {
-            var applicant_coverage = pcov.get_coverage_for_applicant(child);
-            if (!applicant_coverage) {
-              return format_premium_value(0.0);
-            } else {
-              applicant_total += applicant_coverage.get_total_premium();
-            }
-          });
-        } else {
-          var applicant_coverage = pcov.get_coverage_for_applicant(applicant);
-          if (!applicant_coverage) {
-            return format_premium_value(0.0);
-          } else {
-            applicant_total += applicant_coverage.get_total_premium();
-          }
-        }
-
-
+        applicant_total += pcov.get_total_premium_for_applicant(applicant);
       });
       return format_premium_value(applicant_total);
     },
@@ -882,10 +862,35 @@ var wizard_viewmodel = (function () {
       if (this.did_decline()) {
         return total;
       }
+
       _.each(this.applicant_coverage_selections(), function (applicant_coverage) {
         total += applicant_coverage.get_total_premium();
       }, this);
       return total;
+    },
+
+    get_total_premium_for_applicant: function(applicant) {
+      var self = this;
+
+      if (!self.product.is_children_coverage_grouped() && applicant.is_group()) {
+        var total = 0.0;
+        _.each(applicant.valid_applicants(), function(child) {
+          var applicant_coverage = self.get_coverage_for_applicant(child);
+          if (!applicant_coverage) {
+            total += 0.0;
+          } else {
+            total += applicant_coverage.get_total_premium();
+          }
+        });
+        return total;
+      } else {
+        var applicant_coverage = self.get_coverage_for_applicant(applicant);
+        if (!applicant_coverage) {
+          return 0.0;
+        } else {
+          return applicant_coverage.get_total_premium();
+        }
+      }
     },
 
     is_applicant_type_covered: function (applicant_type) {
@@ -1222,7 +1227,11 @@ var wizard_viewmodel = (function () {
             }
 
           });
-          return coverage_descriptions.join("") + ineligible_descriptions.join("");
+
+          var formatted_premium = format_premium_value(self.product_coverage.get_total_premium_for_applicant(self.applicant));
+          var premium_text = "<div>" + formatted_premium + " " + self.product_coverage.payment_mode().display_lowercase() + "</div>";
+
+          return coverage_descriptions.join("") + ineligible_descriptions.join("") + premium_text;
         } else {
 
           // Check ineligibility
