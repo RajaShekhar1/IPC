@@ -10,7 +10,7 @@ def get_active_method(settings, signature_time):
     signature_time = signature_time.replace(hour=0, minute=0, second=0)
     method = None
     for enrollment_period in settings:
-        if enrollment_period.get('type') == 'open':
+        if enrollment_period.get('type') == 'open_with_start':
             if parse(enrollment_period['enrollment_period'].get('start_date')) <= signature_time <= parse(
                      enrollment_period['enrollment_period'].get('end_date')):
                 method = enrollment_period.get('method')
@@ -35,7 +35,7 @@ def calculate_effective_date(case, signature_time):
     open_rule = None
     ongoing_rule = None
     for effective_date_method in settings:
-        if effective_date_method.get('type') == 'open':
+        if effective_date_method.get('type') == 'open_with_start':
             if 'enrollment_period' not in effective_date_method:
                 start_date = case.enrollment_periods[0].get_start_date()
                 end_date = case.enrollment_periods[0].get_end_date()
