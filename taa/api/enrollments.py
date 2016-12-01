@@ -139,7 +139,7 @@ def render_batch_item_pdf(batch_id, item_id):
     if not item:
         abort(404)
 
-    binary_pdf = enrollment_submission_service.render_enrollment_pdf(item.enrollment_record)
+    binary_pdf = enrollment_submission_service.render_enrollment_pdf(item.enrollment_record, is_stp=False, force_show_all_docs=True)
 
     response = make_response(binary_pdf)
     response.headers['Content-Type'] = 'application/pdf'
@@ -186,7 +186,7 @@ def generate_enrollment_pdf(enrollment_record_id):
     if not can_view:
         abort(403)
 
-    binary_pdf = enrollment_submission_service.render_enrollment_pdf(enrollment)
+    binary_pdf = enrollment_submission_service.render_enrollment_pdf(enrollment, is_stp=False, force_show_all_docs=True)
 
     response = make_response(binary_pdf)
     response.headers['Content-Type'] = 'application/pdf'
