@@ -99,20 +99,6 @@ class DocuSignService(object):
         )
         return in_person_signer, envelope_result
 
-    def create_fpp_envelope(self, enrollment_data, case):
-        in_person_signer, recipients = self.create_envelope_recipients(case, enrollment_data)
-        # Don't use docusign rendering of form if we need to adjust the recipient routing/roles.
-        should_use_docusign_renderer = False if enrollment_data.should_use_call_center_workflow() else True
-        components = self.create_fpp_envelope_components(enrollment_data, recipients, should_use_docusign_renderer)
-        envelope_result = self.create_envelope(
-            email_subject=u"Signature needed: {} for {} ({})".format(
-                enrollment_data.get_product().name,
-                enrollment_data.get_employee_name(),
-                enrollment_data.get_employer_name()),
-            components=components,
-        )
-        return in_person_signer, envelope_result
-
     def create_envelope(self, email_subject, components):
         docusign_transport = get_docusign_transport()
         data = {
@@ -393,18 +379,6 @@ def create_envelope(email_subject, components):
 def create_envelope_recipients(case, enrollment_data):
     docusign_service = LookupService('DocuSignService')
     return docusign_service.create_envelope_recipients(case, enrollment_data)
-
-
-def create_fpp_envelope(enrollment_data, case):
-    docusign_service = LookupService('DocuSignService')
-    return docusign_service.create_fpp_envelope(enrollment_data, case)
-
-
-def create_fpp_envelope_and_fetch_signing_url(enrollment_data, case):
-    employee, envelope_result = create_fpp_envelope(enrollment_data, case)
-    redirect_url = fetch_signing_url(employee, enrollment_data, envelope_result)
-
-    return False, None, redirect_url
 
 
 def fetch_signing_url(in_person_signer, enrollment_data, envelope_result):
