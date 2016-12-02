@@ -689,7 +689,7 @@ class EnrollmentSubmissionProcessor(object):
 
         return CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
                                                                     enrollment_record=enrollment_application),
-                                    all_product_data)
+                                    all_product_data, enrollment_application=enrollment_application)
 
     def generate_document_components(self, enrollment_application, is_stp=False, only_product_id=None, force_show_all_docs=False):
         """Used for generating PDFs from enrollments signed in the wizard, outside of docusign"""
