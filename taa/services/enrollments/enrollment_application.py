@@ -44,7 +44,10 @@ class EnrollmentApplicationService(DBService):
                            by_agent_ids=None,
                            by_envelope_url=None,
                            by_applicant_signing_status=None, by_agent_signing_status=None):
-        q = db.session.query(EnrollmentApplication)
+        
+        q = db.session.query(EnrollmentApplication
+                             ).filter(EnrollmentApplication.is_preview == False)
+        
         q = q.options(db.eagerload('coverages').joinedload('product')
                       ).options(db.joinedload('census_record')
                                 ).options(db.joinedload('case'))
@@ -165,11 +168,13 @@ class EnrollmentApplicationService(DBService):
         signature_method = self.get_signature_method(census_record, wizard_data)
 
         data = self.get_first_wizard_data_record(wizard_data)
+        first_data_wrap = EnrollmentDataWrap(data, census_record.case)
 
         is_preview = data.get('is_preview', False)
         given_sig_time = data.get('time_stamp')
         signature_time = given_sig_time if given_sig_time else datetime.now()
-
+        created_time = datetime.now()
+        
         if data['employee_beneficiary'] == 'spouse':
             emp_beneficiary_name = u'{} {}'.format(data['spouse']['first'],
                                                    data['spouse']['last'])
@@ -209,6 +214,7 @@ class EnrollmentApplicationService(DBService):
             is_preview=is_preview,
             # Signing info
             signature_time=signature_time,
+            created_time=created_time,
             signature_city=data['enrollCity'],
             signature_state=data['enrollState'],
             identity_token=data['identityToken'],
@@ -238,20 +244,24 @@ class EnrollmentApplicationService(DBService):
             spouse_beneficiary_relationship=sp_beneficiary_relation,
             spouse_beneficiary_birthdate=sp_beneficiary_dob,
         )
+        
+        # If self-enroll, we need to mark the enrollment as pending agent.
+        if first_data_wrap.is_self_enroll():
+            enrollment_data['agent_signing_status'] = EnrollmentApplication.SIGNING_STATUS_PENDING
+            enrollment_data['applicant_signing_status'] = EnrollmentApplication.SIGNING_STATUS_COMPLETE
+            enrollment_data['applicant_signing_datetime'] = datetime.now()
+            
         return self.create(**enrollment_data)
 
     def get_application_status(self, census_record, wizard_data):
 
         """:type: taa.services.products.ProductService"""
         
-        #data = self.get_first_wizard_data_record(wizard_data)
-        #wrapped_data = EnrollmentDataWrap(data, census_record.case)
+        data = self.get_first_wizard_data_record(wizard_data)
+        first_data_record = EnrollmentDataWrap(data, census_record.case)
         
         if isinstance(wizard_data, list):
             accepted_data = list(EnrollmentDataWrap(d, census_record.case) for d in wizard_data if not d['did_decline'])
-            accepted_product_ids = [d['product_id'] for d in accepted_data]
-            accepted_products = self.product_service.get_all(*accepted_product_ids)
-            """:type: list[taa.services.products.Product]"""
             
             # If this is a preview, mark the status as pending
             if not accepted_data or accepted_data[0].is_preview():
@@ -270,8 +280,10 @@ class EnrollmentApplicationService(DBService):
             #elif census_record.case.should_use_call_center_workflow:
             #    return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
             
-            # TODO: Self-enroll should be marked as pending agent
-            
+            elif first_data_record.is_self_enroll():
+                # Agent still needs to sign the application if self-enrolled.
+                return EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
+
             else:
                 # All other cases are enrolled status for now.
                 return EnrollmentApplication.APPLICATION_STATUS_ENROLLED
@@ -285,14 +297,9 @@ class EnrollmentApplicationService(DBService):
         return application_status
 
     def get_signature_method(self, census_record, wizard_data):
-        #data = self.get_first_wizard_data_record(wizard_data)
-        #wrapped_data = EnrollmentDataWrap(data, census_record.case)
-
-        #if wrapped_data.did_finish_signing_in_wizard():
+        # We no longer have a docusign method of signing.
         return EnrollmentApplication.SIGNATURE_METHOD_WIZARD
-        #else:
-        #    return EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN
-
+        
     def _strip_ssn(self, ssn):
         return ssn.replace('-', '').strip() if ssn else ''
 
@@ -302,10 +309,15 @@ class EnrollmentApplicationService(DBService):
             all_data = [all_data]
 
         for data in all_data:
-            
+
+            if data['did_decline']:
+                continue
+                
             enroller_effective_date = data.get('effective_date')
-            if data['did_decline'] or enrollment.is_preview:
+            
+            if enrollment.is_preview:
                 effective_date = None
+                
             elif enroller_effective_date:
                 if isinstance(enroller_effective_date, date_type) or isinstance(enroller_effective_date, datetime):
                     effective_date = enroller_effective_date
@@ -327,9 +339,6 @@ class EnrollmentApplicationService(DBService):
                 else:
                     # Fall back to signature time for old case data.
                     effective_date = data['time_stamp'] if data.get('time_stamp') else datetime.now()
-
-            if data['did_decline']:
-                continue
 
             product = EnrollmentDataWrap(data, enrollment.case).get_product()
 

@@ -259,18 +259,19 @@ class DocuSignService(object):
         # Need to get all envelopes that this user is allowed to see.
         agent_service = LookupService("AgentService")
         if agent_service.is_user_agent(for_user):
-            # Envelopes that have been created by me.
+            # Fetch enrollments that have been created by me.
             agent = agent_service.get_agent_from_user(for_user)
 
             own_enrollments = enrollment_service.search_enrollments(
                 by_agent_id=agent.id,
-                by_applicant_signing_status=envelope_status,
+                by_agent_signing_status=envelope_status,
             )
 
-            # Envelopes for partner agents on cases I own.
+            # Fetch additional enrollments for partner agents on cases I own.
             owned_case_ids = [case.id for case in agent.owned_cases]
 
             partner_enrollments = db.session.query(EnrollmentApplication
+                                                   ).filter(EnrollmentApplication.is_preview == False
                                                    ).filter(db.or_(EnrollmentApplication.agent_id != agent.id,
                                                                    EnrollmentApplication.agent_id == None,
                                                                    )
@@ -284,15 +285,34 @@ class DocuSignService(object):
             # Allow home office and admin to see all for now.
             enrollments = enrollment_service.search_enrollments(
                 by_agent_ids=None,
-                by_applicant_signing_status=envelope_status,
+                by_agent_signing_status=envelope_status,
             ).options(db.eagerload('coverages', 'product'))
 
         print("LOADED ALL ENROLLMENTS")
-        return [DocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
+        return [FakeDocusignEnvelope(enrollment.docusign_envelope_id, enrollment)
                 for enrollment in enrollments
-                # Include only docusign-signed enrollments.
-                if enrollment.docusign_envelope_id is not None and enrollment.signature_method != EnrollmentApplication.SIGNATURE_METHOD_WIZARD]
+                # Include only self-enroll envelopes
+                if enrollment.method == EnrollmentApplication.METHOD_SELF_EMAIL and
+                enrollment.signature_method == EnrollmentApplication.SIGNATURE_METHOD_WIZARD]
 
+    def sign_enrollment(self, for_user, enrollment_record):
+        errors = []
+        
+        # Now, see if we can sign this enrollment based on who is logged in and the status.
+        agent_service = LookupService("AgentService")
+        if not agent_service.is_user_agent(for_user) and not agent_service.can_manage_all_cases(for_user):
+            raise ValueError("No agent record associated with user {} or agent is not allowed to sign enrollment".format(for_user.href))
+
+        #if enrollment_record.is_pending_agent():
+        enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
+        enrollment_record.agent_signing_datetime = datetime.now()
+        enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+        
+        db.session.commit()
+            
+        return errors
+            
+        
     def get_envelope_signing_url(self, for_user, envelope_id, callback_url):
         "Must be the agent that the envelope was sent to (this user must be the recipient)"
         errors = []
@@ -695,6 +715,59 @@ class DocusignEnvelope(object):
         Might add declined to this to allow viewing declines."""
         return self.enrollment_record.application_status == EnrollmentApplication.APPLICATION_STATUS_ENROLLED
 
+
+class FakeDocusignEnvelope(DocusignEnvelope):
+    """
+    We no longer use docusign; use this wrapper to keep the old code working for now.
+    """
+    
+    def get_envelope_id(self):
+        return self.enrollment_record.id
+    
+    def is_employee_sig_pending(self):
+        return self.get_employee_signing_status() == EnrollmentApplication.SIGNING_STATUS_PENDING
+    
+    def is_agent_sig_pending(self):
+        return self.enrollment_record.agent_signing_status == EnrollmentApplication.SIGNING_STATUS_PENDING
+    
+    def get_employee_signing_status(self):
+        return self.enrollment_record.applicant_signing_status
+
+    def update_enrollment_status(self):
+        self.update_application_status()
+        self.update_recipient_statuses()
+
+        db.session.commit()
+        
+    def update_recipient_statuses(self):
+        # No external system that needs synchronization.
+        pass
+
+    def complete_enrollment(self):
+        self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+
+    def mark_enrollment_pending(self):
+        if self.is_employee_sig_pending():
+            self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_EMPLOYEE
+        else:
+            self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
+
+    
+    
+    def get_agent_signing_status(self):
+        return self.enrollment_record.agent_signing_status
+    
+    def get_completed_pdf(self):
+        raise NotImplementedError
+    
+    def get_completed_view_url(self, callback_url):
+        raise NotImplementedError
+
+    def get_agent_signing_url(self, callback_url):
+        raise NotImplementedError
+    
+    def get_employee_signing_url(self, callback_url):
+        raise NotImplementedError
 
 def get_docusign_transport():
     transport_service = LookupService('DocuSignTransport')
@@ -1134,7 +1207,7 @@ class DocuSignEnvelopeComponent(object):
         tabs = []
 
         # Convert call-center employee signatures to voice-auth statements.
-        if (purpose == self.PDF_TABS and (self.data.should_use_call_center_workflow() or self.data.did_finish_signing_in_wizard())
+        if (purpose == self.PDF_TABS and (self.data.should_use_call_center_workflow() or self.data.did_finish_signing_in_wizard() or self.data.get_agent_esignature())
                 and hasattr(self, 'template_id') and self.template_id):
             tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
             for tab_def in tab_definitions:
@@ -1168,7 +1241,7 @@ class DocuSignEnvelopeComponent(object):
 
 
         # This is for enrollment import - replace signatures with text when rendering PDF.
-        if self.data.get('emp_sig_txt'):
+        if self.data.get('emp_sig_txt') or self.data.did_employee_sign_in_wizard():
             tabs += [DocuSignPreSignedTextTab("SignHereEmployee", self.data.get_employee_esignature())]
             tabs += [DocuSignPreSignedTextTab("InitialHereEmployee", self.data.get_employee_initials())]
         if self.data.get('agent_sig_txt'):
@@ -1180,7 +1253,9 @@ class DocuSignEnvelopeComponent(object):
             employee_signed_date = self.data.get('application_date') if self.data.get(
                 'application_date') else self.data.get('emp_sig_date')
             tabs += [DocuSignPreSignedTextTab("DateSignedEmployee", employee_signed_date)]
-
+        elif self.data.did_employee_sign_in_wizard():
+            tabs += [DocuSignPreSignedTextTab("DateSignedEmployee", self.data.get_employee_esignature_date())]
+            
         if self.data.get('application_date') or self.data.get('agent_sig_date'):
             agent_signed_date = self.data.get('application_date') if self.data.get(
                 'application_date') else self.data.get('agent_sig_date')

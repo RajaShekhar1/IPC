@@ -58,9 +58,12 @@
                       </td>
                     {% else %}
                       <td>
-                      {% if enrollment.status in ["Pending Employee", "Pending Agent"] and enrollment.envelope_id and current_agent_id != None and current_agent_id == enrollment.agent_id %}
-                        <button class="btn btn-warning btn-sm sign-envelope" data-id="{{ enrollment.envelope_id }}"><i class="icon fa fa-pencil"></i> Sign</button>
+                      {# Wizard-signed self-enroll documents get a sign button #}
+                      {#
+                      {% if enrollment.status in ["Pending Employee", "Pending Agent"] and current_agent_id != None and current_agent_id == enrollment.agent_id %}
+                        <button class="btn btn-warning btn-sm sign-envelope" data-id="{{ enrollment.id }}"><i class="icon fa fa-pencil"></i> Sign</button>
                       {% endif %}
+                      #}
                       {# Docusign-signed documents #}
                       {% if enrollment.status in ["Enrolled"] and enrollment.is_docusign_signed and enrollment.envelope_id and (can_edit_case or current_agent_id == enrollment.agent_id) %}
                         <button class="btn btn-primary btn-sm view-envelope" data-id="{{ enrollment.envelope_id }}"><i class="icon fa fa-file"></i> View</button>

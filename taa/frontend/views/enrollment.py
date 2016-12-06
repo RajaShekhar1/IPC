@@ -292,6 +292,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     product_effective_date_list = get_product_effective_dates(product_settings, effective_date)
     wizard_data = dict(
         is_in_person=not is_self_enroll,
+        is_self_enroll=is_self_enroll,
         case_data={
             'id': case.id,
             'situs_state': state if state != 'XX' else None,
@@ -630,6 +631,20 @@ def check_submission_status():
         get_accepted_products(enrollment.case, get_accepted_product_ids(standardized_enrollment_data)) if
         p.does_generate_form())
 
+    # Handle self-enroll a little differently using the old status page. Don't need to wait until finished processing.
+    if enrollment.method == EnrollmentApplication.METHOD_SELF_EMAIL:
+        if are_all_products_declined(received_enrollment_data):
+            return get_declined_response(received_enrollment_data)
+        else:
+            url = url_for('ds_landing_page',
+                          event='signing_complete',
+                          name=received_enrollment_data[0]['employee']['first'],
+                          type='email'
+            )
+            return jsonify(status='ready', redirect_url=url)
+    
+    # In-person enrollments and call center.
+    
     if are_all_products_declined(received_enrollment_data):
         # Declined enrollment, return redirect to our landing page.
         return get_declined_response(received_enrollment_data)
