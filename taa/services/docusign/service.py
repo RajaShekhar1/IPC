@@ -303,13 +303,17 @@ class DocuSignService(object):
         if not agent_service.is_user_agent(for_user) and not agent_service.can_manage_all_cases(for_user):
             raise ValueError("No agent record associated with user {} or agent is not allowed to sign enrollment".format(for_user.href))
 
-        #if enrollment_record.is_pending_agent():
-        enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
-        enrollment_record.agent_signing_datetime = datetime.now()
-        enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
-        
-        db.session.commit()
+        if enrollment_record.is_pending_agent():
+            enrollment_record.agent_signing_status = EnrollmentApplication.SIGNING_STATUS_COMPLETE
+            enrollment_record.agent_signing_datetime = datetime.now()
+            enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
             
+            db.session.commit()
+            
+            # Create submissions for this enrollment
+            submission_service = LookupService('EnrollmentSubmissionService')
+            submission_service.create_submissions_for_application(enrollment_record)
+        
         return errors
             
         
