@@ -385,12 +385,12 @@ def self_enrollment(company_name, uuid):
                 is_self_enrollable = False
                 break
 
-    if case_service.requires_occupation(case) and census_record.occupation_class not in map(lambda cr: cr['label'],
+    if case and case_service.requires_occupation(case) and census_record.occupation_class not in map(lambda cr: cr['label'],
                                                                                             case.occupation_class_settings):
         is_self_enrollable = False
 
     vars = {'is_valid': False, 'allowed_states': []}
-    if setup is not None and is_self_enrollable:
+    if case is not None and setup is not None and is_self_enrollable:
         session['is_self_enroll'] = True
 
         # Store these in session rather than as a form submission for security purposes
