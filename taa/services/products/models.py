@@ -197,13 +197,13 @@ class Product(ProductJsonSerializable, db.Model):
         return state_replacement_paragraphs
 
     def get_brochure_name(self):
-        if not self.is_base_product() and self.should_use_base_product_settings('brochure_name'):
+        if not self.is_base_product() and (self.should_use_base_product_settings('brochure_name') or not self.brochure_name):
             return self.get_base_product().brochure_name
 
-        return self.brochure_name
+        return self.brochure_name if self.brochure_name else ''
 
     def get_brochure_url(self):
-        if not self.is_base_product() and self.should_use_base_product_settings('brochure_url'):
+        if not self.is_base_product() and (self.should_use_base_product_settings('brochure_url') or not self.brochure_url):
             return self.get_base_product().brochure_url
 
         return self.brochure_url

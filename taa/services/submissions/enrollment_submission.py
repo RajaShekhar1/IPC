@@ -5,10 +5,6 @@ import traceback
 from zipfile import ZipFile
 
 from PyPDF2 import PdfFileReader, PdfFileWriter
-from StringIO import StringIO
-
-import gnupg
-import taa.services.enrollments as enrollments
 
 from taa import db, tasks
 from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
@@ -42,7 +38,11 @@ class EnrollmentSubmissionService(object):
         if enrollment_application.is_preview:
             # Preview mode only; don't submit the application
             return
-
+        
+        # If this enrollment has not finished the signing ceremony, we cannot submit it yet.
+        if enrollment_application.is_pending():
+            return
+        
         # Generate all the submissions that are not queued up in batches.
         self.create_all_submissions(enrollment_application)
 

@@ -5,6 +5,7 @@ from zipfile import ZipFile
 
 import traceback
 from flask import Blueprint, request, abort, make_response, send_file
+from flask import session
 from flask_stormpath import login_required, groups_required
 from taa.tasks import send_admin_error_email
 
@@ -112,9 +113,13 @@ def delete_batch(batch_id):
 #  (if this is opened up to other users, add case permission checking)
 @route(bp, '/records/<int:enrollment_record_id>', methods=['GET'])
 @login_required
-@groups_required(['admins', 'home_office'], all=False)
+@groups_required(['admins', 'home_office', 'agents'], all=False)
 def get_individual_enrollment_record(enrollment_record_id):
-    return enrollment_application_service.get_or_404(enrollment_record_id)
+    enrollment = enrollment_application_service.get_or_404(enrollment_record_id)
+    
+    
+    
+    return enrollment
 
 # Admin delete enrollment record
 @route(bp, '/records/<int:enrollment_record_id>', methods=['DELETE'])
@@ -173,17 +178,11 @@ def render_batch_item_xml(batch_id, item_id):
 
 
 @route(bp, '/records/<int:enrollment_record_id>/pdf', methods=['GET'])
-@login_required
-@groups_required(['admins', 'home_office', 'agents'], all=False)
 def generate_enrollment_pdf(enrollment_record_id):
     enrollment = enrollment_application_service.get_or_404(enrollment_record_id)
 
     # Check that logged-in agent can view enrollment
-    agent = agent_service.get_logged_in_agent()
-    can_view = (case_service.can_current_user_view_case(enrollment.case) or
-                agent.id == enrollment.agent_id)
-
-    if not can_view:
+    if not can_user_view_enrollment_pdf(enrollment):
         abort(403)
 
     binary_pdf = enrollment_submission_service.render_enrollment_pdf(enrollment, is_stp=False, force_show_all_docs=True)
@@ -192,6 +191,23 @@ def generate_enrollment_pdf(enrollment_record_id):
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'inline; filename=%s.pdf' % 'enrollment_{}'.format(enrollment.id)
     return response
+
+
+def can_user_view_enrollment_pdf(enrollment):
+    agent = agent_service.get_logged_in_agent()
+    if not agent:
+        # Only allow if this is a preview, and we are in a self-enroll session
+        can_view = (session.get('is_self_enroll') is not None and enrollment.is_preview)
+    else:
+        
+        can_view = can_agent_view_enrollment(agent, enrollment)
+    return can_view
+
+
+def can_agent_view_enrollment(agent, enrollment):
+    if not agent:
+        return False
+    return (case_service.can_current_user_view_case(enrollment.case) or agent.id == enrollment.agent_id)
 
 
 @route(bp, '/records/<int:enrollment_record_id>/xml', methods=['GET'])

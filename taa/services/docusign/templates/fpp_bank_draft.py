@@ -111,7 +111,7 @@ class FPPBankDraftFormTemplate(DocuSignServerTemplate):
             # Sort enrollments by signature date
             raw_effective_date = self.data.get('effective_date')
             for application in sorted(
-                    self.data.enrollment_record.census_record.enrollment_applications,
+                    [e for e in self.data.enrollment_record.census_record.enrollment_applications if not e.is_preview],
                     key=lambda a: a.signature_time):
                 # if not application.is_paylogix:
                 #     continue

@@ -68,6 +68,8 @@ class EnrollmentApplicationCoverageService(DBService):
     def get_census_record_coverages(self, census_record):
         coverages = []
         for app in census_record.enrollment_applications:
+            if app.is_preview:
+                continue
             coverages += app.coverages
         return coverages
 

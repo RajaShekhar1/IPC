@@ -262,6 +262,9 @@ class EnrollmentDataWrap(object):
             return True
 
         elif self.get_product().is_simple_coverage():
+            if not 'employee_coverage' in self.data:
+                return False
+                
             return self.get_product().is_applicant_covered(
                 'spouse',
                 # This uses employee coverage to determine if spouse is included.
@@ -377,7 +380,7 @@ class EnrollmentDataWrap(object):
             date = self.enrollment_record.signature_time
             esig = u"{} voice auth on file {}".format(self.get_employee_name(), date.strftime("%l:%M%p").strip().lower())
             return self.data.get('emp_sig_txt', esig)
-        elif self.did_finish_signing_in_wizard():
+        elif self.did_employee_sign_in_wizard():
             date = self.enrollment_record.signature_time
             esig = u"{} esigned {}".format(self.get_employee_name(), date.strftime("%l:%M%p").strip().lower())
             return self.data.get('emp_sig_txt', esig)
@@ -399,11 +402,21 @@ class EnrollmentDataWrap(object):
             date = self.enrollment_record.signature_time
             esig = u'{} esigned {}'.format(self.get_agent_signing_name(), date.strftime("%l:%M%p").strip().lower())
             return self.data.get('agent_sig_txt', esig)
+        elif self.enrollment_record.agent_signing_datetime:
+            # Agent signed at some point later most likely
+            date = self.enrollment_record.agent_signing_datetime
+            esig = u'{} esigned {}'.format(self.get_agent_signing_name(), date.strftime("%l:%M%p").strip().lower())
+            return esig
         else:
             return self.data.get('agent_sig_txt', '')
 
     def get_agent_esignature_date(self):
-        date = self.enrollment_record.signature_time
+        if self.enrollment_record.agent_signing_datetime:
+            date = self.enrollment_record.agent_signing_datetime
+        else:
+            date = self.enrollment_record.signature_time
+        
+        # If a date is provided in the enrollment data, it overrides the above date.
         return self.data.get('agent_sig_date', date.strftime('%m/%d/%Y'))
 
     def has_agent_esigned(self):
@@ -716,8 +729,13 @@ class EnrollmentDataWrap(object):
     #     rider_settings = product_settings.get('riders', [])
 
     def did_finish_signing_in_wizard(self):
-        return self.data.get('applicant_signed') and self.data.get('agent_signed')
+        return self.did_employee_sign_in_wizard() and self.did_agent_sign_in_wizard()
 
+    def did_employee_sign_in_wizard(self):
+        return self.data.get('applicant_signed')
+    
+    def did_agent_sign_in_wizard(self):
+        return self.data.get('agent_signed')
 
 # For employee signing sessions
 def build_callback_url(wizard_data, session_type):
