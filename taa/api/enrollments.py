@@ -5,6 +5,7 @@ from zipfile import ZipFile
 
 import traceback
 from flask import Blueprint, request, abort, make_response, send_file
+from flask import session
 from flask_stormpath import login_required, groups_required
 from taa.tasks import send_admin_error_email
 
@@ -173,15 +174,19 @@ def render_batch_item_xml(batch_id, item_id):
 
 
 @route(bp, '/records/<int:enrollment_record_id>/pdf', methods=['GET'])
-@login_required
-@groups_required(['admins', 'home_office', 'agents'], all=False)
 def generate_enrollment_pdf(enrollment_record_id):
     enrollment = enrollment_application_service.get_or_404(enrollment_record_id)
 
     # Check that logged-in agent can view enrollment
     agent = agent_service.get_logged_in_agent()
-    can_view = (case_service.can_current_user_view_case(enrollment.case) or
-                agent.id == enrollment.agent_id)
+    
+    if not agent:
+        # Only allow if this is a preview, and we are in a self-enroll session
+        can_view = (session.get('is_self_enroll') is not None and enrollment.is_preview)
+    else:
+    
+        can_view = (case_service.can_current_user_view_case(enrollment.case) or
+                    agent.id == enrollment.agent_id)
 
     if not can_view:
         abort(403)
