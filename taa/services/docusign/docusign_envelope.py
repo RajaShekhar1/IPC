@@ -262,6 +262,9 @@ class EnrollmentDataWrap(object):
             return True
 
         elif self.get_product().is_simple_coverage():
+            if not 'employee_coverage' in self.data:
+                return False
+                
             return self.get_product().is_applicant_covered(
                 'spouse',
                 # This uses employee coverage to determine if spouse is included.
