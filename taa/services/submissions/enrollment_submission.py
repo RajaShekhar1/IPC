@@ -40,7 +40,7 @@ class EnrollmentSubmissionService(object):
             return
         
         # If this enrollment has not finished the signing ceremony, we cannot submit it yet.
-        if not self.enrollment_application_service.has_finished_signing(enrollment_application):
+        if enrollment_application.is_pending():
             return
         
         # Generate all the submissions that are not queued up in batches.
