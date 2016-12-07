@@ -25,14 +25,31 @@ var agent_inbox = (function() {
     self.replacing_insurance = ko.observable(false);
 
     self.sign_envelope = function() {
+
       // Get the envelope ID from the button.
       self.signing_enrollment_id($(this).attr("data-id"));
 
-      //sign_envelope(envelope_id, {from_inbox: true}).success(get_finished_signing_callback(envelope_id));
+      var loading_dialogue = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i> Loading...</div>' });
 
-      // Show signing ceremony popup
-      $("#modal-signing-enroller-in-person").modal("show");
+      // Fetch application data so we can get the key details we need for the popup.
+      var app_req = $.getJSON("/enrollments/records/"+self.signing_enrollment_id());
 
+      app_req.done(function(resp) {
+        bootbox.hideAll();
+
+        // Set the data we need for the popup; if any product has marked that we have existing or are replacing, we default the
+        //  agent answer to true.
+        var enrollments = JSON.parse(resp.data.standardized_data);
+        self.existing_insurance(_.any(enrollments, function(e) { return e.existing_insurance;}));
+        self.replacing_insurance(_.any(enrollments, function(e) { return e.replacing_insurance;}));
+
+        // Show signing ceremony popup
+        $("#modal-signing-enroller-in-person").modal("show");
+
+      }).fail(function() {
+        bootbox.hideAll();
+        bootbox.alert("There was a problem fetching the application data from the server.");
+      });
     };
 
     self.should_show_other_insurance_questions = function() {
