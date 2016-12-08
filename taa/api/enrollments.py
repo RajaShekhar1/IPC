@@ -6,6 +6,7 @@ from zipfile import ZipFile
 import traceback
 from flask import Blueprint, request, abort, make_response, send_file
 from flask import session
+from flask.ext.login import current_user
 from flask_stormpath import login_required, groups_required
 from taa.tasks import send_admin_error_email
 
@@ -194,6 +195,9 @@ def generate_enrollment_pdf(enrollment_record_id):
 
 
 def can_user_view_enrollment_pdf(enrollment):
+    if agent_service.can_manage_all_cases(current_user):
+        return True
+    
     agent = agent_service.get_logged_in_agent()
     if not agent:
         # Only allow if this is a preview, and we are in a self-enroll session
