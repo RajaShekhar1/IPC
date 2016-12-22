@@ -252,6 +252,13 @@ def enrollment_type_validator(field, record):
     return True, None, None
 
 
+def third_party_enrollment_id_validator(field, record):
+    val = field.get_column_from_record(record)
+    if not (val.isalnum() and len(val) == 9):
+        return False, "invalid_third_party_enrollment_id", "Enrollment ID must be nine alphanumeric characters"
+    return True, None, None
+
+
 def height_validator(field, record):
     val = field.get_column_from_record(record)
     if not val.strip():
