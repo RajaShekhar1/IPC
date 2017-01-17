@@ -533,12 +533,12 @@ class EnrollmentDataWrap(object):
     def get_effective_date(self):
         if self.data.get('effective_date'):
             return dateutil_parse(self.data.get('effective_date'))
-    
+        
         # Look for effective date for this product on one of the coverage records (they should all have the same date).
         for coverage_record in self.get_coverage_records():
             if coverage_record.effective_date:
                 return coverage_record.effective_date
-    
+            
         # Fall back to the signature time / application date.
         return self.enrollment_record.signature_time
 
