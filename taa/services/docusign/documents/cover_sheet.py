@@ -28,7 +28,7 @@ small_style = ParagraphStyle(name='smallLegal',
 
 
 class CoverSheetAttachment(PDFAttachment):
-    def __init__(self, recipients, enrollment_data, all_enrollments, enrollment_application=None):
+    def __init__(self, recipients, enrollment_data, all_enrollments, enrollment_application):
         PDFAttachment.__init__(self, recipients, enrollment_data)
 
         self.case = enrollment_data.case
@@ -176,14 +176,12 @@ class CoverSheetAttachment(PDFAttachment):
         total_premium = decimal.Decimal('0.00')
 
         # Iterate through the case products to identify declines.
-        case_service = LookupService('CaseService')
         product_service = LookupService('ProductService')
         rider_service = RiderService()
-        if self.enrollment_application:
-            product_ids = self.enrollment_application.get_enrolled_product_ids()
-            product_options = [product_service.get(product_id) for product_id in product_ids]
-        else:
-            product_options = case_service.get_ordered_products_for_case(self.data.case)
+        
+        product_ids = self.enrollment_application.get_enrolled_product_ids()
+        product_options = [product_service.get(product_id) for product_id in product_ids]
+    
         state = self.enrollment_data.get('enrollState')
         declined_products = self.get_declined_products()
         for i, product in enumerate(product_service.filter_products_by_enrollment_state(product_options, state, self.case)):

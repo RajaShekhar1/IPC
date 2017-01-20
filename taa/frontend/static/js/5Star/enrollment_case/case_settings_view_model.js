@@ -83,6 +83,18 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.initialize_effective_products();
 
+  self.should_show_coverage_limits = function(product) {
+    return self.should_show_max_coverage(product) || self.should_show_max_age(product);
+  };
+
+  self.should_show_max_coverage = function(product) {
+    return !_.includes(["HI", "ACC", "Static Benefit"], product.base_product_type);
+  };
+
+  self.should_show_max_age = function(product) {
+    return !_.includes(["HI", "ACC", "Static Benefit"], product.base_product_type);
+  };
+
   self.get_product_effective_date_settings = function (product) {
     var effective = _.find(self.effective_products(), function (ep) {
       return ep.id == product.id;
@@ -93,6 +105,31 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     self.effective_products.push(effective);
     return effective;
   };
+
+  function get_coverage_limit_settings_for_product(product) {
+    var product_settings = {};
+    if (case_data.product_settings.coverage_limits && case_data.product_settings.coverage_limits[product.id]) {
+      product_settings = case_data.product_settings.coverage_limits[product.id];
+    }
+    return product_settings;
+  }
+
+  // Coverage limits
+  self.get_maximum_age_vm_for_product = function(product) {
+    return coverage_settings_module.get_max_age_vm_for_product({
+      product: product,
+      settings: get_coverage_limit_settings_for_product(product)
+    });
+  };
+
+
+  self.get_maximum_coverage_vm_for_product = function(product) {
+    return coverage_settings_module.get_max_coverage_vm_for_product({
+      product: product,
+      settings: get_coverage_limit_settings_for_product(product)
+    });
+  };
+
 
   self.sort_selected_products = ko.observableArray([]);
   self.products.subscribe(function () {
@@ -1675,7 +1712,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       riders: self.serialize_riders(),
       classification_mappings: self.serialize_occ_mapping(),
       effective_date_settings: self.serialize_product_effective_date(),
-      state_overrides: self.serialize_state_overrides()
+      state_overrides: self.serialize_state_overrides(),
+      coverage_limits: self.serialize_coverage_limits()
     };
   };
 
@@ -1687,6 +1725,31 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     });
 
     return overrides;
+  };
+
+  self.serialize_coverage_limits = function() {
+    var limits = {};
+    _.each(self.products(), function(product) {
+
+      limits[product.id] = {};
+
+      if (self.should_show_max_age(product)) {
+        var max_age_vm = self.get_maximum_age_vm_for_product(product);
+        // Save the data only if enabled.
+        if (max_age_vm.is_enabled()) {
+          limits[product.id]['max_age'] = max_age_vm.serialize();
+        }
+      }
+
+      if (self.should_show_max_coverage(product)) {
+        var max_coverage_vm = self.get_maximum_coverage_vm_for_product(product);
+
+        if (max_coverage_vm.is_enabled()) {
+          limits[product.id]['max_coverage'] = max_coverage_vm.serialize();
+        }
+      }
+    });
+    return limits;
   };
 
   self.serialize_riders = function () {

@@ -1,5 +1,3 @@
-from itertools import ifilter
-
 from dateutil.parser import parse as dateutil_parse
 from dateutil.relativedelta import *
 from datetime import date

@@ -2016,8 +2016,8 @@ var wizard_viewmodel = (function () {
     self.enrollment_type = function() {
       if (self.is_call_center){
         return "-call-center";
-      }
-      else{
+
+      } else{
         return "-in-person";
       }
     };
@@ -2148,9 +2148,16 @@ var wizard_viewmodel = (function () {
       // Mark as signed
       self.applicant_signed(true);
 
-      //  Go to agent signing
       $("#modal-signing-applicant" + self.enrollment_type()).modal("hide");
-      $("#modal-signing-enroller" + self.enrollment_type()).modal("show");
+
+      if (!self.is_self_enroll()) {
+        //  Go to agent signing
+        $("#modal-signing-enroller" + self.enrollment_type()).modal("show");
+      } else {
+        // Finished signing document for self enroll. Submit the data to the server.
+        submit_application();
+      }
+
     };
 
     self.handle_agent_signing = function() {
@@ -2319,10 +2326,11 @@ var wizard_viewmodel = (function () {
     };
 
     self.is_in_person_application = function () {
+      // Note - this is true for call-center too for backwards compatibility with some parts of the wizard.
       return 'is_in_person' in options && options.is_in_person;
     };
     self.is_self_enroll = function () {
-      return !self.is_in_person_application()
+      return options.is_self_enroll;
     };
     self.get_has_existing_question_highlight = function () {
       if (self.is_self_enroll()) {

@@ -39,6 +39,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
                                     backref=db.backref(
                                         'enrollment_applications',
                                         lazy='joined'))
+    created_time = db.Column(db.DateTime, index=True)
     signature_time = db.Column(db.DateTime, index=True)
     # effective_date = db.Column(db.DateTime)
     signature_city = db.Column(db.UnicodeText)
