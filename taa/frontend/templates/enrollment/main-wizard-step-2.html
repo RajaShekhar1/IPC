@@ -277,19 +277,20 @@
           <div class="col-sm-6">
             <div class="row">
 
-              <div class="col-sm-3 text-center"
-                   data-bind="if: product_health_questions.product_coverage.did_select_employee_coverage">
-                <span data-bind="text: $root.employee().name"></span>
-              </div>
-                <!--ko if: product_health_questions.product_coverage.did_select_spouse_coverage -->
-              <div class="col-sm-3 text-center">
-                <span data-bind="text: $root.spouse().name"></span>
-              </div>
-                <!--/ko-->
+              <!--ko if: product_health_questions.product_coverage.did_select_employee_coverage -->
+                <div class="col-sm-3 text-center">
+                  <span data-bind="text: $root.employee().name"></span>
+                </div>
+              <!--/ko-->
+              <!--ko if: product_health_questions.product_coverage.did_select_spouse_coverage -->
+                <div class="col-sm-3 text-center">
+                  <span data-bind="text: $root.spouse().name"></span>
+                </div>
+              <!--/ko-->
               <!--ko foreach: product_health_questions.product_coverage.get_covered_children -->
-              <div class="col-sm-3 text-center">
-                <span data-bind="text: $data.name"></span>
-              </div>
+                <div class="col-sm-3 text-center">
+                  <span data-bind="text: $data.name"></span>
+                </div>
               <!--/ko-->
             </div>
           </div>

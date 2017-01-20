@@ -627,6 +627,10 @@ var wizard_viewmodel = (function () {
 
   ProductCoverageViewModel.prototype = {
     _get_effective_date: function (root) {
+      if (this.get_total_premium() === 0.0) {
+        return "(N/A)";
+      }
+
       if (_.get(this.effective_date_settings, 'effective_date_override')) {
         return normalize_date(_.get(this.effective_date_settings, 'effective_date'))
       }
@@ -746,10 +750,16 @@ var wizard_viewmodel = (function () {
       }, this);
     },
 
+    get_applicant_coverages_which_selected_coverage: function () {
+      return _.filter(this.valid_applicant_coverage_selections(), function(acov) {
+        return acov.coverage_option().is_valid();
+      });
+    },
+
     get_covered_applicants: function() {
       // Ungroups any groups
       var self = this;
-      var covered_applicants = _.map(self.valid_applicant_coverage_selections(), function(acov) {
+      var covered_applicants = _.map(self.get_applicant_coverages_which_selected_coverage(), function(acov) {
         return acov.applicant;
       });
       var out = [];
