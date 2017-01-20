@@ -689,10 +689,10 @@ var wizard_viewmodel = (function () {
         return selections;
       }
 
-      if (self.applicant_list.has_valid_employee()) {
+      if (self.applicant_list.has_valid_employee() && self.product.is_valid_applicant(self.applicant_list.get_employee())) {
         selections.push(self.__get_coverage_for_applicant(self.applicant_list.get_employee()));
       }
-      if (self.applicant_list.has_valid_spouse() && self.should_include_spouse()) {
+      if (self.applicant_list.has_valid_spouse() && self.should_include_spouse() && self.product.is_valid_applicant(self.applicant_list.get_spouse())) {
         selections.push(self.__get_coverage_for_applicant(self.applicant_list.get_spouse()));
       }
 

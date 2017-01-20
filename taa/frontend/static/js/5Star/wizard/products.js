@@ -67,21 +67,40 @@ var wizard_products = (function () {
   }
 
   Product.prototype = {
-
-    // Override if necessary
+    // Age max limits are subject to case-specific overrides. Also, some product subclasses will change the default as well.
 
     min_emp_age: function () {
       return 18;
     },
     max_emp_age: function () {
-      return 70;
+      var default_max_emp_age = 70;
+
+      // Check for case-specific override for employee.
+      if (this.product_data.coverage_limits && this.product_data.coverage_limits.max_age && this.product_data.coverage_limits.max_age.is_enabled) {
+        var max_emp_age = parseInt(this.product_data.coverage_limits.max_age.max_employee_age);
+        if (max_emp_age && !isNaN(max_emp_age) && max_emp_age < default_max_emp_age) {
+          return max_emp_age;
+        }
+      }
+
+      return default_max_emp_age;
     },
 
     min_sp_age: function () {
       return 18;
     },
     max_sp_age: function () {
-      return 70;
+      var default_max_sp_age = 70;
+
+      // Check for case-specific override for spouse.
+      if (this.product_data.coverage_limits && this.product_data.coverage_limits.max_age && this.product_data.coverage_limits.max_age.is_enabled) {
+        var max_spouse_age = parseInt(this.product_data.coverage_limits.max_age.max_spouse_age);
+        if (max_spouse_age && !isNaN(max_spouse_age) && max_spouse_age < default_max_sp_age) {
+          return max_spouse_age;
+        }
+      }
+
+      return default_max_sp_age;
     },
 
     min_child_age: function () {
@@ -169,11 +188,6 @@ var wizard_products = (function () {
     },
 
     does_override_rate_options: function () {
-      // If the product data has specified maximum coverage or premium values for age-bands, we want to override the
-      //  rate options presented to the user.
-      // if (this.product_data.coverage_limits && this.product_data.coverage_limits.max_coverage && this.product_data.coverage_limits.max_coverage.is_enabled) {
-      //   return true;
-      // }
       return false;
     },
 
@@ -511,14 +525,18 @@ var wizard_products = (function () {
   //endregion
 
   GroupCIProduct.prototype.max_child_age = function () {
-      return 26;
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 26.
+    var base_max_age = Product.prototype.max_child_age.call(this);
+    return Math.min(26, base_max_age);
   };
   GroupCIProduct.prototype.is_children_coverage_grouped = function() {
     return true;
   };
 
   GroupCIProduct.max_emp_age = function () {
-    return 70;
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 70.
+    var base_max_age = Product.prototype.max_emp_age.call(this);
+    return Math.min(70, base_max_age);
   };
   
   function FPPGovProduct(product_data) {
@@ -623,7 +641,9 @@ var wizard_products = (function () {
     return false;
   };
   HIProduct.prototype.max_child_age = function () {
-      return 26;
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 26.
+    var base_max_age = Product.prototype.max_child_age.call(this);
+    return Math.min(26, base_max_age);
   };
   //endregion
 
@@ -678,7 +698,9 @@ var wizard_products = (function () {
     return false;
   };
   ACCProduct.prototype.max_child_age = function() {
-    return 26;
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 26.
+    var base_max_age = Product.prototype.max_child_age.call(this);
+    return Math.min(26, base_max_age);
   };
   //endregion
 
