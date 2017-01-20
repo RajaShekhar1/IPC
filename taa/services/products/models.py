@@ -227,6 +227,8 @@ class Product(ProductJsonSerializable, db.Model):
         """
         return self.get_base_product_code() in [self.TYPE_STATIC_BENEFIT, self.TYPE_ACC, self.TYPE_HI]
 
+    def is_children_coverage_grouped(self):
+        return not self.is_fpp()
 
 # Relate custom products to agents - who can see these products
 product_agents = db.Table('product_agents', db.metadata,

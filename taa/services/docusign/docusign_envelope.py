@@ -315,25 +315,51 @@ class EnrollmentDataWrap(object):
         return len(self.get_covered_children())
 
     def get_covered_children(self):
-        covered_children = []
-        
-        if not self.data.get('child_coverages'):
-            return covered_children
-        
-        for i, child in enumerate(self.data['children']):
-            coverage = self.data['child_coverages'][i]
-            if coverage and (coverage.get('face_value') or
-                              self.get_product().is_static_benefit() or
-                             (coverage.get('coverage_selection') and
-                                  self.get_product().is_simple_coverage() and
-                                  self.get_product().is_applicant_covered('children', coverage['coverage_selection']))):
-                covered_children.append(child)
+        covered_children, coverages = self.get_covered_children_with_coverages()
         return covered_children
 
     def get_child_coverage(self, child_num=0):
-        
         return self.format_coverage(self.data['child_coverages'][child_num])
+    
+    def get_covered_children_with_coverages(self):
+        covered_children = []
+        coverages = []
+        
+        if not self.data.get('child_coverages'):
+            return covered_children, coverages
+    
+        for i, child in enumerate(self.data['children']):
+            coverage = self.data['child_coverages'][i]
+            if self.is_child_coverage_valid(coverage):
+                covered_children.append(child)
+                coverages.append(coverage)
+                
+        return covered_children, coverages
+    
+    def is_child_coverage_valid(self, coverage):
+        return (coverage and (coverage.get('face_value') or
+                                 self.get_product().is_static_benefit() or
+                                 (coverage.get('coverage_selection') and
+                                      self.get_product().is_simple_coverage() and
+                                      self.get_product().is_applicant_covered('children',
+                                                                              coverage['coverage_selection']))))
 
+    def get_absolute_child_index(self, covered_child_index):
+    
+        current_covered_index = 0
+        
+        for i, child in enumerate(self.data['children']):
+            coverage = self.data['child_coverages'][i]
+            if self.is_child_coverage_valid(coverage):
+                # We found a covered child, this is either the one we were looking for, or we look for the next one.
+                if current_covered_index == covered_child_index:
+                    return i
+                else:
+                    current_covered_index += 1
+        
+        # Shouldn't get here.
+        raise ValueError("Invalid covered child index")
+                
     def get_child_premium(self, child_num=0):
         if self.get_product().is_employee_premium_only():
             return decimal.Decimal('0.00')
@@ -373,7 +399,12 @@ class EnrollmentDataWrap(object):
 
         # Filter out emp and sp only questions
         return [q for q in questions if not q.get('is_employee_only') and not q.get('is_spouse_only')]
-
+    
+    def get_covered_child_soh_questions(self, child_index):
+        # Same as above but interpret the index as an index into the covered_children only.
+        abs_child_index = self.get_absolute_child_index(child_index)
+        return self.get_child_soh_questions(abs_child_index)
+    
     def get_employee_esignature(self):
         if self.should_use_call_center_workflow():
             # Replace employee signature with "John Doe voice auth on file 02:45pm"

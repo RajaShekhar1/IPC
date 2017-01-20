@@ -390,10 +390,10 @@ var StandardHealthQuestion = function (question, product_coverage) {
   };
 
 
-  self.does_any_applicant_need_to_answer = ko.pureComputed(function () {
+  self.does_any_applicant_need_to_answer = ko.computed(function () {
 
-    return _.any(self.product_coverage.applicant_coverage_selections(), function (app_cov) {
-      return self.does_applicant_need_to_answer(app_cov.applicant);
+    return _.any(self.product_coverage.get_covered_applicants(), function (applicant) {
+      return self.does_applicant_need_to_answer(applicant);
     });
   });
   Object.defineProperty(self, 'action_name', {value: HealthQuestions.Responses.Yes, configurable: true});
@@ -760,8 +760,8 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
   };
 
   self.does_any_applicant_need_to_answer = ko.computed(function () {
-    return _.any(self.product_coverage.applicant_coverage_selections(), function (app_cov) {
-      return self.does_applicant_need_to_answer(app_cov.applicant);
+    return _.any(self.product_coverage.get_covered_applicants(), function (app) {
+      return self.does_applicant_need_to_answer(app);
     });
   });
 };
