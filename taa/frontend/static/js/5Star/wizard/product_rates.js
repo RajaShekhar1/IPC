@@ -164,7 +164,7 @@ var product_rates_service = (function() {
     var requests = _.map(products, function(product) {
       var enabled_riders = coverage_vm.get_enabled_riders_for_product(product);
       var data = _build_rate_parameters(payment_mode, applicant_list, statecode, enabled_riders, product, classification_mappings, occupation);
-      var request = remote_service.get_product_rates(product.product_data.id, data);
+      var request = remote_service.get_product_rates(product.product_data.id, data, coverage_vm.case_data.id);
       request.product_id = product.product_data.id;
       return request;
     });
@@ -215,7 +215,8 @@ var product_rates_service = (function() {
   function _build_applicant_parameters(applicant_list) {
     return {
       employee: applicant_list.get_employee().serialize_data(),
-      spouse: (applicant_list.has_valid_spouse())? applicant_list.get_spouse().serialize_data() : null
+      spouse: (applicant_list.has_valid_spouse())? applicant_list.get_spouse().serialize_data() : null,
+      children: (applicant_list.has_valid_children() ? _.map(applicant_list.get_valid_children(), function(c) {return c.serialize_data()}) : [])
     };
   }
 
