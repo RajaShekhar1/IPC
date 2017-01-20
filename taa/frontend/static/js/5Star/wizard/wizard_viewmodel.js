@@ -18,6 +18,7 @@ var wizard_viewmodel = (function () {
                       should_include_spouse, should_include_children, root) {
     this.products = available_products;
     this.applicants = applicant_list;
+    this.case_data = case_data;
 
     this.should_include_spouse = should_include_spouse;
     this.should_include_children = should_include_children;

@@ -530,6 +530,12 @@ class EnrollmentDataWrap(object):
 
         return 'yes' if val else 'no'
 
+    def get_third_party_enrollment_id(self):
+        if self.data.get('third_party_enrollment_id'):
+            return self.data['third_party_enrollment_id']
+        else:
+            return None
+
     def get_effective_date(self):
         if self.data.get('effective_date'):
             return dateutil_parse(self.data.get('effective_date'))

@@ -169,6 +169,11 @@ var wizard_products = (function () {
     },
 
     does_override_rate_options: function () {
+      // If the product data has specified maximum coverage or premium values for age-bands, we want to override the
+      //  rate options presented to the user.
+      // if (this.product_data.coverage_limits && this.product_data.coverage_limits.max_coverage && this.product_data.coverage_limits.max_coverage.is_enabled) {
+      //   return true;
+      // }
       return false;
     },
 
@@ -325,6 +330,7 @@ var wizard_products = (function () {
     };
 
     self.filter_coverage_options_for_applicant_type = function (all_options, applicant_type) {
+
       if (applicant_type === wizard_applicant.Applicant.EmployeeType) {
         return self.filter_employee_coverage_options(all_options);
       } else if (applicant_type === wizard_applicant.Applicant.SpouseType) {

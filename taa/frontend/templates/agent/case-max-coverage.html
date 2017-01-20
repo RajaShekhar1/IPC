@@ -1,0 +1,116 @@
+{# Maximum Coverage settings for a product included in a case. #}
+<div class="form-group"
+     data-bind="visible: $parent.should_show_coverage_limits(product)">
+  <h4 class="header lighter blue">Coverage Limits</h4>
+  <!--ko if: $parent.should_show_max_age(product) -->
+  <div data-bind="with: $parent.get_maximum_age_vm_for_product($data)">
+    <label>
+      <input type="checkbox" class="ace ace-switch ace-switch-4 btn-flat"
+             data-bind="checked: is_enabled"
+      >
+      <span class="lbl">&nbsp;&nbsp;Restrict Maximum Age</span>
+    </label>
+    <br/>
+    <div class="row" data-bind="slideDownIf: is_enabled">
+      <div class="col-xs-offset-2 col-xs-10">
+        <div class="row">
+          <label class="col-xs-2">Employee:</label> <input class="col-xs-2" type="number" min="0" max="120"
+                                                           data-bind="textInput: max_employee_age">
+        </div>
+        <br>
+        <div class="row">
+          <label class="col-xs-2">Spouse: </label> <input class="col-xs-2" type="number" min="0" max="120"
+                                                          data-bind="textInput: max_spouse_age">
+        </div>
+      </div>
+    </div>
+  </div>
+  <!--/ko-->
+
+  <!--ko if: $parent.should_show_max_coverage(product) -->
+  <div data-bind="with: $parent.get_maximum_coverage_vm_for_product($data)">
+    <label>
+      <input type="checkbox" class="ace ace-switch ace-switch-4 btn-flat"
+             data-bind="checked: is_enabled"
+      >
+      <span class="lbl">&nbsp;&nbsp;Restrict Maximum Coverage</span>
+    </label>
+    <br/>
+    <div class="row" data-bind="slideDownIf: is_enabled">
+
+      <div class="col-xs-offset-2 col-xs-10">
+        <h4 class="text-center" data-bind="if: applicant_limits().length === 0">No coverage restrictions entered</h4>
+        <table class="table table-bordered" data-bind="visible: applicant_limits().length > 0">
+          <thead>
+          <tr>
+            <th>Applicant</th>
+            <th>Age</th>
+            <th>Max Coverage</th>
+            <th>Max Premium</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody data-bind="foreach: sorted_applicant_limits">
+          <tr>
+            <td data-bind="text: display_applicant_type"></td>
+            <td data-bind="text: display_age_band"></td>
+            <td data-bind="text: display_coverage_maximum"></td>
+            <td data-bind="text: display_premium_maximum"></td>
+            <td>
+              <button class='btn btn-default'
+                      data-bind="click: function() {$parent.delete_applicant_limit($data)}">
+                <i class="ace-icon fa fa-minus"></i> Remove
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+        <button class='btn btn-default' data-bind="click: show_applicant_limit_form"><i
+                class="ace-icon fa fa-plus"></i> Add Max Coverage
+        </button>
+        <br>
+        <div data-bind="slideDownIf: new_applicant_limit">
+          <div class='well well-info' data-bind="with: new_applicant_limit">
+            <div class="form-group">
+              <label class="text-right col-xs-3">Applicant Type:</label>
+              <div class="col-xs-9">
+                <select data-bind="value: applicant_type">
+                  <option value="">(Select Applicant Type)</option>
+                  <option value="employee">Employee</option>
+                  <option value="spouse">Spouse</option>
+                  <option value="child">Child</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="text-right col-xs-3">Lower Age:</label>
+              <div class="col-xs-2"><input type="number" min='0' max="120" data-bind="textInput: min_age"></div>
+
+              <label class="text-right col-xs-2">Upper Age:</label>
+              <div class="col-xs-2"><input type="number" min='0' max="120" data-bind="textInput: max_age"></div>
+              <div class="col-xs-3"></div>
+            </div>
+            <div class="form-group">
+              <label class="text-right col-xs-3">Max Coverage:</label>
+              <div class="col-xs-3"><select data-bind="value: max_coverage, options: coverage_options, optionsCaption: 'No Max Coverage'"></select></div>
+            </div>
+            <div class="form-group">
+              <label class="text-right col-xs-3">Max Premium:</label>
+              <div class="col-xs-3"><input type="text" size="4" data-bind="textInput: max_premium"> <span data-bind="html: display_premium_frequency"></span></div>
+
+            </div>
+            <div class="form-group">
+              <button class="btn btn-default" data-bind="click: $parent.add_coverage_limit">Submit</button>
+            </div>
+            <ul class="list-unstyled" data-bind="foreach: $parent.validation_errors()">
+              <li class="error" data-bind="text: message"></li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+  <!--/ko-->
+</div>

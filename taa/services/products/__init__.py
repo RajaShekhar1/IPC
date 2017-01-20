@@ -1,3 +1,5 @@
+import decimal
+
 from flask import abort
 from flask_stormpath import current_user
 
@@ -247,10 +249,10 @@ class ProductService(DBService):
         db.session.flush()
         db.session.refresh(product)
 
-    def get_rates(self, product, demographics, riders=None, rate_level=None):
-
+    def get_rates(self, product, demographics, riders=None, rate_level=None, case_id=None):
+        
         if product.get_base_product_code() == 'Group CI':
-            return get_rates(product, **demographics)
+            product_rates = get_rates(product, **demographics)
         elif product.get_base_product_code() in ['ACC', 'HI']:
             # Set up the rate calculator to use 'tiers' of coverage options + rate levels.
             coverage_tiers = [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC,
@@ -265,9 +267,9 @@ class ProductService(DBService):
                            ]
             }}
 
-            return rate_response
+            product_rates = rate_response
         elif product.get_base_product_code() in ['Static Benefit']:
-            return {'employee': {'flat_fee': product.flat_fee}}
+            product_rates = {'employee': {'flat_fee': product.flat_fee}}
         else:
             # Use the new rates calculator for all the other products.
             rate_response = {}
@@ -311,7 +313,21 @@ class ProductService(DBService):
                         rate_response[applicant_type]['byface'] = filter(lambda rate: rate['coverage'] <= limit,
                                                                          rate_response[applicant_type]['byface'])
 
-            return rate_response
+            product_rates = rate_response
+            
+        # Some cases limit the returned rates via age-banded max coverage and/or premiums.
+        if case_id:
+            from taa.services.cases import CaseService
+            case = CaseService().get(case_id)
+        else:
+            case = None
+            
+        if not case:
+            return product_rates
+        
+        return self.filter_rates_for_case(product_rates, product, demographics, case)
+    
+    
 
     def get_recommendations(self, product, demographics):
         return recommendations.get_recommendations(product, **demographics)
@@ -455,8 +471,73 @@ class ProductService(DBService):
             
         return filter(lambda p: is_allowed_in_state(p, state), product_options)
 
+    def filter_rates_for_case(self, product_rates, product, demographics, case):
+        # Enforce max coverage and max premium if provided
+        from taa.services.cases import CaseService
+        case_service = CaseService()
+        limit_data = case_service.get_product_coverage_limit_data(case, product)
+        if limit_data and 'max_coverage' in limit_data and limit_data['max_coverage']['is_enabled']:
+            return MaxCoverageLimiter(limit_data['max_coverage'], product, demographics).filter_rates(product_rates)
+        else:
+            return product_rates
+            
+
+class MaxCoverageLimiter(object):
+    def __init__(self, limit_data, product, demographics):
+        self.limit_data = limit_data
+        self.product = product
+        self.demographics = demographics
+        
+    def filter_rates(self, product_rates):
+        
+        for limit in self.limit_data['applicant_limits']:
+            self.filter_rates_if_in_age_band(limit, product_rates)
+        
+        return product_rates
+    
+    def filter_rates_if_in_age_band(self, limit, product_rates):
+        age_band = AgeBand(limit['min_age'], limit['max_age'])
+        if limit['applicant_type'] == 'employee' and age_band.is_included(self.demographics['employee_age']):
+    
+            product_rates['employee']['byface'] = self.filter_by_limit(product_rates['employee']['byface'], limit)
+            product_rates['employee']['bypremium'] = self.filter_by_limit(product_rates['employee']['bypremium'], limit)
+             
+        elif limit['applicant_type'] == 'spouse' and age_band.is_included(self.demographics['spouse_age']):
+            
+            product_rates['spouse']['byface'] = self.filter_by_limit(product_rates['spouse']['byface'], limit)
+            product_rates['spouse']['bypremium'] = self.filter_by_limit(product_rates['spouse']['bypremium'], limit)
+            
+        elif limit['applicant_type'] == 'child' and any([age_band.is_included(c['age']) for c in self.demographics['children']]):
+            if product_rates.get('children', {}).get('byface'):
+                product_rates['children']['byface'] = self.filter_by_limit(product_rates['children']['byface'], limit)
+            
+            if product_rates.get('children', {}).get('bypremium'):
+                product_rates['children']['bypremium'] = self.filter_by_limit(product_rates['children']['bypremium'], limit)
 
 
+    def filter_by_limit(self, rate_list, limit):
+        
+        # Apply max coverage rule
+        if limit.get('max_coverage'):
+            max_coverage = int(limit['max_coverage'])
+            rate_list = filter(lambda c: c['coverage'] <= max_coverage, rate_list)
+            
+        # Apply max premium rule
+        if limit.get('max_premium'):
+            max_premium = decimal.Decimal(str(limit['max_premium']))
+            rate_list = filter(lambda c: decimal.Decimal(str(c['premium'])) <= max_premium, rate_list)
+        
+        return rate_list
+
+class AgeBand(object):
+    def __init__(self, min_age, max_age):
+        self.min_age = int(min_age)
+        self.max_age = int(max_age)
+        
+    def is_included(self, age):
+        if not age:
+            return False
+        return self.min_age <= int(age) and int(age) < self.max_age
 
 class ProductCriteriaService(DBService):
     __model__ = GuaranteeIssueCriteria

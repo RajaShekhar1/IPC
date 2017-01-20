@@ -106,6 +106,19 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return effective;
   };
 
+  self.should_show_coverage_limits = function(product) {
+    return self.should_show_max_coverage(product) || self.should_show_max_age(product);
+  };
+
+  self.should_show_max_coverage = function(product) {
+    return !_.includes(["HI", "ACC", "Static Benefit"], product.base_product_type);
+  };
+
+  self.should_show_max_age = function(product) {
+    return !_.includes(["HI", "ACC", "Static Benefit"], product.base_product_type);
+  };
+
+
   function get_coverage_limit_settings_for_product(product) {
     var product_settings = {};
     if (case_data.product_settings.coverage_limits && case_data.product_settings.coverage_limits[product.id]) {
@@ -125,6 +138,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.get_maximum_coverage_vm_for_product = function(product) {
     return coverage_settings_module.get_max_coverage_vm_for_product({
+      payment_mode: self.payment_mode,
       product: product,
       settings: get_coverage_limit_settings_for_product(product)
     });

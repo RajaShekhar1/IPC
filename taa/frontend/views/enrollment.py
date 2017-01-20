@@ -316,7 +316,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
             'enroller_selects': enroller_selects,
         },
         applicants=applicants,
-        products=[serialize_product_for_wizard(p, soh_questions) for p in
+        products=[serialize_product_for_wizard(p, soh_questions, case) for p in
                   product_options],
         payment_modes=payment_mode_choices,
         employee_questions=employee_questions,
@@ -353,9 +353,9 @@ def get_product_effective_dates(product_settings, effective_date):
     return product_effective_date_list
 
 
-def serialize_product_for_wizard(product, all_soh_questions):
+def serialize_product_for_wizard(product, all_soh_questions, case):
     data = product.to_json()
-    # Override the name to be the base product name
+    # Override the name to be the short name, otherwise default to full base product name.
     data['name'] = product.get_short_name() if product.get_short_name() else product.get_base_product().name
     data[
         'base_product_name'] = product.get_base_product().get_short_name() if product.get_base_product().get_short_name() else product.get_base_product().name
@@ -364,6 +364,12 @@ def serialize_product_for_wizard(product, all_soh_questions):
     data['code'] = product.get_base_product_code()
     data['base_product_type'] = data['code']
     data['soh_questions'] = all_soh_questions.get(product.id, [])
+    
+    # Include case-specific product coverage limits with the data.
+    coverage_limit_data = case_service.get_product_coverage_limit_data(case, product)
+    if coverage_limit_data:
+        data['coverage_limits'] = coverage_limit_data
+        
     return data
 
 

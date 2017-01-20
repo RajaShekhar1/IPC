@@ -156,7 +156,7 @@
                     <HireDate>{{ employee.hire_date }}</HireDate>
                     <ActivelyAtWorkInd tc="{{ employee.actively_at_work_code }}">{{ employee.actively_at_work }}</ActivelyAtWorkInd>
                     <EmployerName>{{ case.company_name }}</EmployerName>
-                    <EmployeeID></EmployeeID>
+                    <EmployeeID>{{ employee.third_party_enrollment_id }}</EmployeeID>
                     <OLifeExtension>
                         {# PDF application form does not have Employer Id value in Group Number Field. We have put a dummy value in field for example. Vendor needs to send this value in next field #}
                         <EmployerID>{{ case.group_number }}</EmployerID>
