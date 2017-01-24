@@ -275,6 +275,20 @@ function numberWithCommas(x) {
 }
 
 
+function formatPremiumValue(val) {
+  if (val == null) {
+    return "(NA)";
+  }
+  return "$" + numberWithCommas(val.toFixed(2));
+}
+
+function formatCoverageValue(val) {
+  if (val == null) {
+    return "(NA)";
+  }
+  return "$" + numberWithCommas(val);
+}
+
 // Custom bindings
 
 // Show or hide a modal based on a boolean observable

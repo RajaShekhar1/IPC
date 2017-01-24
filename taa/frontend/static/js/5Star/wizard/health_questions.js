@@ -196,6 +196,7 @@ var health_questions = (function () {
                 // Employees must answer if >= 10000 coverage
                 {
                   guarantee_issue_amount: 10000,
+                  guarantee_issue_premium: null,
                   applicant_type: 'Employee',
                   age_max: null,
                   age_min: null,
@@ -208,6 +209,7 @@ var health_questions = (function () {
                 {
                   // Children never have to answer, make the max GI amount bigger than is possible to select to achieve this effect.
                   guarantee_issue_amount: 25000,
+                  guarantee_issue_premium: null,
                   applicant_type: 'Child',
                   age_max: null,
                   age_min: null,
@@ -566,16 +568,43 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     //  the selected coverage. Returns undefined if there is no qualifying option.
     // We don't do <= here since we are assuming that the selected coverage is already greater than
     //  any GI amount, otherwise we wouldn't be searching for the best GI coverage to replace the selected coverage.
-    var descendingCriteria = _.sortBy(criteria, function (c) {
-      return -c.guarantee_issue_amount;
+
+    var applicant_coverage_options = self.product_coverage.get_coverage_options_for_applicant(applicant);
+
+    var sorted_coverage_options = _.sortBy(applicant_coverage_options, function(opt) {
+      // Whether this is a by-premium or by-face, sort by face value (coverage amount)
+      return -opt.face_value;
     });
-    return _.find(descendingCriteria, function (criterion) {
-      return (
-        self.does_applicant_meet_demographic_GI_criteria(applicant, criterion) &&
-        criterion.guarantee_issue_amount < coverage
-      );
+    var sorted_less_than_selected_options = _.filter(sorted_coverage_options, function(opt) {
+      return opt.face_value < coverage;
+    });
+
+
+    self.does_applicant_meet_coverage_GI_criteria(applicant, cov, crit);
+
+    var applicant_coverage = self.product_coverage.__get_coverage_for_applicant(applicant);
+
+    // var descendingCriteria = _.sortBy(criteria, function (c) {
+    //   return -c.guarantee_issue_amount;
+    // });
+
+    var applicable_criteria = _.filter(criteria, function(c) { return self.does_applicant_meet_demographic_GI_criteria(applicant, c);});
+
+    var found_criterion = null;
+    _.each(sorted_less_than_selected_options, function(opt) {
+      var matching_criterion = _.find(applicable_criteria, function(c) {
+        return self.does_applicant_meet_coverage_GI_criteria(applicant, opt, c);
+      })
+    });
+
+    return _.find(applicable_criteria, function (criterion) {
+      _.find()
     });
   };
+
+  function get_criteria_coverage_by_applicant(applicant) {
+
+  }
 
   self.show_yes_dialogue = function (applicant, message) {
 
@@ -665,9 +694,9 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
 
     // See if there is a GI condition with a lower coverage amount.
     // If no option was found, present the normal yes dialogue.
-    if (!get_reduced_coverage_criteria(applicant)) {
-      return false;
-    }
+    //if (!get_reduced_coverage_criteria(applicant)) {
+    //  return false;
+    //}
 
     // If there is no option that will fit the reduced criterion, also don't show the reduce option.
     if (!find_reduced_coverage_option(applicant)) {
@@ -776,7 +805,29 @@ GIHealthQuestion.prototype.does_applicant_meet_GI_criteria = function (applicant
 };
 GIHealthQuestion.prototype.does_applicant_meet_coverage_GI_criteria = function (applicant, applicant_coverage, criterion) {
   var self = this;
-  return applicant_coverage.get_cumulative_coverage_amount() <= criterion.guarantee_issue_amount;
+  // In order to be within GI limits, the applicant's cumulative coverage amount for this product must be under (or exactly)
+  //  the max coverage amount on any applicable criteria AND less than the coverage that the criteria's premium amount would buy (if given).
+  //
+  //
+
+  var cumulative_coverage_amount = applicant_coverage.get_cumulative_coverage_amount();
+  var meets_coverage = cumulative_coverage_amount <= criterion.guarantee_issue_amount;
+  if (!meets_coverage) {
+    return false;
+  }
+
+  if (criterion.guarantee_issue_premium && !isNaN(parseFloat(criterion.guarantee_issue_premium))) {
+    var weekly_premium_criterion = parseFloat(criterion.guarantee_issue_premium);
+    var annual_premium_criterion = weekly_premium_criterion * 52;
+    var selected_premium = applicant_coverage.coverage_option().premium;
+    var selected_annual_premium = selected_premium * applicant_coverage.coverage_option().payment_mode().frequency;
+    if (selected_annual_premium > annual_premium_criterion) {
+      return false;
+    }
+  }
+
+  // We met all the criteria.
+  return true;
 };
 GIHealthQuestion.prototype.does_applicant_meet_demographic_GI_criteria = function (applicant, criterion) {
   // Checks all the criteria _except_ for the coverage so we know if the applicant
@@ -828,6 +879,12 @@ GIHealthQuestion.prototype.does_yes_stop_app = function () {
   // Otherwise, clicking YES always stops (but will show the reduce/remove dialogue if optional).
   return true;
 };
+
+
+function does_coverage_meet_GI_criterion(coverage_amount, criterion) {
+
+}
+
 
 function ActivelyAtWorkHealthQuestion(question, product_coverage, employee, actively_at_work_observable) {
   "use strict";

@@ -305,6 +305,7 @@ class GuaranteeIssueCriteria(GICriteriaSerializer, db.Model):
     applicant_type = db.Column(db.Unicode(16))
 
     guarantee_issue_amount = db.Column(db.Integer)
+    guarantee_issue_premium = db.Column(db.Numeric)
 
     # Age criteria: Exclusive range
     age_min = db.Column(db.Integer)
