@@ -525,9 +525,7 @@ var wizard_products = (function () {
   //endregion
 
   GroupCIProduct.prototype.max_child_age = function () {
-    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 26.
-    var base_max_age = Product.prototype.max_child_age.call(this);
-    return Math.min(26, base_max_age);
+    return 26;
   };
   GroupCIProduct.prototype.is_children_coverage_grouped = function() {
     return true;
