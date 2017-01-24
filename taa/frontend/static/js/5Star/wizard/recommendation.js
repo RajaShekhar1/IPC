@@ -27,25 +27,56 @@ function RecommendationSet(name, recommendations) {
     return valid_recommendation.recommended_coverage.payment_mode().display_lowercase();
   };
 
-  self.formatted_total_premium = function() {
-    return format_premium_value(self.get_total_premium());
+  self.formatted_total_premium = function(applicant_coverages) {
+    return format_premium_value(self.get_total_premium(applicant_coverages));
   };
 
-  self.get_total_premium = function() {
+  self.get_total_premium = function(applicant_coverages) {
     var total = 0.0;
     // _.each(self.recommendations, function(rec) {
     //   total += rec.get_total_premium();
     // });
 
-    if (vm.employee().is_valid()) {
-      total += self.get_applicant_recommendation(wizard_applicant.Applicant.EmployeeType).get_total_premium();
-    }
-    if (vm.should_include_spouse_in_table()) {
-      total += self.get_applicant_recommendation(wizard_applicant.Applicant.SpouseType).get_total_premium();
-    }
-    if (vm.should_include_children()) {
-      total += self.get_applicant_recommendation(wizard_applicant.Applicant.ChildType).get_total_premium();
-    }
+
+    //
+    // if (vm.employee().is_valid()) {
+    //   total += self.get_applicant_recommendation(wizard_applicant.Applicant.EmployeeType).get_total_premium();
+    // }
+    // if (vm.should_include_spouse_in_table()) {
+    //   total += self.get_applicant_recommendation(wizard_applicant.Applicant.SpouseType).get_total_premium();
+    // }
+    // if (vm.should_include_children()) {
+    //   var rec = self.get_applicant_recommendation(wizard_applicant.Applicant.ChildType);
+    //   if (rec.product.is_children_coverage_grouped()) {
+    //     total += rec.get_total_premium();
+    //   } else {
+    //     _.each()
+    //   }
+    //
+    // }
+
+    var has_added_children_coverage = false;
+
+    _.each(ko.unwrap(applicant_coverages), function(applicant_coverage) {
+      var applicant = applicant_coverage.applicant;
+
+      if (applicant.type === wizard_applicant.Applicant.EmployeeType) {
+        total += self.get_applicant_recommendation(wizard_applicant.Applicant.EmployeeType).get_total_premium();
+      } else if (applicant.type === wizard_applicant.Applicant.SpouseType) {
+        total += self.get_applicant_recommendation(wizard_applicant.Applicant.SpouseType).get_total_premium();
+      } else if (applicant.type === wizard_applicant.Applicant.ChildType) {
+        var rec = self.get_applicant_recommendation(wizard_applicant.Applicant.ChildType);
+        if (rec.product.is_children_coverage_grouped() && !has_added_children_coverage) {
+          // Only add child premium once if grouped coverage
+          total += rec.get_total_premium();
+          has_added_children_coverage = true;
+        } else {
+          // Individual children coverage
+          total += rec.get_total_premium();
+        }
+      }
+    });
+
 
     return total;
   };
@@ -64,10 +95,11 @@ function Recommendation(name, applicant_type, coverage_option, product) {
   };
 
   self.get_total_premium = function() {
+    // No longer multiply here now that we show a row for each child for FPP
     // FPP products multiply by # children.
-    if (self.product.is_fpp_product() && self.applicant_type === wizard_applicant.Applicant.ChildType) {
-      return self.recommended_coverage.premium * window.vm.coverage_vm.applicants.get_valid_children().length;
-    }
+    // if (self.product.is_fpp_product() && self.applicant_type === wizard_applicant.Applicant.ChildType) {
+    //   return self.recommended_coverage.premium * window.vm.coverage_vm.applicants.get_valid_children().length;
+    // }
 
     return self.recommended_coverage.premium;
   };

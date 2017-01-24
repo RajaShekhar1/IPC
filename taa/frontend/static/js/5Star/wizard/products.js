@@ -67,21 +67,40 @@ var wizard_products = (function () {
   }
 
   Product.prototype = {
-
-    // Override if necessary
+    // Age max limits are subject to case-specific overrides. Also, some product subclasses will change the default as well.
 
     min_emp_age: function () {
       return 18;
     },
     max_emp_age: function () {
-      return 70;
+      var default_max_emp_age = 70;
+
+      // Check for case-specific override for employee.
+      if (this.product_data.coverage_limits && this.product_data.coverage_limits.max_age && this.product_data.coverage_limits.max_age.is_enabled) {
+        var max_emp_age = parseInt(this.product_data.coverage_limits.max_age.max_employee_age);
+        if (max_emp_age && !isNaN(max_emp_age) && max_emp_age < default_max_emp_age) {
+          return max_emp_age;
+        }
+      }
+
+      return default_max_emp_age;
     },
 
     min_sp_age: function () {
       return 18;
     },
     max_sp_age: function () {
-      return 70;
+      var default_max_sp_age = 70;
+
+      // Check for case-specific override for spouse.
+      if (this.product_data.coverage_limits && this.product_data.coverage_limits.max_age && this.product_data.coverage_limits.max_age.is_enabled) {
+        var max_spouse_age = parseInt(this.product_data.coverage_limits.max_age.max_spouse_age);
+        if (max_spouse_age && !isNaN(max_spouse_age) && max_spouse_age < default_max_sp_age) {
+          return max_spouse_age;
+        }
+      }
+
+      return default_max_sp_age;
     },
 
     min_child_age: function () {
@@ -89,6 +108,20 @@ var wizard_products = (function () {
     },
     max_child_age: function () {
       return 23;
+    },
+
+    is_valid_applicant: function(applicant) {
+      var self = this;
+
+      if (applicant.type === wizard_applicant.Applicant.EmployeeType) {
+        return this.is_valid_employee(applicant);
+      } else if (applicant.type === wizard_applicant.Applicant.SpouseType) {
+        return this.is_valid_spouse(applicant);
+      } else if (applicant.type === wizard_applicant.Applicant.ChildType && applicant.is_group()) {
+        return _.any(applicant.applicants(), function(a) { return self.is_valid_child(a);});
+      } else {
+        return this.is_valid_child(applicant);
+      }
     },
 
     is_valid_employee: function (employee) {
@@ -105,6 +138,11 @@ var wizard_products = (function () {
     is_valid_child: function (child) {
       var age = child.get_age();
       return (age >= this.min_child_age() && age <= this.max_child_age());
+    },
+
+    is_children_coverage_grouped: function() {
+      // Some products require
+      return false;
     },
 
     // Allow the details of the benefit's face value, display to be based on the product
@@ -150,11 +188,6 @@ var wizard_products = (function () {
     },
 
     does_override_rate_options: function () {
-      // If the product data has specified maximum coverage or premium values for age-bands, we want to override the
-      //  rate options presented to the user.
-      // if (this.product_data.coverage_limits && this.product_data.coverage_limits.max_coverage && this.product_data.coverage_limits.max_coverage.is_enabled) {
-      //   return true;
-      // }
       return false;
     },
 
@@ -444,10 +477,10 @@ var wizard_products = (function () {
     // Need to validate age and is_smoker is valid
     var age = employee.get_age();
     var valid = (age >= this.min_emp_age() && age <= this.max_emp_age());
-    valid &= employee.is_smoker() != null;
-    valid &= employee.has_valid_weight();
-    valid &= employee.has_valid_height();
-    valid &= employee.has_valid_gender();
+    // valid &= employee.is_smoker() != null;
+    // valid &= employee.has_valid_weight();
+    // valid &= employee.has_valid_height();
+    // valid &= employee.has_valid_gender();
 
     return valid;
   };
@@ -455,10 +488,10 @@ var wizard_products = (function () {
   GroupCIProduct.prototype.is_valid_spouse = function (spouse) {
     var age = spouse.get_age();
     var valid = (age >= this.min_sp_age() && age <= this.max_sp_age());
-    valid &= spouse.is_smoker() != null;
-    valid &= spouse.has_valid_weight();
-    valid &= spouse.has_valid_height();
-    valid &= spouse.has_valid_gender();
+    // valid &= spouse.is_smoker() != null;
+    // valid &= spouse.has_valid_weight();
+    // valid &= spouse.has_valid_height();
+    // valid &= spouse.has_valid_gender();
     return valid;
   };
 
@@ -492,12 +525,18 @@ var wizard_products = (function () {
   //endregion
 
   GroupCIProduct.prototype.max_child_age = function () {
-      // Until we can separate children out, leave this at 23.
-      return 23;
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 26.
+    var base_max_age = Product.prototype.max_child_age.call(this);
+    return Math.min(26, base_max_age);
+  };
+  GroupCIProduct.prototype.is_children_coverage_grouped = function() {
+    return true;
   };
 
   GroupCIProduct.max_emp_age = function () {
-    return 70;
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 70.
+    var base_max_age = Product.prototype.max_emp_age.call(this);
+    return Math.min(70, base_max_age);
   };
   
   function FPPGovProduct(product_data) {
@@ -601,6 +640,11 @@ var wizard_products = (function () {
   HIProduct.prototype.should_show_step_5 = function () {
     return false;
   };
+  HIProduct.prototype.max_child_age = function () {
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 26.
+    var base_max_age = Product.prototype.max_child_age.call(this);
+    return Math.min(26, base_max_age);
+  };
   //endregion
 
   //region ACCProduct
@@ -652,6 +696,11 @@ var wizard_products = (function () {
 
   ACCProduct.prototype.should_show_step_four = function () {
     return false;
+  };
+  ACCProduct.prototype.max_child_age = function() {
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 26.
+    var base_max_age = Product.prototype.max_child_age.call(this);
+    return Math.min(26, base_max_age);
   };
   //endregion
 

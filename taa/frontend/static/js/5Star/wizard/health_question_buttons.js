@@ -7,7 +7,8 @@ var health_question_buttons = (function () {
     self.product_health_questions = product_health_questions;
 
     self.button_groups = ko.pureComputed(function () {
-      return _.map(self.product_coverage.applicant_list.get_valid_applicants(), function (applicant) {
+      var applicants = self.product_coverage.get_covered_applicants();
+      return _.map(applicants, function (applicant) {
         // Create a button viewmodel that is linked to this question and the response object.
         var response = self.product_health_questions.get_applicant_answer_for_question(applicant, question);
         return new ResponseButtonGroup(question, applicant, response, {});
@@ -28,7 +29,6 @@ var health_question_buttons = (function () {
     self.no_highlight = self.question.get_no_highlight();
 
     self.handle_yes = function () {
-      //console.log('Yes', self);
       self.response.value('Yes');
       if (question.has_static_value) {
         question.value(true);

@@ -247,6 +247,7 @@ def edit_census_record(case_id, census_record_id):
 
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)
+    
     """:type: taa.services.cases.models.CaseCensus"""
     record_form = CensusRecordForm(obj=census_record)
     agent = agent_service.get_logged_in_agent()

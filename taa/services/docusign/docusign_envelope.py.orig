@@ -262,9 +262,6 @@ class EnrollmentDataWrap(object):
             return True
 
         elif self.get_product().is_simple_coverage():
-            if not 'employee_coverage' in self.data:
-                return False
-                
             return self.get_product().is_applicant_covered(
                 'spouse',
                 # This uses employee coverage to determine if spouse is included.
@@ -315,51 +312,25 @@ class EnrollmentDataWrap(object):
         return len(self.get_covered_children())
 
     def get_covered_children(self):
-        covered_children, coverages = self.get_covered_children_with_coverages()
+        covered_children = []
+        
+        if not self.data.get('child_coverages'):
+            return covered_children
+        
+        for i, child in enumerate(self.data['children']):
+            coverage = self.data['child_coverages'][i]
+            if coverage and (coverage.get('face_value') or
+                              self.get_product().is_static_benefit() or
+                             (coverage.get('coverage_selection') and
+                                  self.get_product().is_simple_coverage() and
+                                  self.get_product().is_applicant_covered('children', coverage['coverage_selection']))):
+                covered_children.append(child)
         return covered_children
 
     def get_child_coverage(self, child_num=0):
+        
         return self.format_coverage(self.data['child_coverages'][child_num])
-    
-    def get_covered_children_with_coverages(self):
-        covered_children = []
-        coverages = []
-        
-        if not self.data.get('child_coverages'):
-            return covered_children, coverages
-    
-        for i, child in enumerate(self.data['children']):
-            coverage = self.data['child_coverages'][i]
-            if self.is_child_coverage_valid(coverage):
-                covered_children.append(child)
-                coverages.append(coverage)
-                
-        return covered_children, coverages
-    
-    def is_child_coverage_valid(self, coverage):
-        return (coverage and (coverage.get('face_value') or
-                                 self.get_product().is_static_benefit() or
-                                 (coverage.get('coverage_selection') and
-                                      self.get_product().is_simple_coverage() and
-                                      self.get_product().is_applicant_covered('children',
-                                                                              coverage['coverage_selection']))))
 
-    def get_absolute_child_index(self, covered_child_index):
-    
-        current_covered_index = 0
-        
-        for i, child in enumerate(self.data['children']):
-            coverage = self.data['child_coverages'][i]
-            if self.is_child_coverage_valid(coverage):
-                # We found a covered child, this is either the one we were looking for, or we look for the next one.
-                if current_covered_index == covered_child_index:
-                    return i
-                else:
-                    current_covered_index += 1
-        
-        # Shouldn't get here.
-        raise ValueError("Invalid covered child index")
-                
     def get_child_premium(self, child_num=0):
         if self.get_product().is_employee_premium_only():
             return decimal.Decimal('0.00')
@@ -399,19 +370,14 @@ class EnrollmentDataWrap(object):
 
         # Filter out emp and sp only questions
         return [q for q in questions if not q.get('is_employee_only') and not q.get('is_spouse_only')]
-    
-    def get_covered_child_soh_questions(self, child_index):
-        # Same as above but interpret the index as an index into the covered_children only.
-        abs_child_index = self.get_absolute_child_index(child_index)
-        return self.get_child_soh_questions(abs_child_index)
-    
+
     def get_employee_esignature(self):
         if self.should_use_call_center_workflow():
             # Replace employee signature with "John Doe voice auth on file 02:45pm"
             date = self.enrollment_record.signature_time
             esig = u"{} voice auth on file {}".format(self.get_employee_name(), date.strftime("%l:%M%p").strip().lower())
             return self.data.get('emp_sig_txt', esig)
-        elif self.did_employee_sign_in_wizard():
+        elif self.did_finish_signing_in_wizard():
             date = self.enrollment_record.signature_time
             esig = u"{} esigned {}".format(self.get_employee_name(), date.strftime("%l:%M%p").strip().lower())
             return self.data.get('emp_sig_txt', esig)
@@ -433,21 +399,11 @@ class EnrollmentDataWrap(object):
             date = self.enrollment_record.signature_time
             esig = u'{} esigned {}'.format(self.get_agent_signing_name(), date.strftime("%l:%M%p").strip().lower())
             return self.data.get('agent_sig_txt', esig)
-        elif self.enrollment_record.agent_signing_datetime:
-            # Agent signed at some point later most likely
-            date = self.enrollment_record.agent_signing_datetime
-            esig = u'{} esigned {}'.format(self.get_agent_signing_name(), date.strftime("%l:%M%p").strip().lower())
-            return esig
         else:
             return self.data.get('agent_sig_txt', '')
 
     def get_agent_esignature_date(self):
-        if self.enrollment_record.agent_signing_datetime:
-            date = self.enrollment_record.agent_signing_datetime
-        else:
-            date = self.enrollment_record.signature_time
-        
-        # If a date is provided in the enrollment data, it overrides the above date.
+        date = self.enrollment_record.signature_time
         return self.data.get('agent_sig_date', date.strftime('%m/%d/%Y'))
 
     def has_agent_esigned(self):
@@ -561,32 +517,19 @@ class EnrollmentDataWrap(object):
 
         return 'yes' if val else 'no'
 
-    def get_third_party_enrollment_id(self):
-        if self.data.get('third_party_enrollment_id'):
-            return self.data['third_party_enrollment_id']
-        else:
-            return None
-
     def get_effective_date(self):
         if self.data.get('effective_date'):
             return dateutil_parse(self.data.get('effective_date'))
-        
-        # Look for effective date for this product on one of the coverage records (they should all have the same date).
-        for coverage_record in self.get_coverage_records():
-            if coverage_record.effective_date:
-                return coverage_record.effective_date
-            
-        # Fall back to the signature time / application date.
-        return self.enrollment_record.signature_time
+        else:
+            return self.enrollment_record.signature_time
 
-    def get_coverage_records(self):
-        "Returns the coverage records associated with this product"
-        return filter(lambda r: r.product_id == self.get_product_id(), self.enrollment_record.coverages)
-    
     def get_applicant_data(self):
         applicants = []
 
-        effective_date = self.get_effective_date().strftime("%m/%d/%Y")
+        if self.data.get('effective_date'):
+            effective_date = dateutil_parse(self.data['effective_date']).strftime("%m/%d/%Y")
+        else:
+            effective_date = self.enrollment_record.signature_time.strftime("%m/%d/%Y")
 
         if self.enrollment_record.payment_mode:
             payment_mode = "{}".format(self.enrollment_record.payment_mode)
@@ -600,7 +543,14 @@ class EnrollmentDataWrap(object):
             premium_amount = self.get_employee_premium()
             applicant_effective_date = effective_date
         else:
+<<<<<<< HEAD
+            if not self.get_product().is_applicant_eligible('employee'):
+                coverage = 'INELIGIBLE'
+            else:
+                coverage = 'WAIVED'
+=======
             coverage = 'WAIVED'
+>>>>>>> master
             premium = ''
             premium_amount = decimal.Decimal('0.00')
             payment_mode = ''
@@ -629,7 +579,11 @@ class EnrollmentDataWrap(object):
                 applicant_payment_mode = payment_mode
                 applicant_effective_date = effective_date
             else:
+<<<<<<< HEAD
+                coverage = 'WAIVED' if self.get_product().is_applicant_eligible('spouse') else 'INELIGIBLE'
+=======
                 coverage = 'WAIVED'
+>>>>>>> master
                 premium = ''
                 premium_amount = decimal.Decimal('0.00')
                 applicant_payment_mode = ''
@@ -669,11 +623,22 @@ class EnrollmentDataWrap(object):
                 applicant_payment_mode = ''
                 applicant_effective_date = ''
 
+            if is_covered:
+                ch_coverage = self.get_child_coverage(i)
+            elif not self.get_product().is_applicant_eligible('children'):
+                ch_coverage = 'INELIGIBLE'
+            else:
+                ch_coverage = 'WAIVED'
+
             applicants.append(dict(
                 relationship="child",
                 name=child['first'],
                 last_name=child['last'],
+<<<<<<< HEAD
+                coverage=ch_coverage,
+=======
                 coverage=self.get_child_coverage(i) if is_covered else 'WAIVED',
+>>>>>>> master
                 coverage_tier=None,
                 premium=premium_amount,
                 formatted_premium=premium,
@@ -773,13 +738,8 @@ class EnrollmentDataWrap(object):
     #     rider_settings = product_settings.get('riders', [])
 
     def did_finish_signing_in_wizard(self):
-        return self.did_employee_sign_in_wizard() and self.did_agent_sign_in_wizard()
+        return self.data.get('applicant_signed') and self.data.get('agent_signed')
 
-    def did_employee_sign_in_wizard(self):
-        return self.data.get('applicant_signed')
-    
-    def did_agent_sign_in_wizard(self):
-        return self.data.get('agent_signed')
 
 # For employee signing sessions
 def build_callback_url(wizard_data, session_type):

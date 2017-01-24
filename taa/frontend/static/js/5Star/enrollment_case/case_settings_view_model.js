@@ -83,6 +83,18 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.initialize_effective_products();
 
+  self.should_show_coverage_limits = function(product) {
+    return self.should_show_max_coverage(product) || self.should_show_max_age(product);
+  };
+
+  self.should_show_max_coverage = function(product) {
+    return !_.includes(["HI", "ACC", "Static Benefit"], product.base_product_type);
+  };
+
+  self.should_show_max_age = function(product) {
+    return !_.includes(["HI", "ACC", "Static Benefit"], product.base_product_type);
+  };
+
   self.get_product_effective_date_settings = function (product) {
     var effective = _.find(self.effective_products(), function (ep) {
       return ep.id == product.id;

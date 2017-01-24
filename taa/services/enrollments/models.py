@@ -157,12 +157,12 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
         from taa.services import LookupService
         application_service = LookupService('EnrollmentApplicationService')
 
-        product_ids = set()
+        product_ids = []
 
         for enrollment_data in application_service.get_standardized_json_for_enrollment(self):
             wrapped_data = EnrollmentDataWrap(enrollment_data, self.case, self)
             product_id = wrapped_data.get_product_id()
-            product_ids.add(product_id)
+            product_ids.append(product_id)
 
         return product_ids
 

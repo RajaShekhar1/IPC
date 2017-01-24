@@ -390,10 +390,10 @@ var StandardHealthQuestion = function (question, product_coverage) {
   };
 
 
-  self.does_any_applicant_need_to_answer = ko.pureComputed(function () {
+  self.does_any_applicant_need_to_answer = ko.computed(function () {
 
-    return _.any(self.product_coverage.applicant_coverage_selections(), function (app_cov) {
-      return self.does_applicant_need_to_answer(app_cov.applicant);
+    return _.any(self.product_coverage.get_covered_applicants(), function (applicant) {
+      return self.does_applicant_need_to_answer(applicant);
     });
   });
   Object.defineProperty(self, 'action_name', {value: HealthQuestions.Responses.Yes, configurable: true});
@@ -419,10 +419,10 @@ StandardHealthQuestion.prototype.does_applicant_need_to_answer = function (appli
     return this.does_spouse_need_to_answer();
   }
   if (applicant.type === wizard_applicant.Applicant.ChildType) {
-    if (!applicant.applicants) {
+    if (!applicant.is_group()) {
       return this.does_child_need_to_answer(applicant);
     } else {
-      return _.any(applicant.applicants(), function (child) {
+      return _.any(applicant.valid_applicants(), function (child) {
         return this.does_child_need_to_answer(child);
       }, this);
     }
@@ -529,8 +529,15 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
 
   self.get_met_gi_criteria_for_child = function (child_applicant) {
     var criteria = self.get_criteria(child_applicant.type);
-    var children = self.product_coverage.applicant_list.get_children_group();
-    var coverage = self.product_coverage.__get_coverage_for_applicant(children);
+
+    var coverage;
+    if (self.product_coverage.product.is_children_coverage_grouped()) {
+      var children = self.product_coverage.applicant_list.get_children_group();
+      coverage = self.product_coverage.__get_coverage_for_applicant(children);
+    } else {
+      coverage = self.product_coverage.__get_coverage_for_applicant(child_applicant);
+    }
+
     return _.find(criteria, function (criterion) {
       return self.does_applicant_meet_GI_criteria(child_applicant, coverage, criterion);
     });
@@ -753,8 +760,8 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
   };
 
   self.does_any_applicant_need_to_answer = ko.computed(function () {
-    return _.any(self.product_coverage.applicant_coverage_selections(), function (app_cov) {
-      return self.does_applicant_need_to_answer(app_cov.applicant);
+    return _.any(self.product_coverage.get_covered_applicants(), function (app) {
+      return self.does_applicant_need_to_answer(app);
     });
   });
 };

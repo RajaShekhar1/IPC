@@ -206,24 +206,23 @@ class FPPTemplate(DocuSignServerTemplate):
 
     def make_children_tabs(self):
         tabs = []
-
-        for i, child in enumerate(self.data['children']):
-            if not self.data['children'][i] or not self.data['child_coverages'][i]:
-                continue
-
-            tabs += self.add_child_data_tabs(i)
-            tabs += self.generate_SOH_tabs("c%s" % (i + 1), self.data.get_child_soh_questions(i))
-            tabs += self.generate_SOH_GI_tabs("c%s" % (i + 1), self.data.get_child_soh_questions(i))
+        covered_children, coverages = self.data.get_covered_children_with_coverages()
+        
+        for i, child in enumerate(covered_children):
+            coverage = coverages[i]
+            
+            tabs += self.add_child_data_tabs(child, coverage, i)
+            tabs += self.generate_SOH_tabs("c%s" % (i + 1), self.data.get_covered_child_soh_questions(i))
+            tabs += self.generate_SOH_GI_tabs("c%s" % (i + 1), self.data.get_covered_child_soh_questions(i))
 
         if self.is_child_attachment_form_needed():
             tabs += [DocuSignTextTab('extra_children_notice', "SEE ATTACHED FOR ADDITIONAL CHILDREN")]
 
         return tabs
 
-    def add_child_data_tabs(self, child_index):
+    def add_child_data_tabs(self, child_data, child_coverage, child_index):
         child_prefix = "child" + str(child_index + 1)
-        child_coverage = self.data["child_coverages"][child_index]
-        child_data = self.data["children"][child_index]
+        
         return [
             DocuSignTextTab(child_prefix + "Name", child_data['first'] + " " + child_data['last']),
             # For old form and Group CI compatibility, also send separate first and last

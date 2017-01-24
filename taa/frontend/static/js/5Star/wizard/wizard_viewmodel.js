@@ -26,7 +26,7 @@ var wizard_viewmodel = (function () {
 
     this.multiproduct_wizard_widget = ko.observable(null);
 
-    this.applicants_in_table = ko.computed(function () {
+    this.applicants_in_table = ko.pureComputed(function () {
       var applicants_in_table = [];
       if (this.applicants.has_valid_employee()) {
         applicants_in_table.push(this.applicants.get_employee());
@@ -51,7 +51,7 @@ var wizard_viewmodel = (function () {
     this.payment_mode = ko.observable(
       payment_mode_module.select_initial_payment_mode(case_data, this.payment_modes)
     );
-    this.can_change_payment_mode = ko.computed(function () {
+    this.can_change_payment_mode = ko.pureComputed(function () {
       return payment_mode_module.can_change_payment_mode(case_data);
     });
     this.is_payment_mode_valid = ko.pureComputed(this._is_payment_mode_valid, this);
@@ -145,14 +145,53 @@ var wizard_viewmodel = (function () {
       );
     },
     get_applicant_coverage_option_for_product: function (applicant, product) {
+      var self = this;
+
       if (applicant.type == wizard_applicant.Applicant.SpouseType && !this.should_include_spouse()) {
         return null_coverage;
       }
       if (applicant.type == wizard_applicant.Applicant.ChildType && !this.should_include_children()) {
         return null_coverage;
       }
-      var applicant_coverage_selection = this.get_applicant_coverage_for_product(applicant, product);
-      return applicant_coverage_selection.get_selected_coverage();
+
+      // if (applicant.is_group()) {
+      //   if (applicant.applicants().length > 0) {
+      //     // Combine coverage options for children - not too pretty.
+      //
+      //     var coverages = _.map(applicant.applicants(), function(child) {
+      //       var child_coverage_selection = self.get_applicant_coverage_for_product(child, product);
+      //       return child_coverage_selection.get_selected_coverage();
+      //     });
+      //
+      //     var premium = 0;
+      //     _.each(coverages, function(cov) {
+      //       if (cov.is_valid()) {
+      //         if (cov.premium > 0) {
+      //           premium += cov.premium;
+      //         }
+      //       }
+      //     });
+      //
+      //     return new CoverageOption({
+      //       is_by_face: false,
+      //       premium: premium,
+      //       payment_mode: self.payment_mode,
+      //       face_value: 0,
+      //       applicant_type: wizard_applicant.Applicant.EmployeeType,
+      //       tier: null,
+      //       flat_fee: 0
+      //     })
+      //
+      //   } else {
+      //     return new NullCoverageOption();
+      //   }
+      // } else {
+        var applicant_coverage_selection = this.get_applicant_coverage_for_product(applicant, product);
+        return applicant_coverage_selection.get_selected_coverage();
+      //}
+
+
+
     },
     get_applicant_coverage_for_product: function (applicant, product) {
       var product_coverage = this.get_product_coverage(product);
@@ -175,14 +214,8 @@ var wizard_viewmodel = (function () {
           // continue
           return true;
         }
-        var matching_applicant_coverage = _.find(pcov.valid_applicant_coverage_selections(), function (app_cov) {
-          return app_cov.applicant === applicant;
-        });
-        if (!matching_applicant_coverage) {
-          return format_premium_value(0.0);
-        }
 
-        applicant_total += matching_applicant_coverage.get_total_premium();
+        applicant_total += pcov.get_total_premium_for_applicant(applicant);
       });
       return format_premium_value(applicant_total);
     },
@@ -315,8 +348,24 @@ var wizard_viewmodel = (function () {
       return '';
     };
 
+
+    self.get_child_applicants = ko.computed(function () {
+      // Each product has different limitations on children age and whether or not the children are treated as a group.
+      var valid_children_for_product = _.filter(self.applicant_list.get_valid_children(), function (child) {
+        return product.is_valid_child(child);
+      });
+
+      // Return a list of children or a list with a single children group.
+      if (self.product.is_children_coverage_grouped()) {
+        return [self.applicant_list.get_children_group()];
+      } else {
+        return valid_children_for_product;
+      }
+    });
+
     // Cache the selections for applicants, instances should be instantiated just once.
     self._applicant_coverage_viewmodels = {};
+
 
     // What options do the applicants have to choose from?
     self.applicant_coverage_selections = ko.computed(this._get_applicant_coverage_selections, this);
@@ -364,6 +413,12 @@ var wizard_viewmodel = (function () {
     self.get_covered_children = ko.computed(function () {
       return self._get_covered_children();
     });
+
+    // Summary of coverage for tables
+    self.get_coverage_summary = function(applicant) {
+      return new ApplicantCoverageSummaryVM(applicant, self).display_coverage_summary()
+    };
+
 
     // Riders
     // Enabled riders for this case
@@ -500,6 +555,7 @@ var wizard_viewmodel = (function () {
     }
 
 
+
     // Subscribe to changes to applicant coverage options to ensure we move down to the next appropriate level.
     //  Timeout is used since we need most everything defined before it tries to evaluate the coverage options computed,
     //   since many parts of the UI depend on the coverage options.
@@ -571,6 +627,10 @@ var wizard_viewmodel = (function () {
 
   ProductCoverageViewModel.prototype = {
     _get_effective_date: function (root) {
+      if (this.get_total_premium() === 0.0) {
+        return "(N/A)";
+      }
+
       if (_.get(this.effective_date_settings, 'effective_date_override')) {
         return normalize_date(_.get(this.effective_date_settings, 'effective_date'))
       }
@@ -622,39 +682,98 @@ var wizard_viewmodel = (function () {
     },
 
     _get_applicant_coverage_selections: function () {
+      var self = this;
       //
       // Return every valid ApplicantGroup that can get coverage for this product.
       var selections = [];
 
-      if (this.product.has_simple_coverage()) {
+      if (self.product.has_simple_coverage()) {
         // Use the employee option only for now.
-        selections.push(this.__get_coverage_for_applicant(this.applicant_list.get_employee()));
+        selections.push(self.__get_coverage_for_applicant(self.applicant_list.get_employee()));
         return selections;
       }
 
-      if (this.applicant_list.has_valid_employee()) {
-        selections.push(this.__get_coverage_for_applicant(this.applicant_list.get_employee()));
+      if (self.applicant_list.has_valid_employee() && self.product.is_valid_applicant(self.applicant_list.get_employee())) {
+        selections.push(self.__get_coverage_for_applicant(self.applicant_list.get_employee()));
       }
-      if (this.applicant_list.has_valid_spouse() && this.should_include_spouse()) {
-        selections.push(this.__get_coverage_for_applicant(this.applicant_list.get_spouse()));
+      if (self.applicant_list.has_valid_spouse() && self.should_include_spouse() && self.product.is_valid_applicant(self.applicant_list.get_spouse())) {
+        selections.push(self.__get_coverage_for_applicant(self.applicant_list.get_spouse()));
       }
-      if (this.applicant_list.has_valid_children() && this.should_include_children()) {
-        // TODO: insert check to see if this product groups children for coverage, otherwise add each child separately.
-        selections.push(this.__get_coverage_for_applicant(this.applicant_list.get_children_group()));
+
+      if (self.applicant_list.has_valid_children() && self.should_include_children()) {
+        // var product = self.product;
+
+        // Apply product validation to each child.
+        // var valid_children_for_product = _.filter(self.applicant_list.get_valid_children(), function(child) {
+        //   return product.is_valid_child(child);
+        // });
+        //
+        // // If the children are selected as a group, we add a group, otherwise add them as individual applicants.
+        // if (product.is_children_coverage_grouped()) {
+        //
+        //   selections.push(self.__get_coverage_for_applicant(children_group));
+        //   //wizard_applicant.get_children_group()
+        // } else {
+        //   _.each(valid_children_for_product, function(child_applicant) {
+        //     selections.push(self.__get_coverage_for_applicant(child_applicant));
+        //   });
+        // }
+        var child_coverages = _.map(self.get_child_applicants(), self.__get_coverage_for_applicant, self);
+        _.each(child_coverages, function(cov) { selections.push(cov); });
       }
 
       return selections;
     },
 
     valid_applicant_coverage_selections: function () {
+
       return _.filter(this.applicant_coverage_selections(), function (acov) {
         var applicant = acov.applicant;
-        return (
-          (applicant.type === wizard_applicant.Applicant.EmployeeType && this.applicant_list.has_valid_employee()) ||
-          (applicant.type === wizard_applicant.Applicant.SpouseType && (this.applicant_list.has_valid_spouse() && this.should_include_spouse())) ||
-          (applicant.type === wizard_applicant.Applicant.ChildType && (this.applicant_list.has_valid_children() && this.should_include_children()))
+
+        return this.product.is_valid_applicant(applicant) && (
+          (applicant.type === wizard_applicant.Applicant.EmployeeType &&
+              this.applicant_list.has_valid_employee() //&&
+              //this.product.is_valid_employee(applicant)
+          ) ||
+          (applicant.type === wizard_applicant.Applicant.SpouseType &&
+              (this.applicant_list.has_valid_spouse() &&
+               this.should_include_spouse() //&&
+               //this.product.is_valid_spouse(applicant)
+              )
+              ) ||
+          (applicant.type === wizard_applicant.Applicant.ChildType && (
+              this.applicant_list.has_valid_children() &&
+              this.should_include_children() //&&
+              //this.product.is_valid_child(applicant)
+          ))
         )
       }, this);
+    },
+
+    get_applicant_coverages_which_selected_coverage: function () {
+      return _.filter(this.valid_applicant_coverage_selections(), function(acov) {
+        return acov.coverage_option().is_valid();
+      });
+    },
+
+    get_covered_applicants: function() {
+      // Ungroups any groups
+      var self = this;
+      var covered_applicants = _.map(self.get_applicant_coverages_which_selected_coverage(), function(acov) {
+        return acov.applicant;
+      });
+      var out = [];
+      _.each(covered_applicants, function(applicant) {
+        if (applicant.is_group()) {
+          _.each(applicant.valid_applicants(), function(a) {
+            out.push(a);
+          })
+        } else {
+          out.push(applicant);
+        }
+      });
+
+      return out;
     },
 
     get_coverage_for_applicant: function (applicant) {
@@ -665,18 +784,43 @@ var wizard_viewmodel = (function () {
     },
 
     // This raw method should not be used outside this class.
-    __get_coverage_for_applicant: function (applicant) {
-      // special case for group of children; if a child applicant is passed, use the group coverage
-      if (applicant.type === wizard_applicant.Applicant.ChildType) {
-        applicant = this.applicant_list.get_children_group();
+    __get_coverage_for_applicant: function (app) {
+      var self = this;
+
+
+      // special case for group of children; if a group of children is passed, we display it differently.
+      if (app.is_group() && self.product.is_children_coverage_grouped()) {
+        // return the first child's coverage for the group product
+        //return this.__get_coverage_for_applicant(this.get_child_applicants()[0]);
+        //
+
+        // var coverages = _.map(app.applicants(), function(child) {
+        //   return self.__get_coverage_for_applicant(child);
+        // });
+
+
+      } else if (app.is_group() && !self.product.is_children_coverage_grouped()) {
+
       }
 
+      // if (applicant.type === wizard_applicant.Applicant.ChildType) {
+      //   applicant = this.applicant_list.get_children_group();
+      // }
+
+      // TODO: If the applicant is not valid for this product, return a special null coverage?
+
+      // TODO: If this product requires child grouping, and this applicant is a child, do something different here...
+      // if (self.product.is_children_coverage_grouped() && app.type === wizard_applicant.Applicant.ChildType && !app.is_group()) {
+      //   // for now, return group coverage
+      //   return this.__get_coverage_for_applicant(this.get_child_applicants()[0]);
+      // }
+
       var applicant_coverage;
-      if (applicant._id in this._applicant_coverage_viewmodels) {
-        applicant_coverage = this._applicant_coverage_viewmodels[applicant._id];
+      if (app._id in this._applicant_coverage_viewmodels) {
+        applicant_coverage = this._applicant_coverage_viewmodels[app._id];
       } else {
-        var new_selection_instance = new ApplicantCoverageSelectionVM(applicant, this);
-        this._applicant_coverage_viewmodels[applicant._id] = new_selection_instance;
+        var new_selection_instance = new ApplicantCoverageSelectionVM(app, this);
+        this._applicant_coverage_viewmodels[app._id] = new_selection_instance;
         applicant_coverage = new_selection_instance;
       }
 
@@ -684,15 +828,44 @@ var wizard_viewmodel = (function () {
     },
 
     _get_covered_children: function () {
-      var coverage = this.get_coverage_for_applicant(this.applicant_list.get_children_group());
-      if (coverage.coverage_option().is_valid()) {
-        // Return only valid children with coverage.
-        return _.filter(this.applicant_list.get_children(), function (child) {
-          return child.is_valid();
-        });
+      var self = this;
+
+      if (self.product.is_children_coverage_grouped()) {
+        // If valid coverage is selected, return all the eligible children.
+        var coverage = self.get_coverage_for_applicant(self.applicant_list.get_children_group());
+
+        if (coverage.is_valid()) {
+          // Return only valid children with coverage.
+          return _.filter(this.applicant_list.get_children(), function (child) {
+            return child.is_valid() && self.product.is_valid_child(child);
+          });
+        } else {
+          return [];
+        }
+
       } else {
-        return [];
+
+        var valid_covered_children = _.filter(self.get_child_applicants(), function(child) {
+            var coverage = self.get_coverage_for_applicant(child);
+            return coverage.coverage_option().is_valid();
+        });
+
+        // Un-group groups TODO: I think this is not possible in this branch anymore, remove?
+        var ungrouped_valid_covered_children = [];
+        _.each(valid_covered_children, function(child) {
+          if (child.is_group()) {
+            _.each(child.valid_applicants(), function(group_child){
+              ungrouped_valid_covered_children.push(group_child);
+            })
+          } else {
+            ungrouped_valid_covered_children.push(child);
+          }
+        });
+
+        return ungrouped_valid_covered_children;
+
       }
+
     },
 
     get_total_premium: function () {
@@ -700,10 +873,35 @@ var wizard_viewmodel = (function () {
       if (this.did_decline()) {
         return total;
       }
+
       _.each(this.applicant_coverage_selections(), function (applicant_coverage) {
         total += applicant_coverage.get_total_premium();
       }, this);
       return total;
+    },
+
+    get_total_premium_for_applicant: function(applicant) {
+      var self = this;
+
+      if (!self.product.is_children_coverage_grouped() && applicant.is_group()) {
+        var total = 0.0;
+        _.each(applicant.valid_applicants(), function(child) {
+          var applicant_coverage = self.get_coverage_for_applicant(child);
+          if (!applicant_coverage) {
+            total += 0.0;
+          } else {
+            total += applicant_coverage.get_total_premium();
+          }
+        });
+        return total;
+      } else {
+        var applicant_coverage = self.get_coverage_for_applicant(applicant);
+        if (!applicant_coverage) {
+          return 0.0;
+        } else {
+          return applicant_coverage.get_total_premium();
+        }
+      }
     },
 
     is_applicant_type_covered: function (applicant_type) {
@@ -740,6 +938,8 @@ var wizard_viewmodel = (function () {
   };
 
   function ApplicantCoverageSelectionVM(applicant, product_coverage) {
+    var self = this;
+
     this.applicant = applicant;
     this.product_coverage = product_coverage;
     this.product = product_coverage.product;
@@ -757,6 +957,12 @@ var wizard_viewmodel = (function () {
       } else if (this.applicant.type === wizard_applicant.Applicant.ChildType && !this.product_coverage.root.should_include_children_in_table()) {
         return null_coverage;
       }
+
+      // Product validation of coverage
+      if (!this.applicant.is_group() && !this.product.is_valid_applicant(applicant)) {
+        return null_coverage;
+      }
+
 
       if (this.product.has_simple_coverage()) {
         return this.product_coverage.selected_simple_coverage_option();
@@ -778,10 +984,44 @@ var wizard_viewmodel = (function () {
       }
     }, this);
 
+    this.is_valid = ko.pureComputed(function() {
+      return this.coverage_option().is_valid();
+    }, this);
+
     this.did_select_option = ko.pureComputed(function () {
+      var self = this;
+
       if (this.product.has_simple_coverage()) {
         return this.product_coverage.selected_simple_coverage_option().is_valid();
       }
+
+      if (this.applicant.is_group()) {
+        if (!this.product.is_children_coverage_grouped()) {
+          // for each child, get the ApplicantCoverage.did_select_option() result.
+          var valid_children = _.filter(self.applicant.valid_applicants(), function(child) {
+            return self.product_coverage.product.is_valid_child(child);
+          });
+
+          return _.any(valid_children, function(child) {
+            return self.product_coverage.get_coverage_for_applicant(child).did_select_option();
+          });
+        } else {
+          // Group coverage
+          //return true;
+        }
+      }
+
+      // Hack of sorts: if this is a group, check if all valid applicants for this product made a selection.
+      // if (this.applicant.is_group()) {
+      //   // for each child, get the ApplicantCoverage.did_select_option() result.
+      //   var valid_children = _.filter(this.applicant.applicants(), function(child) {
+      //     return self.product_coverage.product.is_valid_child(child);
+      //   });
+      //
+      //   return _.all(valid_children, function(child) {
+      //     return self.product_coverage.get_coverage_for_applicant(child).did_select_option()
+      //   });
+      // }
 
       // Just see if a selection was made, even if the selection is NullCoverageOption.
       return (this.customized_coverage_option() !== null &&
@@ -866,11 +1106,16 @@ var wizard_viewmodel = (function () {
     },
 
     get_total_premium: function () {
-      // If this is an FPP product, and the applicant is a children group, we multiply the selected premium by the number of valid children.
-      if (this.applicant.type === wizard_applicant.Applicant.ChildType && this.product.is_fpp_product()) {
-        var num_valid_children = window.vm.applicant_list.get_valid_children().length;
-        return this.coverage_option().premium * num_valid_children;
+
+      if (this.product.has_simple_coverage() && this.applicant.type !== this.coverage_option().applicant_type) {
+        return 0.0;
       }
+
+      // If this is a child group, and children coverage is
+      // if (this.applicant.type === wizard_applicant.Applicant.ChildType && this.product.is_fpp_product()) {
+      //   var num_valid_children = window.vm.applicant_list.get_valid_children().length;
+      //   return this.coverage_option().premium * num_valid_children;
+      // }
 
       return this.coverage_option().premium;
     },
@@ -880,6 +1125,148 @@ var wizard_viewmodel = (function () {
     }
 
   };
+
+  // Covers most of the interface as ApplicantCoverageSelectionVM, but works for display the coverage of a group of applicants.
+  //   Anything that needs to work with the coverage amounts should use individuals, not groups. This VM is only intended to
+  //    make displaying group summaries easier.
+  function ApplicantGroupCoverageSelectionVM(applicant_group) {
+    var self = this;
+
+    self.applicant_group = applicant_group;
+    self.applicant = applicant_group;
+
+
+
+    self.did_select_option = ko.pureComputed(function() {
+      // FIXME
+      return true;
+    });
+
+    self.format_face_value = ko.pureComputed(function() {
+      return "Face Value Group";
+    });
+
+    self.format_premium_option = ko.pureComputed(function() {
+      return "Premium Group";
+    });
+
+    self.coverage_option = ko.pureComputed(function() {
+      return new GroupedCoverageVM(self.applicant_group, self.coverages);
+    });
+    self.get_selected_coverage = self.coverage_option;
+
+    self.is_valid = ko.pureComputed(function() {
+      var coverage = self.get_selected_coverage();
+      return coverage.is_valid();
+    });
+
+
+  }
+
+  function ApplicantCoverageSummaryVM(applicant, product_coverage) {
+    var self = this;
+
+    self.applicant = applicant;
+    self.product_coverage = product_coverage;
+
+    // self.did_select_option = ko.pureComputed(function() {
+    //
+    //   // If child group, and coverage is grouped, display group coverage.
+    //   if (self.applicant.type === wizard_applicant.Applicant.ChildType &&
+    //       self.product_coverage.product.is_children_coverage_grouped()) {
+    //
+    //     var coverage = product_coverage.get_coverage_for_applicant(applicant);
+    //     return coverage.did_select_option();
+    //
+    //   // if child group, but individual
+    //   } else if (self.applicant.type === wizard_applicant.Applicant.ChildType) {
+    //     // Individual child coverage; if any selected, return true.
+    //     return _.any(self.applicant.applicants, function(a) {
+    //       var c = product_coverage.get_coverage_for_applicant(a);
+    //       return c.did_select_option();
+    //     });
+    //
+    //   }
+    //
+    //   // Normal ungrouped coverage.
+    //   var coverage = product_coverage.get_coverage_for_applicant(applicant);
+    //   return coverage.did_select_option();
+    // });
+
+    self.display_coverage_summary = ko.pureComputed(function() {
+      var coverage_opt;
+
+
+      if (!self.product_coverage.product.is_valid_applicant(self.applicant)) {
+        return "Ineligible";
+      }
+
+      var applicant_coverage = self.product_coverage.get_coverage_for_applicant(self.applicant);
+      if (!applicant_coverage.did_select_option()) {
+        return "Select Coverage";
+      }
+
+
+      if (self.product_coverage.product.has_simple_coverage()) {
+        var status = self.product_coverage.get_coverage_status(applicant);
+        var out = "<strong>"+ status +"</strong>";
+        if (applicant.type === wizard_applicant.Applicant.EmployeeType) {
+          coverage_opt = product_coverage.get_coverage_for_applicant(applicant).coverage_option();
+          out += "<div>" + coverage_opt.format_premium_option() + "</div>";
+        }
+        return out;
+      } else {
+        if (self.applicant.type === wizard_applicant.Applicant.ChildType &&
+            !self.product_coverage.product.is_children_coverage_grouped()) {
+
+          // Individual child coverage;
+          var coverage_options = _.map(self.applicant.valid_applicants(), function(a) {
+            return {option: product_coverage.get_coverage_for_applicant(a).coverage_option(), applicant: a};
+          });
+
+          // List each one on his own line
+          var coverage_descriptions = [];
+          var ineligible_descriptions = [];
+          _.each(coverage_options, function(opt) {
+
+            if (!product_coverage.product.is_valid_applicant(opt.applicant)) {
+              ineligible_descriptions.push("<div>"+opt.applicant.first()+": <strong>Ineligible</strong></div>");
+            } else if (opt.option.is_valid()) {
+              coverage_descriptions.push("<div>" + opt.applicant.first() + ": <strong>" + opt.option.format_face_value() + "</strong></div>")
+            } else {
+              coverage_descriptions.push("<div>"+opt.applicant.first()+": <strong>- no benefit -</strong></div>")
+            }
+
+          });
+
+          var formatted_premium = format_premium_value(self.product_coverage.get_total_premium_for_applicant(self.applicant));
+          var premium_text = "<div>" + formatted_premium + " " + self.product_coverage.payment_mode().display_lowercase() + "</div>";
+
+          return coverage_descriptions.join("") + ineligible_descriptions.join("") + premium_text;
+        } else {
+
+          // Check ineligibility
+          if (applicant.type !== wizard_applicant.ApplicantGroup.Children && !product_coverage.product.is_valid_applicant(applicant)) {
+
+            return "<strong>Ineligible</strong></div>";
+          }
+
+          coverage_opt = product_coverage.get_coverage_for_applicant(applicant).coverage_option();
+
+          return "<strong>" + coverage_opt.format_face_value() +
+                 "</strong><div>" + coverage_opt.format_premium_option() + "</div>";
+        }
+
+
+
+      }
+
+    });
+
+
+  }
+
+
 
   function CoverageSummaryVM(product_coverages, applicant_list) {
     this.product_coverages = product_coverages;
@@ -892,7 +1279,7 @@ var wizard_viewmodel = (function () {
     }, this);
 
     this.valid_applicants = ko.pureComputed(function () {
-      return this.applicant_list.get_valid_applicants_for_coverage();
+      return this.applicant_list.get_valid_applicant_groups_for_coverage();
 
     }, this);
 
@@ -2353,7 +2740,7 @@ var wizard_viewmodel = (function () {
       var num_initial_children = self.children().length;
       var last_name = self.employee().last() || "";
       if (num_initial_children == 0) {
-        var num_blank_children_forms = (2 - num_initial_children);
+        var num_blank_children_forms = (1 - num_initial_children);
         for (var i = 0; i < num_blank_children_forms; i += 1) {
           var ch = wizard_applicant.create_applicant({
             last: last_name,

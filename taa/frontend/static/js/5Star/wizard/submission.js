@@ -224,7 +224,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
   }
 
   wizard_results.children = [];
-  _.each(product_cov.get_covered_children(), function (child) {
+  _.each(product_cov.applicant_list.get_valid_children(), function (child) {
     wizard_results['children'].push(child.serialize_data());
   });
 
@@ -239,8 +239,7 @@ function build_wizard_results_for_product_coverage(product_cov) {
 
     is_employee_actively_at_work: root.is_employee_actively_at_work(),
     has_spouse_been_treated_6_months: product_cov.has_spouse_been_treated_6_months(),
-    has_spouse_been_disabled_6_months: product_cov.has_spouse_been_disabled_6_months(),
-
+    has_spouse_been_disabled_6_months: product_cov.has_spouse_been_disabled_6_months()
   });
 
   if (health_questions) {
@@ -270,8 +269,14 @@ function build_wizard_results_for_product_coverage(product_cov) {
   // Children and child coverages
   wizard_results['child_coverages'] = [];
   wizard_results['children_soh_questions'] = [];
-  _.each(product_cov.get_covered_children(), function (child) {
-    var coverage = product_cov.__get_coverage_for_applicant(child);
+  _.each(product_cov.applicant_list.get_valid_children(), function (child) {
+    var coverage;
+    if (product_cov.product.is_children_coverage_grouped()) {
+      coverage = product_cov.__get_coverage_for_applicant(product_cov.applicant_list.get_children_group());
+    } else {
+      coverage = product_cov.__get_coverage_for_applicant(child);
+    }
+
     wizard_results['child_coverages'].push(coverage.coverage_option().serialize_data());
 
     if (health_questions) {

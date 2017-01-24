@@ -340,7 +340,8 @@ class EnrollmentApplicationService(DBService):
                     # Fall back to signature time for old case data.
                     effective_date = data['time_stamp'] if data.get('time_stamp') else datetime.now()
 
-            product = EnrollmentDataWrap(data, enrollment.case).get_product()
+            data_wrap = EnrollmentDataWrap(data, enrollment.case)
+            product = data_wrap.get_product()
 
             if data['employee_coverage']:
                 self.coverages_service.create_coverage(
@@ -356,14 +357,20 @@ class EnrollmentApplicationService(DBService):
                     data['spouse_coverage'],
                     EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE,
                     effective_date=effective_date)
-            if data['child_coverages'] and data['child_coverages'][0]:
-                if data['child_coverages'][0] == '':
-                    effective_date = None
-                self.coverages_service.create_coverage(
-                    enrollment, product, data, data['children'][0],
-                    data['child_coverages'][0],
-                    EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD,
-                    effective_date=effective_date)
+            if data_wrap.get_covered_children():
+                covered_children, coverages = data_wrap.get_covered_children_with_coverages()
+                if data_wrap.get_product().is_children_coverage_grouped():
+                    covered_children = covered_children[0:1]
+                    coverages = coverages[0:1]
+                
+                for i, covered_child in enumerate(covered_children):
+                    coverage = coverages[i]
+                    self.coverages_service.create_coverage(
+                        enrollment, product, data, covered_child,
+                        coverage,
+                        EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD,
+                        effective_date=effective_date)
+                
         db.session.flush()
 
     # Reports

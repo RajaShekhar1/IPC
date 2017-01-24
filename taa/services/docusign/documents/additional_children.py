@@ -102,11 +102,18 @@ class ChildAttachmentForm(PDFAttachment):
             self.get_spacer(),
             Paragraph("Statement of Health", bold_style2),
         ]
-        for question in question_data:
+        
+        # Outer loop is over the ordered question list of the first child
+        for soh_data in self.children[0]['soh_questions']:
+            if soh_data.get('is_spouse_only'):
+                continue
+            
+            question = soh_data['question']
+            
             # Draw the question.
             flowables.append(Paragraph(question, style))
 
-            # Draw the answer table.
+            # Draw the answer table with an answer for each child.
             answer_table_data = []
             for child_name, answer in question_data[question].iteritems():
                 if answer is None:
