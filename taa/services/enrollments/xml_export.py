@@ -254,6 +254,11 @@ def get_variables(data, enrollment, applicant_type, pdf_bytes):
     vars['employee']['actively_at_work'] = data.get_actively_at_work()# or 'Y'
     vars['employee']['actively_at_work_code'] = YESNO_SOH[data.get_actively_at_work()]
 
+    third_party_enrollment_id = data.get_third_party_enrollment_id()
+    if third_party_enrollment_id is None:
+        third_party_enrollment_id = ""
+    vars['employee']['third_party_enrollment_id'] = third_party_enrollment_id
+
     policy = get_policy_info(data, applicant_type, enrollee, enrollment.case)
     vars['policy'].update(policy)
 

@@ -1,5 +1,6 @@
 from flask import Blueprint, request
 from flask_stormpath import login_required, groups_required, user
+from taa.services.cases import CaseService
 
 from taa.core import TAAFormError
 from taa.api import route
@@ -102,7 +103,10 @@ def get_product_rates(product_id):
     rider_codes = data.get('rider_codes', [])
     statecode = data.get('statecode', None)
     rate_level = data.get('rate_level', None)
-
+    
+    # Are we limiting to a specific case? Some cases have further limitations on rates.
+    case_id = data.get('case_id')
+    
     demographics = dict(
         employee_age=employee['age'],
         employee_height=employee['height'],
@@ -119,9 +123,14 @@ def get_product_rates(product_id):
         payment_mode=payment_mode,
         statecode=statecode,
     )
-
+    
+    # Include the raw data as well
+    demographics['employee'] = employee
+    demographics['spouse'] = spouse
+    demographics['children'] = data.get('children', [])
+    
     # Return rates and recommendations
-    rates = product_service.get_rates(product, demographics, riders=rider_codes, rate_level=rate_level)
+    rates = product_service.get_rates(product, demographics, riders=rider_codes, rate_level=rate_level, case_id=case_id)
 
     recommendations = product_service.get_recommendations(
         product, demographics

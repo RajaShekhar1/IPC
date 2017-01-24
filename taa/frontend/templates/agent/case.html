@@ -581,6 +581,9 @@
                                         </div>
                                       </div>
 
+                                      {# Include max coverage settings #}
+                                      {% include "agent/case-max-coverage.html" %}
+
                                       {# Occupation Class Mappings #}
                                       <div class="form-group"
                                            data-bind="visible: $root.is_product_occupation_class_eligible(product)">

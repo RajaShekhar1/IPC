@@ -72,6 +72,7 @@ class EnrollmentRecordParser(object):
     product_code = EnrollmentRecordField("product_code", "product_code", preprocess_product_code, [required_validator, product_validator], flat_file_size=8, description="A string specifying the product being enrolled.")
     payment_mode = EnrollmentRecordField("payment_mode", "payment_mode", preprocess_numbers, [required_validator, payment_mode_validator], flat_file_size=2, description="A two digit number resenting the payment mode")
     enrollment_type = EnrollmentRecordField("enrollment_type", "enrollment_type", preprocess_string, [required_validator, enrollment_type_validator], flat_file_size=1, description="How the application was taken")
+    third_party_enrollment_id = EnrollmentRecordField("third_party_enrollment_id", "third_party_enrollment_id", preprocess_string, [], flat_file_size=9, description="A third party identifier for enrollments")
 
     # Employee Information
     emp_first = EnrollmentRecordField("emp_first", "employee_first", preprocess_string, [required_validator], flat_file_size=14, description="Employee first name")
@@ -172,6 +173,7 @@ class EnrollmentRecordParser(object):
         product_code,
         payment_mode,
         enrollment_type,
+        third_party_enrollment_id,
 
         # Employee data
         emp_first,

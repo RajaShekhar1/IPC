@@ -1,4 +1,5 @@
 import StringIO
+import json
 import uuid
 from datetime import datetime
 
@@ -676,3 +677,14 @@ class CaseService(DBService):
         removed_labels = new_labels - old_labels
         for label in removed_labels:
             self.remove_occupation_class_from_census_records(case_id, label)
+
+    def get_product_coverage_limit_data(self, case, product):
+        if not case.product_settings:
+            return None
+        if not case.product_settings.get('coverage_limits'):
+            return None
+        
+        limit_data = case.product_settings['coverage_limits']
+        product_limit_data = limit_data.get(str(product.id))
+        return product_limit_data
+        
