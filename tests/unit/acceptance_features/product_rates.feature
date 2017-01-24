@@ -524,42 +524,43 @@ Feature: Compute rates for products and associated riders.
       | 18  | $1.75   | $2.49   | $2.87   | $3.24   | $3.98   | $4.73   | $5.48   | $6.22   | $6.60   | $6.97   | $7.72   | $8.46    | $9.21    | $10.33   | $10.70   | $11.45   | $12.19   |
       | 70  | $14.12  | $27.23  | $33.79  | $40.35  | $53.46  | $66.58  | $79.69  | $92.81  | $99.37  | $105.92 | $119.04 | $132.15  | $145.27  | $164.94  | $171.50  | $184.62  | $197.73  |
 
+#
+#  Scenario: FPPTIY product + WP Rider + QOL
+#    Given I want rates for the 'FPPTIY' product
+#    When I lookup premiums by coverage with the above data for the following ages
+#      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+#      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
+#      | 65  | Employee       | IN    | 52   | Y        | Y         | N         |
+#      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
+#    Then I should see the following premiums
+#      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+#      | 18  | $1.83   | $2.66   | $3.08   | $3.49   | $4.32   | $5.15   | $5.98   | $6.82   | $7.23   | $7.65   | $8.48   | $9.31    | $10.14   | $11.38   | $11.80   | $12.63   | $13.46   |
+#      | 65  | $10.96  | $20.92  | $25.89  | $30.87  | $40.83  | $50.79  | $60.75  | $70.70  | $75.68  | $80.66  | $90.62  | $100.58  | $110.53  | $125.47  | $130.45  | $140.41  | $150.37  |
+#      | 70  | $15.21  | $29.42  | $36.52  | $43.62  | $57.83  | $72.04  | $86.25  | $100.45 | $107.56 | $114.66 | $128.87 | $143.08  | $157.28  | $178.60  | $185.70  | $199.91  | $214.12  |
 
-  Scenario: FPPTIY product + WP Rider + QOL
-    Given I want rates for the 'FPPTIY' product
-    When I lookup premiums by coverage with the above data for the following ages
-      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
-      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
-      | 65  | Employee       | IN    | 52   | Y        | Y         | N         |
-      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
-    Then I should see the following premiums
-      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
-      | 18  | $1.83   | $2.66   | $3.08   | $3.49   | $4.32   | $5.15   | $5.98   | $6.82   | $7.23   | $7.65   | $8.48   | $9.31    | $10.14   | $11.38   | $11.80   | $12.63   | $13.46   |
-      | 65  | $10.96  | $20.92  | $25.89  | $30.87  | $40.83  | $50.79  | $60.75  | $70.70  | $75.68  | $80.66  | $90.62  | $100.58  | $110.53  | $125.47  | $130.45  | $140.41  | $150.37  |
-      | 70  | $15.21  | $29.42  | $36.52  | $43.62  | $57.83  | $72.04  | $86.25  | $100.45 | $107.56 | $114.66 | $128.87 | $143.08  | $157.28  | $178.60  | $185.70  | $199.91  | $214.12  |
 
+#  Scenario: FPPTIB product + WP Rider + QOL
+#    Given I want rates for the 'FPPTIB' product
+#    When I lookup premiums by coverage with the above data for the following ages
+#      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+#      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
+#      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
+#    Then I should see the following premiums
+#      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+#      | 18  | $1.95   | $2.90   | $3.38   | $3.86   | $4.81   | $5.76   | $6.71   | $7.66   | $8.14   | $8.62   | $9.57   | $10.52   | $11.47   | $12.90   | $13.38   | $14.33   | $15.28   |
+#      | 70  | $17.39  | $33.79  | $41.99  | $50.18  | $66.58  | $82.97  | $99.37  | $115.76 | $123.96 | $132.15 | $148.55 | $164.94  | $181.34  | $205.93  | $214.13  | $230.52  | $246.91  |
 
-  Scenario: FPPTIB product + WP Rider + QOL
-    Given I want rates for the 'FPPTIB' product
-    When I lookup premiums by coverage with the above data for the following ages
-      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
-      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
-      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
-    Then I should see the following premiums
-      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
-      | 18  | $1.95   | $2.90   | $3.38   | $3.86   | $4.81   | $5.76   | $6.71   | $7.66   | $8.14   | $8.62   | $9.57   | $10.52   | $11.47   | $12.90   | $13.38   | $14.33   | $15.28   |
-      | 70  | $17.39  | $33.79  | $41.99  | $50.18  | $66.58  | $82.97  | $99.37  | $115.76 | $123.96 | $132.15 | $148.55 | $164.94  | $181.34  | $205.93  | $214.13  | $230.52  | $246.91  |
-
-  Scenario: FPPTIW product + WP Rider + QOL
-    Given I want rates for the 'FPPTIW' product
-    When I lookup premiums by coverage with the above data for the following ages
-      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
-      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
-      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
-    Then I should see the following premiums
-      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
-      | 18  | $1.77   | $2.54   | $2.93   | $3.31   | $4.08   | $4.86   | $5.63   | $6.40   | $6.78   | $7.17   | $7.94   | $8.71    | $9.48    | $10.64   | $11.03   | $11.80   | $12.57   |
-      | 70  | $14.12  | $27.23  | $33.79  | $40.35  | $53.46  | $66.58  | $79.69  | $92.81  | $99.37  | $105.92 | $119.04 | $132.15  | $145.27  | $164.94  | $171.50  | $184.62  | $197.73  |
+# Need updated rates for WP being enabled on FPPTIW, B, Y  (uses the FPPTIG WP rates now)
+#  Scenario: FPPTIW product + WP Rider + QOL
+#    Given I want rates for the 'FPPTIW' product
+#    When I lookup premiums by coverage with the above data for the following ages
+#      | Age | Applicant Type | State | Mode | WP Rider | QOL Rider | AIR Rider |
+#      | 18  | Employee       | IN    | 52   | Y        | Y         | N         |
+#      | 70  | Employee       | IN    | 52   | Y        | Y         | N         |
+#    Then I should see the following premiums
+#      | Age | $10,000 | $20,000 | $25,000 | $30,000 | $40,000 | $50,000 | $60,000 | $70,000 | $75,000 | $80,000 | $90,000 | $100,000 | $110,000 | $125,000 | $130,000 | $140,000 | $150,000 |
+#      | 18  | $1.77   | $2.54   | $2.93   | $3.31   | $4.08   | $4.86   | $5.63   | $6.40   | $6.78   | $7.17   | $7.94   | $8.71    | $9.48    | $10.64   | $11.03   | $11.80   | $12.57   |
+#      | 70  | $14.12  | $27.23  | $33.79  | $40.35  | $53.46  | $66.58  | $79.69  | $92.81  | $99.37  | $105.92 | $119.04 | $132.15  | $145.27  | $164.94  | $171.50  | $184.62  | $197.73  |
 
   Scenario: FPPTIB Child
     Given I want rates for the 'FPPTIB' product

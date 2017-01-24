@@ -19,11 +19,104 @@ var agent_inbox = (function() {
       });
     });
 
-    self.sign_envelope = function() {
-      // Get the envelope ID from the button.
-      var envelope_id = $(this).attr("data-id");
+    self.signing_enrollment_id = ko.observable(null);
 
-      sign_envelope(envelope_id, {from_inbox: true}).success(get_finished_signing_callback(envelope_id));
+    self.existing_insurance = ko.observable(false);
+    self.replacing_insurance = ko.observable(false);
+
+    self.sign_envelope = function() {
+
+      // Get the envelope ID from the button.
+      self.signing_enrollment_id($(this).attr("data-id"));
+
+      var loading_dialogue = bootbox.dialog({ message: '<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i> Loading...</div>' });
+
+      // Fetch application data so we can get the key details we need for the popup.
+      var app_req = $.getJSON("/enrollments/records/"+self.signing_enrollment_id());
+
+      app_req.done(function(resp) {
+        bootbox.hideAll();
+
+        // Set the data we need for the popup; if any product has marked that we have existing or are replacing, we default the
+        //  agent answer to true.
+        var enrollments = JSON.parse(resp.data.standardized_data);
+        self.existing_insurance(_.any(enrollments, function(e) { return e.existing_insurance;}));
+        self.replacing_insurance(_.any(enrollments, function(e) { return e.replacing_insurance;}));
+
+        // Show signing ceremony popup
+        $("#modal-signing-enroller-in-person").modal("show");
+
+      }).fail(function() {
+        bootbox.hideAll();
+        bootbox.alert("There was a problem fetching the application data from the server.");
+      });
+    };
+
+    self.should_show_other_insurance_questions = function() {
+      return true;
+    };
+
+    self.show_pdf_preview = function() {
+      self.pdf_url = '/enrollments/records/' + self.signing_enrollment_id() + '/pdf';
+
+      bootbox.dialog({
+          title: "Reviewing Application",
+          className: 'pdf-preview',
+          message: '<script>vm.renderPDF(vm.pdf_url, ".pdf-container", {canvasClass: "pdf-preview", loadingSel: ".loading-pdf-preview"});</script><div class="row">  ' +
+          '<div class="col-md-12">' +
+          '<h2 class="loading-pdf-preview text-center">' +
+          'Loading application preview<br>' +
+          '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i>' +
+          '<span class="sr-only">Loading...</span>' +
+          '</h2>' +
+          '<div class="pdf-container text-center">' +
+            //'<canvas id="pdf-preview"></canvas>' +
+          '</div>' +
+          '</div></div>',
+          buttons: {
+            confirm: {
+              label: "Close",
+              className: "width-25 pull-right btn btn-primary",
+            }
+          }
+        });
+    };
+    
+    var MAX_PDF_PREVIEW_SCALE = 1.25;
+    self.renderPDF = function(url, targetSel, options) {
+      options = options || {};
+      var container = $(targetSel);
+      var loadingSel = options.loadingSel || null;
+      var canvasClass = options.canvasClass || '';
+      var scale = options.scale || MAX_PDF_PREVIEW_SCALE;
+
+      function renderPage(page) {
+        scale = Math.min(MAX_PDF_PREVIEW_SCALE, container[0].clientWidth / page.getViewport(1).width);
+        var viewport = page.getViewport(scale);
+        var canvas = document.createElement('canvas');
+        canvas.className = canvasClass;
+        var ctx = canvas.getContext('2d');
+        var renderContext = {
+          canvasContext: ctx,
+          viewport: viewport
+        };
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+        $.each(container, function(idx, el) { el.appendChild(canvas); });
+        if(loadingSel) {
+          $(loadingSel).hide();
+        }
+        page.render(renderContext);
+      }
+
+      function renderPages(pdfDoc) {
+        for (var num = 1; num <= pdfDoc.numPages; num++) {
+          pdfDoc.getPage(num).then(renderPage);
+        }
+      }
+      PDFJS.disableWorker = true;
+      PDFJS.getDocument(url).then(renderPages);
     };
 
     self.view_envelope = function() {
@@ -47,6 +140,10 @@ var agent_inbox = (function() {
       }
     }
 
+    self.handle_agent_signing = function() {
+      sign_envelope(self.signing_enrollment_id(), {from_inbox: true});
+    };
+
     self.table_options = {
       order: [[2, "asc"]],
       columns: [
@@ -59,7 +156,10 @@ var agent_inbox = (function() {
               btn_class = "sign-button";
             } else if (row.should_show_view_button(self.current_agent_id)) {
               icon_class = "glyphicon glyphicon-file";
-              btn_class = "view-button";
+              btn_class = "";//"view-button";
+              // Just return a link to the PDF
+              var pdf_url = '/enrollments/records/' + row.id + '/pdf';
+              return '<a target="_blank" class="btn btn-primary btn-xs ' + btn_class+ '" href="'+pdf_url+'" data-id="'+row.id+'"><span class="ace-icon '+icon_class+'"></span> '+row.button_text+'</a>';
             } else {
               // No button if status is pending and we are not the agent on the envelope.
               return "";
@@ -94,14 +194,6 @@ var agent_inbox = (function() {
             return "<a href='/enrollment-case/" + row.case_id + "/census/" + row.census_record_id +"'>" + row.employee_last + "</a>";
           }
         }
-        // TODO: Re-enable after pagination is added to table.
-        // {
-        //   data: "products"
-        // },
-        // {
-        //   data: "coverage"
-        // }
-
       ]
     };
 
@@ -191,6 +283,8 @@ var agent_inbox = (function() {
       return moment(self.timestamp).format("MM/DD/YYYY h:mma");
     }
 
+
+
   };
 
   function fetch_envelopes(loading_observable, envelopes_observable) {
@@ -211,7 +305,7 @@ var agent_inbox = (function() {
 
 
   function sign_envelope(envelope_id, options) {
-    var url = "/envelopes/"+envelope_id+"/sign";
+    var url = "/envelopes/sign-enrollment/"+envelope_id;
     if (options && options.from_inbox) {
       url += "?from=inbox";
     }
@@ -219,17 +313,19 @@ var agent_inbox = (function() {
       ).success(function(data) {return handle_signing_redirect(envelope_id, data)}
       ).error(handle_signing_failure);
 
-    bootbox.alert("Redirecting to signing page, please wait...");
+    bootbox.alert("Please wait...");
     return req;
   }
 
-  function view_envelope(envelope_id, options) {
-    var url = "/envelopes/"+envelope_id+"/sign";
+  function view_envelope(enrollment_id, options) {
+    //var url = "/envelopes/"+envelope_id+"/sign";
+
+    var url = '/enrollments/records/' + enrollment_id + '/pdf';
     if (options && options.from_inbox) {
       url += "?from=inbox";
     }
     var req = $.post(url
-      ).success(function(data) {return handle_signing_redirect(envelope_id, data)}
+      ).success(function(data) {return handle_signing_redirect(enrollment_id, data)}
       ).error(handle_signing_failure);
 
     bootbox.alert("Loading document, please wait...");
@@ -246,12 +342,17 @@ var agent_inbox = (function() {
       }
 
       // Perform the redirection.
-      window.location.href = data.url;
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        window.location.reload();
+      }
+
     }
 
     function handle_signing_failure(data) {
       bootbox.hideAll();
-      bootbox.alert("There was a problem redirecting to the signing page.");
+      bootbox.alert("There was a problem signing the document.");
     }
 
   return {

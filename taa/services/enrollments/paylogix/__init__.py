@@ -117,6 +117,8 @@ def create_paylogix_csv(applications):
         'Insured Premium',
         'Insured Coverage',
         'Agent Code',
+        'Group Number',
+        'Company Name',
     ]
 
     csv_data.writerow(headers)
@@ -182,6 +184,8 @@ def create_paylogix_csv(applications):
                     coverage,
 
                     data_wrap.get_agent_code(),
+                    application.case.group_number,
+                    application.case.company_name,
                 ]
                 csv_data.writerow(row)
 

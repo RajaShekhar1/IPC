@@ -41,14 +41,14 @@ self_enrollment_email_service = SelfEnrollmentEmailService()
 def inbox():
     # If we are passed an enrollment (id), we will update any linked envelope for that enrollment.
     #  This allows us to stay sync'd up with DocuSign.
-    if request.args.get('enrollment') and request.args.get('enrollment').isdigit():
-        try:
-            enrollment_service.sync_enrollment_with_docusign(request.args['enrollment'])
-            db.session.commit()
-        except Exception as ex:
-            print(
-                u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')),
-                ex)
+    # if request.args.get('enrollment') and request.args.get('enrollment').isdigit():
+    #     try:
+    #         #enrollment_service.sync_enrollment_with_docusign(request.args['enrollment'])
+    #         db.session.commit()
+    #     except Exception as ex:
+    #         print(
+    #             u"DOCUSIGN ENVELOPE UPDATE FAILURE for enrollment app id {}: {}".format(request.args.get('enrollment')),
+    #             ex)
 
     if agent_service.is_user_agent(current_user):  # or agent_service.can_manage_all_cases(current_user):
         #
@@ -337,8 +337,14 @@ def format_enroll_data(enrollment, enrollment_data, wrapped_data):
     # else:
     effective_date = None
 
-    status = 'Enrolled' if not wrapped_data.did_decline() else 'Waived'
-
+    if enrollment.application_status == EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT:
+        status = "Pending Agent"
+    elif wrapped_data.did_decline():
+        status = 'Waived'
+    else:
+        status = 'Enrolled'
+    
+    
     return dict(
         id=enrollment.id,
         product_name=product_name,

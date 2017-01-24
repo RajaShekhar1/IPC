@@ -127,15 +127,13 @@ class SelfEnrollmentEmailService(DBService):
         # return self.find(census_id=census_record.id)
         return self.find(census_id=census_record.id).all()
 
-    def _send_email(self, from_email, from_name, to_email, to_name, subject,
-                    body):
+    def _send_email(self, from_email, from_name, to_email, to_name, subject, body):
 
         mailer = LookupService('MailerService')
         try:
             mailer.send_email(
                 to=["{} <{}>".format(to_name, to_email)],
-                from_email=from_email,
-                from_name=from_name,
+                reply_to="{} <{}>".format(from_name, from_email),
                 subject=subject,
                 html=body,
             )

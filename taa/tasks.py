@@ -75,7 +75,7 @@ def send_email(email_log_id):
 
 def _send_email_from_batch(email_log):
     self_enrollment_email_service = LookupService('SelfEnrollmentEmailService')
-
+    
     success = self_enrollment_email_service._send_email(
         from_email=email_log.batch.email_from_address,
         from_name=email_log.batch.email_from_name,
