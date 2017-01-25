@@ -159,4 +159,59 @@
         </div>
       </div>
     </div>
-    {% endblock %}
+  {% endblock %}
+
+  {% block page_js %}
+  <script>
+    var chkAdmins = $('input[name="groups"][value="admins"]');
+    var chkAgents = $('input[name="groups"][value="agents"]');
+    var chkHomeOffice = $('input[name="groups"][value="home_office"]');
+
+    var groupChange = function() {
+      var isAgents = chkAgents.prop('checked');
+      var isAdmins = chkAdmins.prop('checked');
+      var isHomeOffice = chkHomeOffice.prop('checked');
+
+      if(isAgents) {
+        if(!isAdmins) {
+          chkAdmins.prop('disabled', isAgents);
+        }
+        if(!isHomeOffice) {
+          chkHomeOffice.prop('disabled', isAgents);
+        }
+        chkAdmins.prop('title', "Can't be in the 'admins' group when in the 'agents' group");
+        chkHomeOffice.prop('title', "Can't be in the 'home_office' group when in the 'agents' group");
+      } else {
+        chkAdmins.prop('disabled', isAgents);
+        chkHomeOffice.prop('disabled', isAgents);
+        chkAdmins.prop('title', '');
+        chkHomeOffice.prop('title', '');
+      }
+
+      if(isAdmins || isHomeOffice) {
+        if(!isAgents) {
+          chkAgents.prop('disabled', isAdmins || isHomeOffice);
+        }
+        chkAgents.prop('title',
+            "Can't be in the 'agents' group when in the '" + (isAdmins ? 'admins' : 'home_office') + "' group");
+      } else {
+        chkAgents.prop('disabled', isAdmins || isHomeOffice);
+        chkAgents.prop('title', '');
+      }
+    };
+
+    $(document).ready(function() {
+      chkAgents.change(function() {
+        groupChange();
+      }).change();
+
+      chkAdmins.change(function() {
+        groupChange();
+      }).change();
+
+      chkHomeOffice.change(function() {
+        groupChange();
+      }).change();
+    });
+  </script>
+  {% endblock %}
