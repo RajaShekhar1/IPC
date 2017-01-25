@@ -2,6 +2,7 @@ from flask import (
     render_template,
     url_for,
     flash,
+    json,
     redirect,
     request,
 )
@@ -260,3 +261,23 @@ def is_email_available(email):
     if accounts and len(accounts) > 0:
         return False
     return True
+
+
+@app.route('/user', methods=['DELETE'])
+@groups_required(['admins', 'home_office'], all=False)
+def delete_user():
+    user_email = request.args['email']
+    accounts = search_stormpath_accounts(filter_email=user_email)
+    if accounts and len(accounts) > 0:
+        account = accounts[0]
+        agent = agent_service.ensure_agent_in_database(account)
+        agent_service.update(agent, **{
+            'is_deleted': True
+        })
+        account.delete()
+        db.session.commit()
+        return (json.dumps({'success': True}), 200,
+                {'ContentType': 'application/json'})
+    return (json.dumps({'success': False}), 400,
+            {'ContentType': 'application/json'})
+

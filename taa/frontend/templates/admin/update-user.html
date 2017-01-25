@@ -146,14 +146,25 @@
                 <br><br><br />
 
                 <div class="clearfix">
-                  <a href="{{url_for('admin')}}" class=" pull-left btn btn-warning">
-                    <span class="bigger-110">Cancel</span>
-                  </a>
-                  <button type="submit" class="pull-right btn btn-info">
-                    <span class="bigger-110">Update</span>
-                  </button>
                 </div>
               </form><!--  </form>  -->
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-sm-4 col-xs-12 pull-left">
+            <a href="{{url_for('admin')}}" class=" pull-left btn btn-warning">
+              <span class="bigger-110">Cancel</span>
+            </a>
+          </div>
+          <div class="col-sm-4 col-xs-12 center">
+            <button class="delete-user btn btn-danger">Delete</button>
+          </div>
+          <div class="col-sm-4 col-xs-12">
+            <div class="pull-right">
+              <button type="submit" class="pull-right btn btn-info">
+                <span class="bigger-110">Update</span>
+              </button>
             </div>
           </div>
         </div>
@@ -200,6 +211,27 @@
       }
     };
 
+    var delete_user = function() {
+      bootbox.prompt('Deleting this user is <strong>permanent and cannot be undone</strong>.<br><br>To delete the user, type "DELETE" into the box below and click "OK".',
+          function(result) {
+            if(result != 'DELETE') {
+              return;
+            }
+            $.when(send_json_data(
+                'DELETE',
+                "{{ url_for('delete_user', email=form.email.data) }}",
+                {}
+            )).then(function(case_xhr, periods_xhr) {
+              bootbox.alert('User was deleted.',
+                  function() {
+                    window.location.href = "{{ url_for('admin') }}";
+                  });
+            }, function(case_xhr, periods_xhr) {
+              bootbox.alert('User could not be deleted.');
+            });
+          })
+    };
+
     $(document).ready(function() {
       chkAgents.change(function() {
         groupChange();
@@ -212,6 +244,10 @@
       chkHomeOffice.change(function() {
         groupChange();
       }).change();
+
+      $('.delete-user').click(function() {
+        delete_user();
+      });
     });
   </script>
   {% endblock %}
