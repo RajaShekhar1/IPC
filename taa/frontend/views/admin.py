@@ -118,7 +118,7 @@ def updateUser():
                 account.custom_data['ds_apikey'] = data['ds_apikey']
                 account.custom_data['activated'] = data['activated']
 
-                groups = request.values.getlist("groups")
+                groups = request.values.getlist('groups')
                 if 'agents' in groups and ('home_office' in groups or
                                            'admins' in groups):
                     flash("User cannot be in the 'agents' and 'admin'/"
@@ -127,9 +127,10 @@ def updateUser():
 
                 token = api_token_service.get_token_by_sp_href(account.href)
 
-                # "api_users" is not a real group, we just pass it along with the groups to indicate if the user
-                #  has an active api token or not.
-                if "api_users" not in groups:
+                # "api_users" is not a real group, we just pass it along with
+                # the groups to indicate if the user has an active api token
+                # or not.
+                if 'api_users' not in groups:
                     if token:
                         token.activated = False
                         db.session.commit()
@@ -142,7 +143,8 @@ def updateUser():
                         api_token_service.create_new_token(full_name, account.href, activated=True)
                         db.session.commit()
 
-                # If the account has a group membership that is not in the posted data, delete it
+                # If the account has a group membership that is not in the
+                # posted data, delete it
                 for gms in account.group_memberships:
                     if gms.group.name not in groups:
                         gms.delete()
