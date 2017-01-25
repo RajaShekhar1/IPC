@@ -24,12 +24,10 @@ api_token_service = LookupService('ApiTokenService')
 @app.route('/admin', methods=['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
 def admin():
-
-    # This shows only agents right now, will want to add admins / HO users soon.
     accounts = []
     for agent in agent_service.get_sorted_agents():
-
-        # Skip over deleted users, they have no stormpath entry so there is no use showing them here (clicking would error)
+        # Skip over deleted users, they have no stormpath entry so there is no
+        # use showing them here (clicking would error)
         if agent.get_status() == 'Deleted':
             continue
 
@@ -55,7 +53,6 @@ def admin():
     #      })
 
     return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(), is_user_admin=agent_service.is_user_admin(current_user))
-
 
 
 @app.route('/edituser', methods=['GET', 'POST'])

@@ -24,14 +24,14 @@ def get_nav_menu():
     elif is_home_office:
         return [
             dict(nav_name='nav_home', url_name='home', display='Home'),
-            dict(nav_name='nav_manage_agents', url_name='manage_agents', display='Agents'),
+            dict(nav_name='nav_manage_agents', url_name='manage_agents', display='Users'),
             dict(nav_name='nav_customproducts', url_name='manage_custom_products', display='Products'),
             dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Enrollment Cases'),
         ]
     elif is_admin:
         return [
             dict(nav_name='nav_home', url_name='home', display='Home'),
-            dict(nav_name='nav_manage_agents', url_name='manage_agents', display='Agents'),
+            dict(nav_name='nav_manage_agents', url_name='manage_agents', display='Users'),
             dict(nav_name='nav_customproducts', url_name='manage_custom_products', display='Products'),
             dict(nav_name='nav_manage_cases', url_name='manage_cases', display='Enrollment Cases'),
         ]

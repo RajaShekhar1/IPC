@@ -23,7 +23,7 @@ class AgentService(DBService):
         return self.get_agent_from_user(current_user)
 
     def ensure_agent_in_database(self, user):
-        if not self.is_user_agent(user):
+        if not self.should_import(user):
             return None
 
         stormpath_url = user.href
@@ -53,6 +53,9 @@ class AgentService(DBService):
         db.session.commit()
 
         return existing_agent
+
+    def should_import(self, user):
+        return True
 
     def get_agent_from_user(self, user):
         return self.ensure_agent_in_database(user)
