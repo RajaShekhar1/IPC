@@ -563,13 +563,16 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     self.show_yes_dialogue(child);
   };
 
-  self.get_best_GI_criteria = function (applicant, coverage, criteria) {
+  self.get_best_GI_criteria_amount = function (applicant, coverage, criteria) {
     // sort by gi amount descending then pick the one, if any, that is strictly less than
     //  the selected coverage. Returns undefined if there is no qualifying option.
     // We don't do <= here since we are assuming that the selected coverage is already greater than
     //  any GI amount, otherwise we wouldn't be searching for the best GI coverage to replace the selected coverage.
 
-    var applicant_coverage_options = self.product_coverage.get_coverage_options_for_applicant(applicant);
+    // var applicant_coverage_options = self.product_coverage.get_coverage_options_for_applicant(applicant);
+
+    var applicant_coverage = self.product_coverage.__get_coverage_for_applicant(applicant);
+
 
     var sorted_coverage_options = _.sortBy(applicant_coverage_options, function(opt) {
       // Whether this is a by-premium or by-face, sort by face value (coverage amount)
@@ -580,15 +583,19 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     });
 
 
-    self.does_applicant_meet_coverage_GI_criteria(applicant, cov, crit);
+    var applicable_criteria = _.filter(criteria, function(c) { return self.does_applicant_meet_demographic_GI_criteria(applicant, c);});
+    var criteria = _.filter(applicable_criteria, function(crit) {
+      return normalize_criterion_coverage(crit, applicant_coverage) < coverage;
+    });
 
-    var applicant_coverage = self.product_coverage.__get_coverage_for_applicant(applicant);
+
+    //self.does_applicant_meet_coverage_GI_criteria(applicant, cov, crit);
+
+    //var applicant_coverage = self.product_coverage.__get_coverage_for_applicant(applicant);
 
     // var descendingCriteria = _.sortBy(criteria, function (c) {
     //   return -c.guarantee_issue_amount;
     // });
-
-    var applicable_criteria = _.filter(criteria, function(c) { return self.does_applicant_meet_demographic_GI_criteria(applicant, c);});
 
     var found_criterion = null;
     _.each(sorted_less_than_selected_options, function(opt) {
@@ -665,7 +672,7 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
 
   function create_reduce_dialogue_message(applicant, action_name) {
     var face_amount = format_face_value(get_cumulative_coverage(applicant));
-    var gi_amount = get_reduced_coverage_criteria(applicant).guarantee_issue_amount;
+    var gi_amount = normalize_criterion_coverage(get_reduced_coverage_criteria(applicant), applicant_coverage);
     var formatted_gi_amount = format_face_value(gi_amount);
     action_name = typeof action_name !== 'undefined'? action_name : 'yes';
 
@@ -679,11 +686,11 @@ var GIHealthQuestion = function (product, question, product_coverage, applicant_
     return applicant_coverage.get_cumulative_coverage_amount();
   }
 
-  function get_reduced_coverage_criteria(applicant) {
+  function get_reduced_coverage_criteria_amount(applicant) {
     var criteria = self.get_criteria(applicant.type);
     var coverage_amount = get_cumulative_coverage(applicant);
 
-    return self.get_best_GI_criteria(applicant, coverage_amount, criteria);
+    return self.get_best_GI_criteria_amount(applicant, coverage_amount, criteria);
   }
 
   function should_show_reduce_coverage_option(applicant) {
@@ -811,24 +818,58 @@ GIHealthQuestion.prototype.does_applicant_meet_coverage_GI_criteria = function (
   //
 
   var cumulative_coverage_amount = applicant_coverage.get_cumulative_coverage_amount();
-  var meets_coverage = cumulative_coverage_amount <= criterion.guarantee_issue_amount;
-  if (!meets_coverage) {
-    return false;
-  }
+  var criterion_coverage = normalize_criterion_coverage(criterion, applicant_coverage);
 
-  if (criterion.guarantee_issue_premium && !isNaN(parseFloat(criterion.guarantee_issue_premium))) {
-    var weekly_premium_criterion = parseFloat(criterion.guarantee_issue_premium);
-    var annual_premium_criterion = weekly_premium_criterion * 52;
-    var selected_premium = applicant_coverage.coverage_option().premium;
-    var selected_annual_premium = selected_premium * applicant_coverage.coverage_option().payment_mode().frequency;
-    if (selected_annual_premium > annual_premium_criterion) {
-      return false;
-    }
-  }
-
-  // We met all the criteria.
-  return true;
+  return cumulative_coverage_amount <= criterion_coverage;
 };
+
+function normalize_criterion_coverage(criterion, applicant_coverage) {
+  // A GI criterion can be coverage amount, premium amount, or both (choose the lessor of, or min, to be more restrictive).
+  var cov_limit = criterion.guarantee_issue_amount;
+  var prem_limit = criterion.guarantee_issue_premium;
+  var applicant_cov_options = applicant_coverage.product_coverage.get_coverage_options_for_applicant(applicant_coverage.applicant);
+
+  var is_valid_premium_limit = (prem_limit && !isNaN(parseFloat(prem_limit)));
+  var prem_cov;
+
+  if (cov_limit && !is_valid_premium_limit) {
+    return cov_limit;
+  } else if (!cov_limit && is_valid_premium_limit) {
+    prem_cov = convert_premium_limit_to_coverage(parseFloat(prem_limit), applicant_coverage.coverage_option().payment_mode(), applicant_cov_options);
+    if (!prem_cov) {
+      return 0;
+    } else {
+      return prem_cov;
+    }
+  } else {
+    // We take the min of both.
+    prem_cov = convert_premium_limit_to_coverage(parseFloat(prem_limit), applicant_coverage.coverage_option().payment_mode(), applicant_cov_options);
+    if (!prem_cov) {
+      return 0;
+    }
+    return Math.min(cov_limit, prem_cov);
+  }
+}
+
+function convert_premium_limit_to_coverage(weekly_premium_limit, payment_mode, applicant_coverage_options) {
+  if (!payment_mode) {
+    return 0;
+  }
+
+  // Premium given is assumed to be weekly.
+  var annual_premium = weekly_premium_limit * 52;
+
+  // Find the highest coverage option for this applicant by face value, but the premium is <= the given premium limit.
+  return _.max(_.map(_.filter(applicant_coverage_options, function(opt) {
+    // Need to use annual premiums for comparison.
+    var option_annual_premium = payment_mode.frequency * opt.premium;
+    return option_annual_premium <= annual_premium;
+  }), function(opt) {
+    // Extract the face value (coverage) to do the max
+    return opt.face_value;
+  }));
+}
+
 GIHealthQuestion.prototype.does_applicant_meet_demographic_GI_criteria = function (applicant, criterion) {
   // Checks all the criteria _except_ for the coverage so we know if the applicant
   //  can reduce his coverage to meet this criterion
