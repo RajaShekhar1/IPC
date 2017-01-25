@@ -173,15 +173,14 @@ def updateUser():
                 flash('User {} updated successfully!'.format(current_email))
 
                 # Update in database also
-                if 'agents' in groups:
-                    agent = agent_service.ensure_agent_in_database(account)
-                    agent_service.update(agent, **{
-                        'email': data['email'],
-                        'first': data['fname'],
-                        'last': data['lname'],
-                        'agent_code': data['agent_code'],
-                        'activated': data['activated']
-                    })
+                agent = agent_service.ensure_agent_in_database(account)
+                agent_service.update(agent, **{
+                    'email': data['email'],
+                    'first': data['fname'],
+                    'last': data['lname'],
+                    'agent_code': data['agent_code'],
+                    'activated': data['activated']
+                })
                 db.session.commit()
 
                 # if we've just activated a user, then send a notice
