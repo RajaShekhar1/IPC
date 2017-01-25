@@ -100,6 +100,13 @@ def updateUser():
                 account = accounts[0]
                 data = form.data
 
+                # Ensure new email address is not already being used
+                if (user_email != data['email'] and
+                        not is_email_available(data['email'])):
+                    flash("The email address '{}' is already in use by "
+                          "someone else".format(data['email']))
+                    return redirect(request.url)
+
                 # edit some custom data fields
                 account.given_name = data['fname']
                 account.surname = data['lname']
@@ -160,12 +167,16 @@ def updateUser():
 
                 # save your changes
                 account.save()
-                flash('User ' + user_email + ' updated successfully!')
+                current_email = (user_email if data['email'] == user_email
+                                 else "{} (formerly {})".format(data['email'],
+                                                                user_email))
+                flash('User {} updated successfully!'.format(current_email))
 
                 # Update in database also
                 if 'agents' in groups:
                     agent = agent_service.ensure_agent_in_database(account)
                     agent_service.update(agent, **{
+                        'email': data['email'],
                         'first': data['fname'],
                         'last': data['lname'],
                         'agent_code': data['agent_code'],
@@ -242,3 +253,9 @@ def view_submission_logs():
 
     return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu())
 
+
+def is_email_available(email):
+    accounts = search_stormpath_accounts(filter_email=email)
+    if accounts and len(accounts) > 0:
+        return False
+    return True
