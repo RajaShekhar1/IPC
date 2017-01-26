@@ -1,7 +1,6 @@
 from flask_script import Manager
 from flask_assets import ManageAssets
 
-
 from taa import app
 from taa.manage import InitializeDatabaseCommand, GetDropBoxTokenCommand
 from taa.manage.check_case_tokens import CheckCaseTokensCommand
@@ -17,6 +16,7 @@ from taa.manage.sync_envelopes import SyncEnvelopesCommand
 from taa.manage.CaseConversion import CaseConversionCommand
 from taa.manage.flag_paylogix_enrollments import FlagPaylogixEnrollmentsCommand
 from taa.manage.generate_case_report import RunCaseReportCommand
+from taa.manage.transfer_stormpath import TransferStormpathCommand
 
 manager = Manager(app)
 manager.add_command('initialize_db', InitializeDatabaseCommand())
@@ -35,5 +35,7 @@ manager.add_command("sync_envelopes", SyncEnvelopesCommand())
 manager.add_command("convert_cases", CaseConversionCommand())
 manager.add_command("flag_paylogix_enrollments", FlagPaylogixEnrollmentsCommand())
 manager.add_command("run_case_report", RunCaseReportCommand())
+manager.add_command("transfer_stormpath", TransferStormpathCommand())
+
 if __name__ == "__main__":
     manager.run()
