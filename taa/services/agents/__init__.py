@@ -58,7 +58,11 @@ class AgentService(DBService):
         return True
 
     def get_agent_from_user(self, user):
-        return self.ensure_agent_in_database(user)
+        if self.is_user_agent(user):
+            return self.ensure_agent_in_database(user)
+        else:
+            return None
+
 
     def is_user_agent(self, user):
         return 'agents' in self.get_user_groupnames(user)
