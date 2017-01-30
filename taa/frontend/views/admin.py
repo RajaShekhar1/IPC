@@ -2,6 +2,7 @@ from flask import (
     render_template,
     url_for,
     flash,
+    json,
     redirect,
     request,
 )
@@ -24,12 +25,10 @@ api_token_service = LookupService('ApiTokenService')
 @app.route('/admin', methods=['GET', 'POST'])
 @groups_required(['admins', 'home_office'], all=False)
 def admin():
-
-    # This shows only agents right now, will want to add admins / HO users soon.
     accounts = []
     for agent in agent_service.get_sorted_agents():
-
-        # Skip over deleted users, they have no stormpath entry so there is no use showing them here (clicking would error)
+        # Skip over deleted users, they have no stormpath entry so there is no
+        # use showing them here (clicking would error)
         if agent.get_status() == 'Deleted':
             continue
 
@@ -55,7 +54,6 @@ def admin():
     #      })
 
     return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(), is_user_admin=agent_service.is_user_admin(current_user))
-
 
 
 @app.route('/edituser', methods=['GET', 'POST'])
@@ -103,6 +101,13 @@ def updateUser():
                 account = accounts[0]
                 data = form.data
 
+                # Ensure new email address is not already being used
+                if (user_email != data['email'] and
+                        not is_email_available(data['email'])):
+                    flash("The email address '{}' is already in use by "
+                          "someone else".format(data['email']))
+                    return redirect(request.url)
+
                 # edit some custom data fields
                 account.given_name = data['fname']
                 account.surname = data['lname']
@@ -114,13 +119,19 @@ def updateUser():
                 account.custom_data['ds_apikey'] = data['ds_apikey']
                 account.custom_data['activated'] = data['activated']
 
-                groups = request.values.getlist("groups")
+                groups = request.values.getlist('groups')
+                if 'agents' in groups and ('home_office' in groups or
+                                           'admins' in groups):
+                    flash("User cannot be in the 'agents' and 'admin'/"
+                          "'home_office' groups at the same time")
+                    return redirect(request.url)
 
                 token = api_token_service.get_token_by_sp_href(account.href)
 
-                # "api_users" is not a real group, we just pass it along with the groups to indicate if the user
-                #  has an active api token or not.
-                if "api_users" not in groups:
+                # "api_users" is not a real group, we just pass it along with
+                # the groups to indicate if the user has an active api token
+                # or not.
+                if 'api_users' not in groups:
                     if token:
                         token.activated = False
                         db.session.commit()
@@ -133,7 +144,8 @@ def updateUser():
                         api_token_service.create_new_token(full_name, account.href, activated=True)
                         db.session.commit()
 
-                # If the account has a group membership that is not in the posted data, delete it
+                # If the account has a group membership that is not in the
+                # posted data, delete it
                 for gms in account.group_memberships:
                     if gms.group.name not in groups:
                         gms.delete()
@@ -158,17 +170,20 @@ def updateUser():
 
                 # save your changes
                 account.save()
-                flash('User ' + user_email + ' updated successfully!')
+                current_email = (user_email if data['email'] == user_email
+                                 else "{} (formerly {})".format(data['email'],
+                                                                user_email))
+                flash('User {} updated successfully!'.format(current_email))
 
                 # Update in database also
-                if 'agents' in groups:
-                    agent = agent_service.ensure_agent_in_database(account)
-                    agent_service.update(agent, **{
-                        'first': data['fname'],
-                        'last': data['lname'],
-                        'agent_code': data['agent_code'],
-                        'activated': data['activated']
-                    })
+                agent = agent_service.ensure_agent_in_database(account)
+                agent_service.update(agent, **{
+                    'email': data['email'],
+                    'first': data['fname'],
+                    'last': data['lname'],
+                    'agent_code': data['agent_code'],
+                    'activated': data['activated']
+                })
                 db.session.commit()
 
                 # if we've just activated a user, then send a notice
@@ -237,6 +252,32 @@ def create_submission_dictionary_for_submissions_view(submission):
 @app.route('/enrollment-submissions', methods=['GET'])
 @groups_required(['admins', 'home_office'], all=False)
 def view_submission_logs():
-    
+
     return render_template('admin/enrollment_submissions.html', nav_menu=get_nav_menu())
+
+
+def is_email_available(email):
+    accounts = search_stormpath_accounts(filter_email=email)
+    if accounts and len(accounts) > 0:
+        return False
+    return True
+
+
+@app.route('/user', methods=['DELETE'])
+@groups_required(['admins', 'home_office'], all=False)
+def delete_user():
+    user_email = request.args['email']
+    accounts = search_stormpath_accounts(filter_email=user_email)
+    if accounts and len(accounts) > 0:
+        account = accounts[0]
+        agent = agent_service.ensure_agent_in_database(account)
+        agent_service.update(agent, **{
+            'is_deleted': True
+        })
+        account.delete()
+        db.session.commit()
+        return (json.dumps({'success': True}), 200,
+                {'ContentType': 'application/json'})
+    return (json.dumps({'success': False}), 400,
+            {'ContentType': 'application/json'})
 

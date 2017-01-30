@@ -64,8 +64,8 @@
                   {{ form.signing_name(class='form-control', required='true') }}
                 </div>
 
-                <label class="col-sm-3">Docusign key</label>
-                <div class="col-sm-9">
+                <label class="col-sm-3 hidden">Docusign key</label>
+                <div class="col-sm-9 hidden">
                   {{ form.ds_apikey(class='form-control') }}
                 </div>
 
@@ -146,17 +146,108 @@
                 <br><br><br />
 
                 <div class="clearfix">
-                  <a href="{{url_for('admin')}}" class=" pull-left btn btn-warning">
-                    <span class="bigger-110">Cancel</span>
-                  </a>
-                  <button type="submit" class="pull-right btn btn-info">
-                    <span class="bigger-110">Update</span>
-                  </button>
                 </div>
               </form><!--  </form>  -->
             </div>
           </div>
         </div>
+        <div class="row">
+          <div class="col-sm-4 col-xs-12 pull-left">
+            <a href="{{url_for('admin')}}" class=" pull-left btn btn-warning">
+              <span class="bigger-110">Cancel</span>
+            </a>
+          </div>
+          <div class="col-sm-4 col-xs-12 center">
+            <button class="delete-user btn btn-danger">Delete</button>
+          </div>
+          <div class="col-sm-4 col-xs-12">
+            <div class="pull-right">
+              <button type="submit" class="pull-right btn btn-info">
+                <span class="bigger-110">Update</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    {% endblock %}
+  {% endblock %}
+
+  {% block page_js %}
+  <script>
+    var chkAdmins = $('input[name="groups"][value="admins"]');
+    var chkAgents = $('input[name="groups"][value="agents"]');
+    var chkHomeOffice = $('input[name="groups"][value="home_office"]');
+
+    var groupChange = function() {
+      var isAgents = chkAgents.prop('checked');
+      var isAdmins = chkAdmins.prop('checked');
+      var isHomeOffice = chkHomeOffice.prop('checked');
+
+      if(isAgents) {
+        if(!isAdmins) {
+          chkAdmins.prop('disabled', isAgents);
+        }
+        if(!isHomeOffice) {
+          chkHomeOffice.prop('disabled', isAgents);
+        }
+        chkAdmins.prop('title', "Can't be in the 'admins' group when in the 'agents' group");
+        chkHomeOffice.prop('title', "Can't be in the 'home_office' group when in the 'agents' group");
+      } else {
+        chkAdmins.prop('disabled', isAgents);
+        chkHomeOffice.prop('disabled', isAgents);
+        chkAdmins.prop('title', '');
+        chkHomeOffice.prop('title', '');
+      }
+
+      if(isAdmins || isHomeOffice) {
+        if(!isAgents) {
+          chkAgents.prop('disabled', isAdmins || isHomeOffice);
+        }
+        chkAgents.prop('title',
+            "Can't be in the 'agents' group when in the '" + (isAdmins ? 'admins' : 'home_office') + "' group");
+      } else {
+        chkAgents.prop('disabled', isAdmins || isHomeOffice);
+        chkAgents.prop('title', '');
+      }
+    };
+
+    var delete_user = function() {
+      bootbox.prompt('Deleting this user is <strong>permanent and cannot be undone</strong>.<br><br>To delete the user, type "DELETE" into the box below and click "OK".',
+          function(result) {
+            if(result != 'DELETE') {
+              return;
+            }
+            $.when(send_json_data(
+                'DELETE',
+                "{{ url_for('delete_user', email=form.email.data) }}",
+                {}
+            )).then(function(case_xhr, periods_xhr) {
+              bootbox.alert('User was deleted.',
+                  function() {
+                    window.location.href = "{{ url_for('admin') }}";
+                  });
+            }, function(case_xhr, periods_xhr) {
+              bootbox.alert('User could not be deleted.');
+            });
+          })
+    };
+
+    $(document).ready(function() {
+      chkAgents.change(function() {
+        groupChange();
+      }).change();
+
+      chkAdmins.change(function() {
+        groupChange();
+      }).change();
+
+      chkHomeOffice.change(function() {
+        groupChange();
+      }).change();
+
+      $('.delete-user').click(function() {
+        delete_user();
+      });
+    });
+  </script>
+  {% endblock %}
