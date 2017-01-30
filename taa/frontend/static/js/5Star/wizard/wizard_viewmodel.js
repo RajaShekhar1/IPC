@@ -371,9 +371,14 @@ var wizard_viewmodel = (function () {
     self.applicant_coverage_selections = ko.computed(this._get_applicant_coverage_selections, this);
 
     self.get_coverage_options_for_applicant = function (applicant) {
-      return _.find(self.applicant_coverage_selections(), function (cov) {
+      var matching_cov_selection = _.find(self.applicant_coverage_selections(), function (cov) {
         return cov.applicant.type === applicant.type;
-      }).get_coverage_options();
+      });
+      if (matching_cov_selection === undefined) {
+        // Options not initialized yet.
+        return [];
+      }
+      return matching_cov_selection.get_coverage_options();
     };
 
     self.has_completed_selection = ko.computed(this._has_completed_selection, this);

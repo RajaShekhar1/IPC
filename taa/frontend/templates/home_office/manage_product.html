@@ -99,7 +99,7 @@
                       <tr>
                         <td data-bind="text: applicant_type()"></td>
                         <td data-bind="html: display_criteria"></td>
-                        <td data-bind="text: guarantee_issue_amount()"></td>
+                        <td data-bind="text: display_gi_amount()"></td>
                         <td><a class="btn"
                                data-bind="click: $parent.product().remove_criterion">remove</a></td>
                       </tr>
@@ -122,8 +122,16 @@
                       <div class="form-group">
                         <label class="col-md-3 control-label">Guarantee Issue Amount</label>
                         <div class="col-md-9">
-                          <select
-                              data-bind="value: guarantee_issue_amount, options: $parent.issue_amount_options"></select>
+                          <label>Coverage
+                            <select
+                                data-bind="value: guarantee_issue_amount, options: $parent.issue_amount_options, optionsCaption: '(N/A)'">
+
+                            </select>
+                          </label>
+                          and / or
+                          <label>Weekly Premium <input type="text" size="6" data-bind="textInput: guarantee_issue_premium"></label>
+                          <br>
+                          <span>(if both coverage and premium specified, the lesser at time of enrollment will be used)</span>
                         </div>
                       </div>
 
@@ -162,6 +170,13 @@
                       </div>
 
                       <button class="btn btn-default" data-bind="click: $root.add_new_criteria">Save Criteria</button>
+
+                      <div class="error">
+                        <ul class="list list-unstyled" data-bind="foreach: $parent.criteria_errors">
+                          <li data-bind="text: $data"></li>
+                        </ul>
+                      </div>
+
                     </div>
 
                     <h4 class="header lighter">When GI and criteria met</h4>
@@ -391,6 +406,7 @@
           applicant_type: null,
           product_id: null,
           guarantee_issue_amount: null,
+          guarantee_issue_premium: null,
           height_min: null,
           height_max: null,
           weight_min: null,
@@ -403,6 +419,7 @@
         self.applicant_type = ko.observable(settings.applicant_type);
         self.product_id = ko.observable(settings.product_id);
         self.guarantee_issue_amount = ko.observable(settings.guarantee_issue_amount);
+        self.guarantee_issue_premium = ko.observable(settings.guarantee_issue_premium);
         self.height_min = ko.observable(settings.height_min);
         self.height_max = ko.observable(settings.height_max);
         self.weight_min = ko.observable(settings.weight_min);
@@ -444,6 +461,7 @@
             applicant_type: self.applicant_type(),
             product_id: self.product_id(),
             guarantee_issue_amount: self.serialize_limit(self.guarantee_issue_amount()),
+            guarantee_issue_premium: self.serialize_float(self.guarantee_issue_premium()),
             height_min: self.serialize_limit(self.height_min()),
             height_max: self.serialize_limit(self.height_max()),
             weight_min: self.serialize_limit(self.weight_min()),
@@ -454,14 +472,68 @@
         };
 
         self.serialize_limit = function (val) {
-          if (val == "-1" || val === null) {
+          if (val == "-1" || val === null || val === undefined) {
             return null;
           } else {
             // Strip any commas for large numbers
             val = (val + "").replace(/,/, "");
             return parseInt(val);
           }
+        };
+
+        self.serialize_float = function (val) {
+          if (val == "-1" || val === null) {
+            return null;
+          } else {
+            // Strip any commas for large numbers
+            val = (val + "").replace(/,/, "");
+            if (isNaN(parseFloat(val))) {
+              return null;
+            }
+            return parseFloat(val);
+          }
+        };
+
+
+        self.has_gi_coverage = function () {
+          return (self.serialize_limit(self.guarantee_issue_amount()) !== null);
+        };
+
+        self.has_gi_premium = function () {
+          return (self.serialize_float(self.guarantee_issue_premium()) !== null);
+        };
+
+        self.display_gi_amount = ko.computed(function() {
+
+          if (self.has_gi_coverage() && self.has_gi_premium()) {
+            var coverage_fmt = formatCoverageValue(self.serialize_limit(self.guarantee_issue_amount()));
+            var premium_fmt = formatPremiumValue(self.serialize_float(self.guarantee_issue_premium()));
+            return "the lesser of " + premium_fmt + " weekly premium or " + coverage_fmt;
+          } else if (self.has_gi_premium()) {
+            return formatPremiumValue(self.serialize_float(self.guarantee_issue_premium())) + " / Week";
+          } else {
+            return formatCoverageValue(self.serialize_limit(self.guarantee_issue_amount()));
+          }
+        });
+
+        self.get_errors = function() {
+          var errors = [];
+
+          if (!self.has_gi_coverage() && !self.has_gi_premium()) {
+            errors.push("Select either a coverage amount, a premium amount, or both.");
+          }
+
+          if (self.guarantee_issue_premium() !== "" && self.guarantee_issue_premium() != null && isNaN(parseFloat(self.guarantee_issue_premium()))) {
+            errors.push("Invalid premium amount entered.")
+          }
+
+          if (parseInt(self.age_min()) >= 0 && parseInt(self.age_max()) >= 0 && parseInt(self.age_min()) > parseInt(self.age_max())) {
+            errors.push("Age minimum must be less than or equal to age maximum.")
+          }
+
+          return errors;
         }
+
       };
 
       var SOHCategoryOptionViewModel = function (label, is_required) {
@@ -698,6 +770,11 @@
           self.should_show_criteria_form(true);
         };
         self.add_new_criteria = function () {
+
+          if (!self.validate_new_criteria()) {
+            return;
+          }
+
           self.product().gi_criteria.push(self.new_criterion());
 
           // keep it sorted by applicant, mins
@@ -723,6 +800,14 @@
         };
 
         self.new_criterion = ko.observable(null);
+
+        self.criteria_errors = ko.observableArray([]);
+
+        self.validate_new_criteria = function() {
+          self.criteria_errors([]);
+          self.criteria_errors(self.new_criterion().get_errors());
+          return self.criteria_errors().length === 0;
+        };
 
         self.applicant_options = ["Employee", "Spouse", "Child"];
 
