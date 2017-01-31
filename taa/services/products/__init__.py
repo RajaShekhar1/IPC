@@ -477,13 +477,14 @@ class ProductService(DBService):
         case_service = CaseService()
         limit_data = case_service.get_product_coverage_limit_data(case, product)
         if limit_data and 'max_coverage' in limit_data and limit_data['max_coverage']['is_enabled']:
-            return MaxCoverageLimiter(limit_data['max_coverage'], product, demographics).filter_rates(product_rates)
+            return MaxCoverageLimiter(case, limit_data['max_coverage'], product, demographics).filter_rates(product_rates)
         else:
             return product_rates
             
 
 class MaxCoverageLimiter(object):
-    def __init__(self, limit_data, product, demographics):
+    def __init__(self, case, limit_data, product, demographics):
+        self.case = case
         self.limit_data = limit_data
         self.product = product
         self.demographics = demographics
@@ -514,7 +515,6 @@ class MaxCoverageLimiter(object):
             if product_rates.get('children', {}).get('bypremium'):
                 product_rates['children']['bypremium'] = self.filter_by_limit(product_rates['children']['bypremium'], limit)
 
-
     def filter_by_limit(self, rate_list, limit):
         
         # Apply max coverage rule
@@ -525,9 +525,20 @@ class MaxCoverageLimiter(object):
         # Apply max premium rule
         if limit.get('max_premium'):
             max_premium = decimal.Decimal(str(limit['max_premium']))
-            rate_list = filter(lambda c: decimal.Decimal(str(c['premium'])) <= max_premium, rate_list)
+            rate_list = filter(lambda c: decimal.Decimal(str(c['premium'])) <= self.normalize_max_premium(max_premium, c), rate_list)
         
         return rate_list
+
+    def normalize_max_premium(self, max_premium, rate):
+        "If a case has a changeable payment mode, we need to normalize the maximum premium value to the selected mode."
+        if is_payment_mode_changeable(self.case.payment_mode):
+            # Assume that max_premium was given in monthly frequency (12), and convert if necessary.
+            requested_pay_frequency = int(rate['payment_mode'])
+            return (12 * max_premium) / requested_pay_frequency
+        else:
+            # Nothing needed to be done.
+            return max_premium
+
 
 class AgeBand(object):
     def __init__(self, min_age, max_age):
