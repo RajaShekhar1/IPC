@@ -253,7 +253,11 @@ class GILimitedRatesDecorator(Rates):
 
     @classmethod
     def get_gi_limit_for_product(cls, product, applicant_type, age, smoker, height, weight):
-
+        
+        if applicant_type.lower() == 'children':
+            # Match what is recording on the criteria rows in the database.
+            applicant_type = 'child'
+        
         criteria_for_applicant = filter(lambda c: c.applicant_type.lower() == applicant_type,
                                         product.gi_criteria)
 
