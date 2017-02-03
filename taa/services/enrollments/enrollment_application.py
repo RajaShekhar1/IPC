@@ -441,6 +441,8 @@ class EnrollmentApplicationService(DBService):
 
     def retrieve_enrollment_data_for_table(self, case, offset=None, limit=None, search_text=None, order_column=None,
                                            order_dir=None):
+        "The queries in this method are streamlined for pulling a page of enrollment/census data for display in the UI"
+        
         from taa.services.agents.models import Agent
         from taa.services.cases import CaseCensus
 
@@ -588,7 +590,7 @@ class EnrollmentApplicationService(DBService):
         enrollment = coverage.enrollment
         wrapped_enrollment_data = self.get_wrapped_enrollment_data(enrollment)
         # Find the enrollment data that matches the coverage's product. All applicant's data is contained in this data.
-        return  next(ifilter(lambda d: d.get_product_id() == coverage.product_id, wrapped_enrollment_data), None)
+        return next(ifilter(lambda d: d.get_product_id() == coverage.product_id, wrapped_enrollment_data), None)
 
 
     def get_unmerged_enrollment_data(self, census_record, enrollment, case_products):
@@ -616,8 +618,7 @@ class EnrollmentApplicationService(DBService):
             coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE)
         spouse_coverage = self.find_first_coverage_by_product_for_applicant_type(
             coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
-        children_coverage = self.find_first_coverage_by_product_for_applicant_type(
-            coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
+        children_coverage = self.get_combined_children_coverage(coverages)
         # Include the calculated total annualized premium also
         total_annual_premium = Decimal('0.00')
 
@@ -638,13 +639,10 @@ class EnrollmentApplicationService(DBService):
             product_data = {u'{}_name'.format(prefix): product.name if product else ''}
 
             total_product_premium = Decimal('0.00')
-
-            for applicant_abbr, applicant_coverages in (('emp',
-                                                         employee_coverage),
-                                                        ('sp',
-                                                         spouse_coverage),
-                                                        ('ch',
-                                                         children_coverage)):
+            
+            coverage_list = [('emp', employee_coverage), ('sp', spouse_coverage), ('ch', children_coverage)]
+            
+            for applicant_abbr, applicant_coverages in coverage_list:
                 coverage = ''
                 premium = ''
                 annualized_premium = ''
@@ -730,6 +728,45 @@ class EnrollmentApplicationService(DBService):
             if coverages
             }
 
+    def get_combined_children_coverage(self, all_coverages):
+        # Creates a "fake" coverage record that combines all coverage info for the children to fit newer style products
+        #  into the old report format
+    
+        class CombinedChildrenCoverage(object):
+            def __init__(self, coverages):
+                self.coverages = coverages
+                self.applicant_type = EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD
+                self.effective_date = coverages[0].effective_date if len(coverages) else None
+                self.coverage_selection = ", ".join([c.coverage_selection for c in coverages if c.coverage_selection])
+                self.coverage_face_value = ', '.join([c.coverage_face_value for c in coverages if c.coverage_face_value])
+            def get_premium(self):
+                return sum([c.get_premium() for c in self.coverages])
+            
+            def get_annualized_premium(self):
+                return sum([c.get_annualized_premium() for c in self.coverages])
+            
+
+        applicant_coverages = filter_applicant_coverages(all_coverages, EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
+        coverages_by_product = group_coverages_by_product(applicant_coverages)
+        return {
+            p: CombinedChildrenCoverage(coverages)
+            for p, coverages in coverages_by_product.iteritems()
+            if coverages
+            }
+        
+
+    def find_all_coverage_by_product_for_applicant_type(self, all_coverages, applicant_type):
+        # Children coverage can now be separate, so we want to get the sum of all children's coverage.
+        applicant_coverages = filter_applicant_coverages(all_coverages,
+                                                         applicant_type)
+        coverages_by_product = group_coverages_by_product(applicant_coverages)
+
+        return {
+            p: coverages
+            for p, coverages in coverages_by_product.iteritems()
+            if coverages
+            }
+        
     def export_enrollment_data(self, data):
         stream = StringIO.StringIO()
         writer = UnicodeCsvWriter(stream)

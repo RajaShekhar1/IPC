@@ -74,7 +74,7 @@
                       {% endif %}
                       </td>
                       <td></td>
-                      <td><strong>{{enrollment.total}}</strong></td>
+                      <td><strong data-bind="text: formatPremium('{{enrollment.total}}')"></strong></td>
                       <td>
                         {% if is_admin %}
                           <button class="btn btn-danger" data-bind="click: function() {delete_enrollment_record({{ enrollment.id }})}"><i class="ace-icon fa fa-trash-o icon-only"></i></button>
@@ -91,7 +91,7 @@
                         <td></td>
                         <td>{{coverage.who}}</td>
                         <td data-bind="text: formatThousand('{{coverage.coverage or 'No Coverage'}}')"></td>
-                        <td>{{coverage.annual_premium}}</td>
+                        <td data-bind="text: formatPremium('{{coverage.annual_premium}}')"></td>
                         <td>
 
                         </td>
@@ -317,10 +317,30 @@
               });
           }
 
-          function CensusRecordViewModel() {
+        function convert_thousand_to_k(amount) {
+          // If the trailing end of a string has '000', replace with a K (for shorthand coverage readout).
+          return amount.substr(0, amount.length - 3) + amount.substr(amount.length - 3).replace("000", "K");
+        }
+
+        function CensusRecordViewModel() {
               var self = this;
               self.formatThousand = function(amount) {
-                  return amount.substr(0, amount.length-3)+amount.substr(amount.length-3).replace("000", "K");
+                  if (amount.indexOf(",") != -1) {
+                    var coverages = amount.split(",");
+                    return _.map(coverages, function(c) {
+                      return convert_thousand_to_k(c);
+                    }).join(", ");
+                  } else {
+                    return convert_thousand_to_k(amount);
+                  }
+
+              };
+
+              self.formatPremium = function(amount) {
+                if (isNaN(parseFloat(amount))) {
+                  return '';
+                }
+                return formatPremiumValue(parseFloat(amount));
               };
 
               self.is_delete_enrollment_modal_showing = ko.observable(false);
