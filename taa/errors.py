@@ -9,14 +9,14 @@ error_sender = ''
 error_recipients = []
 
 
-def init_exception_emails(app, recipients, sender='error@5starenroll.com'):
+def init_exception_emails(app, recipients):
     """
     Rewrote Flask-errormail to use mandrill module rather than flask-mail
     """
 
     global error_recipients, error_sender
     error_recipients = recipients
-    error_sender = sender
+    error_sender = app.config.get('EMAIL_FROM_ADDRESS', 'error@afba.com')
 
     # Don't attempt if debug mode is on
     if not app.config.get('DEBUG', False):
