@@ -121,7 +121,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   function get_coverage_limit_settings_for_product(product) {
     var product_settings = {};
-    if (case_data.product_settings.coverage_limits && case_data.product_settings.coverage_limits[product.id]) {
+    if (case_data.product_settings &&
+        case_data.product_settings.coverage_limits &&
+        case_data.product_settings.coverage_limits[product.id]) {
       product_settings = case_data.product_settings.coverage_limits[product.id];
     }
     return product_settings;
