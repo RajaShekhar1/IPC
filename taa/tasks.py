@@ -160,7 +160,7 @@ def send_admin_error_email(error_message, error_details):
     mailer = LookupService('MailerService')
     mailer.send_email(
         to=[e for e in errors.error_recipients],
-        from_email=u"TAA Error <errors@5StarEnroll.com>",
+        from_email=u"TAA Error <{}>".format(taa_app.config.get('EMAIL_FROM_ADDRESS', 'errors@5StarEnroll.com')),
         subject=u"5Star Processing Error ({})".format(taa_app.config['HOSTNAME']),
         html=body,
     )

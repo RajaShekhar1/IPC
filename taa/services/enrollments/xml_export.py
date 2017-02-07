@@ -40,8 +40,13 @@ agent_service = RequiredFeature('AgentService')
 
 def generate_xml(data, enrollment, template, applicant_type='employee', pdf_bytes=None):
     vars = get_variables(data, enrollment, applicant_type, pdf_bytes)
-    if vars['enrollee']['coverage']['face_value'] is None:
+    
+    # Don't submit if applicant is not applying for coverage.
+    if not vars['enrollee']['coverage']:
         return None
+    elif vars['enrollee']['coverage']['face_value'] is None:
+        return None
+    
     with app.test_request_context():
         return render_template(template, **vars)
 

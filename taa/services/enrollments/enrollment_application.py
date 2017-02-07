@@ -589,7 +589,7 @@ class EnrollmentApplicationService(DBService):
 
         enrollment = coverage.enrollment
         wrapped_enrollment_data = self.get_wrapped_enrollment_data(enrollment)
-        # Find the enrollment data that matches the coverage's product. All applicant's data is contained in this data.
+        # Find the enrollment data that matches the coverage's product. All applicant data is contained in this data.
         return next(ifilter(lambda d: d.get_product_id() == coverage.product_id, wrapped_enrollment_data), None)
 
 
