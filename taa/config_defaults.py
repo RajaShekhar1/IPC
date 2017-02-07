@@ -73,7 +73,7 @@ EMAIL_SMTP_SERVER = "smtp.sparkpostmail.com"
 EMAIL_SMTP_PORT = 587
 EMAIL_SMTP_USERNAME = env_get_text('EMAIL_SMTP_USERNAME', "SMTP_Injection")
 EMAIL_SMTP_PASSWORD = env_get_text('EMAIL_SMTP_PASSWORD', "0785e8d2791fd5d23076765cc25de75023aa9620")
-EMAIL_FROM_ADDRESS = env_get_text('EMAIL_FROM_ADDRESS', "enrollment@5StarEnroll.com")
+EMAIL_FROM_ADDRESS = env_get_text('EMAIL_FROM_ADDRESS', "enrollment@afba.com")
 EMAIL_FROM_NAME = env_get_text('EMAIL_FROM_NAME', '5Star Enrollment')
 
 SPARKPOST_API_KEY = env_get_text("SPARKPOST_API_KEY", "0785e8d2791fd5d23076765cc25de75023aa9620")

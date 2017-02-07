@@ -150,6 +150,12 @@ class EnrollmentSubmissionService(object):
     def generate_enrollment_xml_docs(self, enrollment_application):
         # returns a list of (xml, applicant_type, coverage) tuples
         xmls = []
+        
+        # Track if we have generated children for each product. (product_id: bool)
+        #  this is necessary because we want to directly iterate through the children here, but we have
+        #  a separate coverage record for each child now, so we don't want N*N submissions either.
+        has_generated_children_for_product = {}
+        
         for coverage in enrollment_application.coverages:
         
             # Filter out products that don't have STP submission by skipping them.
@@ -160,7 +166,9 @@ class EnrollmentSubmissionService(object):
             pdf_bytes = self.render_enrollment_pdf(coverage.enrollment, is_stp=True, product_id=coverage.product_id)
         
             # If this is coverage for children, add an XML doc for each child.
-            if coverage.applicant_type == 'children':
+            if coverage.applicant_type == 'children' and not has_generated_children_for_product.get(coverage.product_id):
+                has_generated_children_for_product[coverage.product_id] = True
+                
                 # Generate one for each child
                 data = self.enrollment_application_service.get_wrapped_data_for_coverage(coverage)
                 for i, child in enumerate(data['children']):
@@ -169,7 +177,7 @@ class EnrollmentSubmissionService(object):
                     xml = self.render_enrollment_xml(coverage, applicant_type, pdf_bytes=pdf_bytes)
                     if xml:
                         xmls.append((xml, applicant_type, coverage, pdf_bytes))
-            else:
+            elif coverage.applicant_type != 'children':
                 # Otherwise, we add the Employee or Spouse XML doc if they chose coverage.
                 applicant_type = coverage.applicant_type
                 xml = EnrollmentSubmissionService().render_enrollment_xml(coverage, applicant_type, pdf_bytes=pdf_bytes)
