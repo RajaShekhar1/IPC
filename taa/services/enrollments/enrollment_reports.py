@@ -19,7 +19,7 @@ class EnrollmentReportService(object):
     def get_enrollment_report(self, case):
         report_data = {}
         print("Retrieving census for case {}...".format(case.id))
-        census_records = self.case_service.get_census_records(case)
+        census_records = self.get_census_record_tuples(case) #self.case_service.get_census_records(case)
         print("Merging {} census records...".format(len(census_records)))
         merged_enrollment_applications = [merge_enrollments(census_record)
                                           for census_record in census_records]
