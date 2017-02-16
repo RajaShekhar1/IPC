@@ -47,7 +47,6 @@ def create_app(bind=None):
 
     # Init database - export the db variable here so other parts of the app can access the database
     global db
-    app.config['SQLALCHEMY_ECHO'] = False
     db = SQLAlchemy(app)
 
     # Initialize our model service classes
