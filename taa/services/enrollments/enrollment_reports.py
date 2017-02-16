@@ -2,6 +2,8 @@ from collections import defaultdict
 from decimal import Decimal
 
 from models import EnrollmentApplication, EnrollmentApplicationCoverage
+from taa import db
+from taa.services.cases import CaseCensus
 from taa.services import RequiredFeature
 from enrollment_application_coverages import (
     select_most_recent_coverage,
@@ -16,32 +18,67 @@ class EnrollmentReportService(object):
 
     def get_enrollment_report(self, case):
         report_data = {}
+        print("Retrieving census for case {}...".format(case.id))
         census_records = self.case_service.get_census_records(case)
+        print("Merging {} census records...".format(len(census_records)))
         merged_enrollment_applications = [merge_enrollments(census_record)
                                           for census_record in census_records]
+
+        print("Grouping coverages with enrollments...")
         enrollment_applications = []
         for census_record in census_records:
             enrollment_applications += [dict(enrollment=e,
                                              coverages=group_coverages_by_product(e.coverages))
                                         for e in census_record.enrollment_applications if not e.is_preview]
         report_data['company_name'] = case.company_name
+
+        print("Gathering enrollment methods for {} apps...".format(len(enrollment_applications)))
         # Enrollment methods used
         report_data['enrollment_methods'] = self._find_enrollment_methods(enrollment_applications)
+
+        print("Gathering enrollment period for {} apps...".format(len(enrollment_applications)))
         # Enrollment period (most recent)
         if case:
             report_data['enrollment_period'] = self._get_enrollment_period_dates(case)
         else:
             report_data['enrollment_period'] = None
+
+        print("Gathering product stats for {} apps...".format(len(enrollment_applications)))
         stats = self.get_product_statistics(enrollment_applications)
+
+        print("Building report summary for {} apps...".format(len(enrollment_applications)))
         report_data['summary'] = self.build_report_summary(stats, case,
                                                            merged_enrollment_applications,
                                                            enrollment_applications)
+
+        print("Building report data for stats by product...")
         # Product data
         report_data['product_report'] = self.build_report_by_product(stats)
+
         # Agents on case
         report_data['case_owner'] = self.case_service.get_case_owner(case)
+
+        print("Getting partner agents")
         report_data['case_agents'] = self.case_service.get_case_partner_agents(case)
+
+        print("Done")
         return report_data
+
+    def get_census_record_tuples(self, case):
+        # Returns raw data without extras for reporting speed.
+
+        query = db.session.query(
+            CaseCensus.id.label('census_record_id'),
+            EnrollmentApplication.application_status.label('application_status'),
+            EnrollmentApplication.method.label('method'),
+            EnrollmentApplicationCoverage.annual_premium.label('annual_premium'),
+            EnrollmentApplicationCoverage.product_id.label('product_id'),
+
+        ).filter(CaseCensus.case_id == case.id
+                 )
+        query = query.outerjoin('enrollment_applications', 'coverages')
+
+        return db.session.execute(query.statement)
 
     def _find_enrollment_methods(self, case_enrollments):
         return list({e['enrollment'].method for e in case_enrollments
