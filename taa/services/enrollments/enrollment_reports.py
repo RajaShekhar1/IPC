@@ -1,6 +1,10 @@
 from collections import defaultdict
 from decimal import Decimal
 
+from taa.services.products import Product
+
+from taa.services.enrollments import EnrollmentApplicationService
+
 from models import EnrollmentApplication, EnrollmentApplicationCoverage
 from taa import db
 from taa.services.cases import CaseCensus
@@ -17,10 +21,141 @@ class EnrollmentReportService(object):
     case_service = RequiredFeature('CaseService')
 
     def get_enrollment_report(self, case):
+        
+        app_service = EnrollmentApplicationService()
+
+        
+        report_data = {
+            # "product_report": {
+            #                       "1": {
+            #                           "enrolled_count": 15304,
+            #                           "product_name": "Family Protection Plan - Terminal Illness",
+            #                           "total_annualized_premium": "10005980.88"
+            #                       },
+            #                       "2": {
+            #                           "enrolled_count": 126,
+            #                           "product_name": "Family Protection Plan - Critical Illness",
+            #                           "total_annualized_premium": "63905.88"
+            #                       },
+            #                       "23": {
+            #                           "enrolled_count": 16,
+            #                           "product_name": "Group CI - Health Depot",
+            #                           "total_annualized_premium": "5138.16"
+            #                       },
+            #                       "71": {
+            #                           "enrolled_count": 5008,
+            #                           "product_name": "HealthDepot Membership",
+            #                           "total_annualized_premium": "540864.00"
+            #                       }
+            #                   },
+            "summary": {
+                "is_census_report": False,
+                "only_one_product": False,
+                "processed_enrollments": 14929,
+                "product_names": [
+                    "HealthDepot Membership",
+                    "Family Protection Plan - Terminal Illness",
+                    "Family Protection Plan - Critical Illness",
+                    "Group CI - Health Depot"
+                ],
+                "total_annualized_premium": "10504869.12",
+                "total_census": 15011
+            }
+        }
+
+        used_product_ids = [r.product_id for r in
+                            db.session.query(EnrollmentApplicationCoverage.product_id.label('product_id')
+                                             ).group_by(EnrollmentApplicationCoverage.product_id
+                                                        ).filter(EnrollmentApplication.case_id == case.id
+                                                                 ).filter(
+                                EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
+                                ).all()
+                            ]
+        report_data['enrollment_methods'] = [r.method for r in
+                            db.session.query(EnrollmentApplication.method.label('method')
+                                             ).group_by(EnrollmentApplication.method
+                                             ).filter(EnrollmentApplication.case_id == case.id
+                                             ).all()
+                            ]
+
+        product_taken_counts = defaultdict(int)
+        product_declined_counts = defaultdict(int)
+
+        for product_id in used_product_ids:
+            q = db.session.query(EnrollmentApplication
+                                 ).filter(EnrollmentApplication.is_preview == False
+                                 ).filter(
+                EnrollmentApplication.coverages.any(EnrollmentApplicationCoverage.product_id == product_id)
+                ).filter(EnrollmentApplication.case_id == case.id
+                )
+            taken_q = q.filter(
+                EnrollmentApplication.application_status == EnrollmentApplication.APPLICATION_STATUS_ENROLLED)
+            declined_q = q.filter(
+                EnrollmentApplication.application_status == EnrollmentApplication.APPLICATION_STATUS_DECLINED)
+            product_taken_counts[product_id] = taken_q.count()
+            product_declined_counts[product_id] = declined_q.count()
+
+        # Get product total premiums
+        product_annual_premiums = {}
+        for product_id in used_product_ids:
+            row = db.session.query(app_service._select_total_annual_premium().label('total_premium')
+                                   ).filter(
+                EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
+                ).filter(EnrollmentApplicationCoverage.product_id == product_id
+                         ).filter(EnrollmentApplication.case_id == case.id
+                                  ).filter(EnrollmentApplication.is_preview == False
+                                           ).filter(
+                EnrollmentApplication.application_status == EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+                ).one()
+            product_annual_premiums[product_id] = row.total_premium
+
+        grand_total_premium = sum(product_annual_premiums.values())
+
+        # Add to report
+        report_data['product_report'] = {}
+        for product_id in used_product_ids:
+            product = db.session.query(Product).get(product_id)
+            report_data['product_report'][product_id] = {
+                "enrolled_count": product_taken_counts[product_id],
+                "product_name": product.get_brochure_name(),
+                "total_annualized_premium": product_annual_premiums[product_id]
+            }
+        
+        # Summary data
+        num_processed = db.session.query(CaseCensus
+            ).filter(CaseCensus.case_id == case.id
+            ).filter(CaseCensus.enrollments.any(db.and_(
+                EnrollmentApplication.is_preview == False,
+                db.or_(EnrollmentApplication.application_status.in_(
+                    EnrollmentApplication.APPLICATION_STATUS_DECLINED,
+                    EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
+                ))
+        report_data['summary']['processed_enrollments'] = num_processed
+        report_data['summary']['total_annualized_premium'] = grand_total_premium
+        
+        # Enrollment methods used
+        #report_data['enrollment_methods'] = self._find_enrollment_methods(enrollment_applications)
+
+        # Enrollment period (most recent)
+        if case:
+            report_data['enrollment_period'] = self._get_enrollment_period_dates(case)
+        else:
+            report_data['enrollment_period'] = None
+
+        # Agents on case
+        report_data['company_name'] = case.company_name
+        report_data['case_owner'] = self.case_service.get_case_owner(case)
+
+        print("Getting partner agents")
+        report_data['case_agents'] = self.case_service.get_case_partner_agents(case)
+        
+        return report_data
+
+    def get_enrollment_report_old(self, case):
         report_data = {}
         print("Retrieving census for case {}...".format(case.id))
-        census_records = self.get_census_record_tuples(case) #self.case_service.get_census_records(case)
-        print("Merging {} census records...".format(len(census_records)))
+        census_records = self.case_service.get_census_records(case)
+        print("Merging census records...")
         merged_enrollment_applications = [merge_enrollments(census_record)
                                           for census_record in census_records]
 
@@ -225,6 +360,7 @@ def merge_enrollments(census_record):
                                      key=lambda e: e.signature_time)
     else:
         most_recent_enrollment = None
+    
     return {
         'enrollment': most_recent_enrollment,
         'coverages': merge_enrollment_application_coverages(all_coverages),
@@ -274,11 +410,7 @@ class ProductStatsAccumulator(object):
         # Count taken products
         for product in merged_enrollment_application['coverages']:
             self._product_counts[product] += 1
-        # Count declined products - TODO: when multiproduct is added,
-        # individual products may be declined
-        # if merged_enrollment_application['enrollment'] and not merged_enrollment_application['enrollment'].did_enroll():
-        #     self._product_declines[product] += 1
-
+        
         # Count annualized premiums by product
         for product, coverages in merged_enrollment_application['coverages'].iteritems():
             self._product_premiums[product] += sum(

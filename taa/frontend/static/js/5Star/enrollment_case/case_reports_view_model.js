@@ -36,7 +36,7 @@ var CaseReportsViewModel = function(params) {
           name: data.product_name,
           num_taken: data.enrolled_count,
           percent_taken: (data.enrolled_count / resp.data.summary.total_census * 100).toFixed(2),
-          annualized_premium: data.total_annualized_premium
+          annualized_premium: numberWithCommas(parseFloat(data.total_annualized_premium))
         });
       });
       self.product_data(pdata);
@@ -82,10 +82,11 @@ self.load_enrollments = function() {
 self.format_enrollment_methods = ko.computed(function() {
   var display_map = {
     in_person: 'In Person',
-    self_enroll_email: 'Self-Enroll by Email'
+    self_enroll_email: 'Self-Enroll by Email',
+    api_import: 'Imported'
   };
 
-  return _.map(self.enrollment_methods(), function(m) {return display_map[m]}).join(",");
+  return _.map(self.enrollment_methods(), function(m) {return display_map[m]}).join(", ");
 });
 
 self.format_enrollment_dates = ko.computed(function() {
@@ -142,7 +143,7 @@ self.format_total_percent_declined = ko.computed(function() {
 });
 
 self.format_total_annualized_premium = ko.computed(function() {
-  return '$'+self.summary_data().total_annualized_premium;
+  return '$' + numberWithCommas(parseFloat(self.summary_data().total_annualized_premium));
 });
 
 self.format_case_agents = ko.computed(function() {
