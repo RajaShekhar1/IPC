@@ -130,6 +130,8 @@ class EnrollmentReportService(object):
                     EnrollmentApplication.APPLICATION_STATUS_DECLINED,
                     EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
                 ))
+            ))
+        )
         report_data['summary']['processed_enrollments'] = num_processed
         report_data['summary']['total_annualized_premium'] = grand_total_premium
         
