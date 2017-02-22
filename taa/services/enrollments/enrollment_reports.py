@@ -124,14 +124,14 @@ class EnrollmentReportService(object):
         # Summary data
         num_processed = db.session.query(CaseCensus
             ).filter(CaseCensus.case_id == case.id
-            ).filter(CaseCensus.enrollments.any(db.and_(
+            ).filter(CaseCensus.enrollment_applications.any(db.and_(
                 EnrollmentApplication.is_preview == False,
-                db.or_(EnrollmentApplication.application_status.in_(
+                db.or_(EnrollmentApplication.application_status.in_([
                     EnrollmentApplication.APPLICATION_STATUS_DECLINED,
                     EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
-                ))
+                ]))
             ))
-        )
+        ).count()
         report_data['summary']['processed_enrollments'] = num_processed
         report_data['summary']['total_annualized_premium'] = grand_total_premium
         
