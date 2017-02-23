@@ -19,49 +19,15 @@ from enrollment_application_coverages import (
 class EnrollmentReportService(object):
 
     case_service = RequiredFeature('CaseService')
-
+    product_service = RequiredFeature('ProductService')
+    
     def get_enrollment_report(self, case):
         
         app_service = EnrollmentApplicationService()
 
         
-        report_data = {
-            # "product_report": {
-            #                       "1": {
-            #                           "enrolled_count": 15304,
-            #                           "product_name": "Family Protection Plan - Terminal Illness",
-            #                           "total_annualized_premium": "10005980.88"
-            #                       },
-            #                       "2": {
-            #                           "enrolled_count": 126,
-            #                           "product_name": "Family Protection Plan - Critical Illness",
-            #                           "total_annualized_premium": "63905.88"
-            #                       },
-            #                       "23": {
-            #                           "enrolled_count": 16,
-            #                           "product_name": "Group CI - Health Depot",
-            #                           "total_annualized_premium": "5138.16"
-            #                       },
-            #                       "71": {
-            #                           "enrolled_count": 5008,
-            #                           "product_name": "HealthDepot Membership",
-            #                           "total_annualized_premium": "540864.00"
-            #                       }
-            #                   },
-            "summary": {
-                "is_census_report": False,
-                "only_one_product": False,
-                "processed_enrollments": 14929,
-                "product_names": [
-                    "HealthDepot Membership",
-                    "Family Protection Plan - Terminal Illness",
-                    "Family Protection Plan - Critical Illness",
-                    "Group CI - Health Depot"
-                ],
-                "total_annualized_premium": "10504869.12",
-                "total_census": 15011
-            }
-        }
+        report_data = {}
+        
 
         used_product_ids = [r.product_id for r in
                             db.session.query(EnrollmentApplicationCoverage.product_id.label('product_id')
@@ -122,22 +88,31 @@ class EnrollmentReportService(object):
             }
         
         # Summary data
-        num_processed = db.session.query(CaseCensus
-            ).filter(CaseCensus.case_id == case.id
-            ).filter(CaseCensus.enrollment_applications.any(db.and_(
-                EnrollmentApplication.is_preview == False,
-                db.or_(EnrollmentApplication.application_status.in_([
-                    EnrollmentApplication.APPLICATION_STATUS_DECLINED,
-                    EnrollmentApplication.APPLICATION_STATUS_ENROLLED,
-                ]))
-            ))
-        ).count()
-        report_data['summary']['processed_enrollments'] = num_processed
-        report_data['summary']['total_annualized_premium'] = grand_total_premium
-        
-        # Enrollment methods used
-        #report_data['enrollment_methods'] = self._find_enrollment_methods(enrollment_applications)
+        num_taken = self.count_census_for_status(case, [EnrollmentApplication.APPLICATION_STATUS_ENROLLED])
+        num_declined = self.count_census_for_status(case, [EnrollmentApplication.APPLICATION_STATUS_DECLINED])
+        num_processed = num_taken + num_declined
+        num_census = self.count_census_for_status(case, [])
+        product_names = [
+            self.product_service.get(product_id).name
+            for product_id in used_product_ids
+        ]
+        summary = dict(
+            processed_enrollments=num_processed,
+            total_census=num_census,
+            total_annualized_premium=grand_total_premium,
+            is_census_report=self._is_uploaded_census(case),
+            only_one_product=self.has_only_one_product(case),
+            product_names=product_names,
+        )
 
+        if self._is_uploaded_census(case):
+            summary.update(dict(
+                taken_enrollments=num_taken,
+                declined_enrollments=num_declined,
+            ))
+        
+        report_data['summary'] = summary
+        
         # Enrollment period (most recent)
         if case:
             report_data['enrollment_period'] = self._get_enrollment_period_dates(case)
@@ -152,7 +127,21 @@ class EnrollmentReportService(object):
         report_data['case_agents'] = self.case_service.get_case_partner_agents(case)
         
         return report_data
-
+    
+    def count_census_for_status(self, case, status_list):
+        q = db.session.query(CaseCensus
+            ).filter(CaseCensus.case_id == case.id
+            )
+        
+        if status_list:
+            q = q.filter(CaseCensus.enrollment_applications.any(db.and_(
+                    EnrollmentApplication.is_preview == False,
+                    db.or_(EnrollmentApplication.application_status.in_(status_list))
+                ))
+            )
+        
+        return q.count()
+    
     def get_enrollment_report_old(self, case):
         report_data = {}
         print("Retrieving census for case {}...".format(case.id))
@@ -281,16 +270,13 @@ class EnrollmentReportService(object):
     def get_product_names(self, case):
         return [p.name for p in case.products]
 
-    def _is_uploaded_census(self, merged_enrollment_applications):
+    def _is_uploaded_census(self, case):
         """
-        If any census record is uploaded, we consider the whole thing
-        a census-enrolled case (Zach's guess)
+        If any census record is uploaded, we consider the whole thing a census-enrolled case
         """
-        return any(map(lambda e:
-                       (e['enrollment'].census_record.is_uploaded_census
-                        if e['enrollment'] else False),
-                       merged_enrollment_applications))
-
+        return db.session.query(CaseCensus).filter(CaseCensus.case_id == case.id).filter(CaseCensus.is_uploaded_census).limit(1).count()
+    
+    
     def get_num_processed_enrollments(self, merged_enrollment_applications):
         return sum(1 for enrollment in merged_enrollment_applications
                    if enrollment['enrollment'] and
