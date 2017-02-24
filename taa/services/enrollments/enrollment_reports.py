@@ -1,7 +1,13 @@
 from collections import defaultdict
 from decimal import Decimal
 
+from taa.services.products import Product
+
+from taa.services.enrollments import EnrollmentApplicationService
+
 from models import EnrollmentApplication, EnrollmentApplicationCoverage
+from taa import db
+from taa.services.cases import CaseCensus
 from taa.services import RequiredFeature
 from enrollment_application_coverages import (
     select_most_recent_coverage,
@@ -13,35 +19,192 @@ from enrollment_application_coverages import (
 class EnrollmentReportService(object):
 
     case_service = RequiredFeature('CaseService')
-
+    product_service = RequiredFeature('ProductService')
+    
     def get_enrollment_report(self, case):
+        
+        app_service = EnrollmentApplicationService()
+
+        
         report_data = {}
+        
+
+        used_product_ids = [r.product_id for r in
+                            db.session.query(EnrollmentApplicationCoverage.product_id.label('product_id')
+                                             ).group_by(EnrollmentApplicationCoverage.product_id
+                                                        ).filter(EnrollmentApplication.case_id == case.id
+                                                                 ).filter(
+                                EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
+                                ).all()
+                            ]
+        report_data['enrollment_methods'] = [r.method for r in
+                            db.session.query(EnrollmentApplication.method.label('method')
+                                             ).group_by(EnrollmentApplication.method
+                                             ).filter(EnrollmentApplication.case_id == case.id
+                                             ).all()
+                            ]
+
+        product_taken_counts = defaultdict(int)
+        product_declined_counts = defaultdict(int)
+
+        for product_id in used_product_ids:
+            q = db.session.query(EnrollmentApplication
+                                 ).filter(EnrollmentApplication.is_preview == False
+                                 ).filter(
+                EnrollmentApplication.coverages.any(EnrollmentApplicationCoverage.product_id == product_id)
+                ).filter(EnrollmentApplication.case_id == case.id
+                )
+            taken_q = q.filter(
+                EnrollmentApplication.application_status == EnrollmentApplication.APPLICATION_STATUS_ENROLLED)
+            declined_q = q.filter(
+                EnrollmentApplication.application_status == EnrollmentApplication.APPLICATION_STATUS_DECLINED)
+            product_taken_counts[product_id] = taken_q.count()
+            product_declined_counts[product_id] = declined_q.count()
+
+        # Get product total premiums
+        product_annual_premiums = {}
+        for product_id in used_product_ids:
+            row = db.session.query(app_service._select_total_annual_premium().label('total_premium')
+                                   ).filter(
+                EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id
+                ).filter(EnrollmentApplicationCoverage.product_id == product_id
+                         ).filter(EnrollmentApplication.case_id == case.id
+                                  ).filter(EnrollmentApplication.is_preview == False
+                                           ).filter(
+                EnrollmentApplication.application_status == EnrollmentApplication.APPLICATION_STATUS_ENROLLED
+                ).one()
+            product_annual_premiums[product_id] = row.total_premium
+
+        grand_total_premium = sum(product_annual_premiums.values())
+
+        # Add to report
+        report_data['product_report'] = {}
+        for product_id in used_product_ids:
+            product = db.session.query(Product).get(product_id)
+            report_data['product_report'][product_id] = {
+                "enrolled_count": product_taken_counts[product_id],
+                "product_name": product.get_brochure_name(),
+                "total_annualized_premium": product_annual_premiums[product_id]
+            }
+        
+        # Summary data
+        num_taken = self.count_census_for_status(case, [EnrollmentApplication.APPLICATION_STATUS_ENROLLED])
+        num_declined = self.count_census_for_status(case, [EnrollmentApplication.APPLICATION_STATUS_DECLINED])
+        num_processed = num_taken + num_declined
+        num_census = self.count_census_for_status(case, [])
+        product_names = [
+            self.product_service.get(product_id).name
+            for product_id in used_product_ids
+        ]
+        summary = dict(
+            processed_enrollments=num_processed,
+            total_census=num_census,
+            total_annualized_premium=grand_total_premium,
+            is_census_report=self._is_uploaded_census(case),
+            only_one_product=self.has_only_one_product(case),
+            product_names=product_names,
+        )
+
+        if self._is_uploaded_census(case):
+            summary.update(dict(
+                taken_enrollments=num_taken,
+                declined_enrollments=num_declined,
+            ))
+        
+        report_data['summary'] = summary
+        
+        # Enrollment period (most recent)
+        if case:
+            report_data['enrollment_period'] = self._get_enrollment_period_dates(case)
+        else:
+            report_data['enrollment_period'] = None
+
+        # Agents on case
+        report_data['company_name'] = case.company_name
+        report_data['case_owner'] = self.case_service.get_case_owner(case)
+
+        print("Getting partner agents")
+        report_data['case_agents'] = self.case_service.get_case_partner_agents(case)
+        
+        return report_data
+    
+    def count_census_for_status(self, case, status_list):
+        q = db.session.query(CaseCensus
+            ).filter(CaseCensus.case_id == case.id
+            )
+        
+        if status_list:
+            q = q.filter(CaseCensus.enrollment_applications.any(db.and_(
+                    EnrollmentApplication.is_preview == False,
+                    db.or_(EnrollmentApplication.application_status.in_(status_list))
+                ))
+            )
+        
+        return q.count()
+    
+    def get_enrollment_report_old(self, case):
+        report_data = {}
+        print("Retrieving census for case {}...".format(case.id))
         census_records = self.case_service.get_census_records(case)
+        print("Merging census records...")
         merged_enrollment_applications = [merge_enrollments(census_record)
                                           for census_record in census_records]
+
+        print("Grouping coverages with enrollments...")
         enrollment_applications = []
         for census_record in census_records:
             enrollment_applications += [dict(enrollment=e,
                                              coverages=group_coverages_by_product(e.coverages))
                                         for e in census_record.enrollment_applications if not e.is_preview]
         report_data['company_name'] = case.company_name
+
+        print("Gathering enrollment methods for {} apps...".format(len(enrollment_applications)))
         # Enrollment methods used
         report_data['enrollment_methods'] = self._find_enrollment_methods(enrollment_applications)
+
+        print("Gathering enrollment period for {} apps...".format(len(enrollment_applications)))
         # Enrollment period (most recent)
         if case:
             report_data['enrollment_period'] = self._get_enrollment_period_dates(case)
         else:
             report_data['enrollment_period'] = None
+
+        print("Gathering product stats for {} apps...".format(len(enrollment_applications)))
         stats = self.get_product_statistics(enrollment_applications)
+
+        print("Building report summary for {} apps...".format(len(enrollment_applications)))
         report_data['summary'] = self.build_report_summary(stats, case,
                                                            merged_enrollment_applications,
                                                            enrollment_applications)
+
+        print("Building report data for stats by product...")
         # Product data
         report_data['product_report'] = self.build_report_by_product(stats)
+
         # Agents on case
         report_data['case_owner'] = self.case_service.get_case_owner(case)
+
+        print("Getting partner agents")
         report_data['case_agents'] = self.case_service.get_case_partner_agents(case)
+
+        print("Done")
         return report_data
+
+    def get_census_record_tuples(self, case):
+        # Returns raw data without extras for reporting speed.
+
+        query = db.session.query(
+            CaseCensus.id.label('census_record_id'),
+            EnrollmentApplication.application_status.label('application_status'),
+            EnrollmentApplication.method.label('method'),
+            EnrollmentApplicationCoverage.annual_premium.label('annual_premium'),
+            EnrollmentApplicationCoverage.product_id.label('product_id'),
+
+        ).filter(CaseCensus.case_id == case.id
+                 )
+        query = query.outerjoin('enrollment_applications', 'coverages')
+
+        return db.session.execute(query.statement)
 
     def _find_enrollment_methods(self, case_enrollments):
         return list({e['enrollment'].method for e in case_enrollments
@@ -107,16 +270,13 @@ class EnrollmentReportService(object):
     def get_product_names(self, case):
         return [p.name for p in case.products]
 
-    def _is_uploaded_census(self, merged_enrollment_applications):
+    def _is_uploaded_census(self, case):
         """
-        If any census record is uploaded, we consider the whole thing
-        a census-enrolled case (Zach's guess)
+        If any census record is uploaded, we consider the whole thing a census-enrolled case
         """
-        return any(map(lambda e:
-                       (e['enrollment'].census_record.is_uploaded_census
-                        if e['enrollment'] else False),
-                       merged_enrollment_applications))
-
+        return db.session.query(CaseCensus).filter(CaseCensus.case_id == case.id).filter(CaseCensus.is_uploaded_census).limit(1).count()
+    
+    
     def get_num_processed_enrollments(self, merged_enrollment_applications):
         return sum(1 for enrollment in merged_enrollment_applications
                    if enrollment['enrollment'] and
@@ -188,6 +348,7 @@ def merge_enrollments(census_record):
                                      key=lambda e: e.signature_time)
     else:
         most_recent_enrollment = None
+    
     return {
         'enrollment': most_recent_enrollment,
         'coverages': merge_enrollment_application_coverages(all_coverages),
@@ -237,11 +398,7 @@ class ProductStatsAccumulator(object):
         # Count taken products
         for product in merged_enrollment_application['coverages']:
             self._product_counts[product] += 1
-        # Count declined products - TODO: when multiproduct is added,
-        # individual products may be declined
-        # if merged_enrollment_application['enrollment'] and not merged_enrollment_application['enrollment'].did_enroll():
-        #     self._product_declines[product] += 1
-
+        
         # Count annualized premiums by product
         for product, coverages in merged_enrollment_application['coverages'].iteritems():
             self._product_premiums[product] += sum(

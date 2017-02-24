@@ -459,28 +459,11 @@ class EnrollmentApplicationService(DBService):
             CaseCensus.employee_email.label('employee_email'),
             # Compute the annual premium
             db.select([
-                db.case([
-                    (db.func.sum(EnrollmentApplicationCoverage.weekly_premium) > 0,
-                     db.func.sum(EnrollmentApplicationCoverage.weekly_premium) * 52),
-                    (db.func.sum(EnrollmentApplicationCoverage.biweekly_premium) > 0,
-                     db.func.sum(EnrollmentApplicationCoverage.biweekly_premium) * 26),
-                    (db.func.sum(EnrollmentApplicationCoverage.semimonthly_premium) > 0,
-                     db.func.sum(EnrollmentApplicationCoverage.semimonthly_premium) * 24),
-                    (db.func.sum(EnrollmentApplicationCoverage.monthly_premium) > 0,
-                     db.func.sum(EnrollmentApplicationCoverage.monthly_premium) * 12)
-                ],
-                    else_=0
-                )
+                self._select_total_annual_premium()
             ],
             ).where(db.and_(
                 EnrollmentApplicationCoverage.enrollment_application_id == EnrollmentApplication.id,
-                # Filter out coverages where the premium shouldn't count.
-                # Either no coverage_selection, or count only the employee coverage if it is a product
-                # with coverage selection.
-                db.or_(EnrollmentApplicationCoverage.coverage_selection == None,
-                       db.and_(EnrollmentApplicationCoverage.coverage_selection != None,
-                               EnrollmentApplicationCoverage.applicant_type == 'employee')
-                       )
+                self._filter_coverages_with_valid_premium()
                 )
             ).correlate(EnrollmentApplication).label('total_premium'),
             db.select(
@@ -526,6 +509,29 @@ class EnrollmentApplicationService(DBService):
         query = query.offset(offset).limit(limit)
 
         return query
+
+    def _filter_coverages_with_valid_premium(self):
+        # Filter out coverages where the premium shouldn't count.
+        # Either no coverage_selection (most coverages are like this, they have face value instead),
+        # or count only the employee coverage if it is a product that uses coverage_selection.
+        return db.or_(EnrollmentApplicationCoverage.coverage_selection == None,
+                      db.and_(EnrollmentApplicationCoverage.coverage_selection != None,
+                              EnrollmentApplicationCoverage.applicant_type == 'employee')
+                      )
+
+    def _select_total_annual_premium(self):
+        return db.case([
+            (db.func.sum(EnrollmentApplicationCoverage.weekly_premium) > 0,
+             db.func.sum(EnrollmentApplicationCoverage.weekly_premium) * 52),
+            (db.func.sum(EnrollmentApplicationCoverage.biweekly_premium) > 0,
+             db.func.sum(EnrollmentApplicationCoverage.biweekly_premium) * 26),
+            (db.func.sum(EnrollmentApplicationCoverage.semimonthly_premium) > 0,
+             db.func.sum(EnrollmentApplicationCoverage.semimonthly_premium) * 24),
+            (db.func.sum(EnrollmentApplicationCoverage.monthly_premium) > 0,
+             db.func.sum(EnrollmentApplicationCoverage.monthly_premium) * 12)
+        ],
+            else_=0
+        )
 
     def retrieve_enrollments_total_visible_count_for_table(self, case):
         return self.retrieve_enrollment_data_for_table(case).count()
