@@ -571,7 +571,9 @@ class CaseService(DBService):
         return self.agent_splits.find(case_id=case.id)
 
     def create_agent_splits_setup(self, case, data):
-        return self.agent_splits.create(case_id=case.id, **data)
+        # Don't flush the session here since this is often called in bulk.
+        model = self.agent_splits.new(case_id=case.id, **data)
+        db.session.add(model)
 
     def delete_agent_splits_setup_for_case(self, case):
         return self.agent_splits.find(case_id=case.id).delete()
