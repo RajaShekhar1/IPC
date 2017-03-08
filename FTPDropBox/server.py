@@ -211,7 +211,9 @@ def main(port, certfile, upload_url, auth_token):
     authorizer = StormPathAuthorizer(stormpath_app)
 
     handler = TAAHandler
-
+    
+    handler.tls_control_required = True
+    handler.
     handler.auth_token = auth_token
     handler.upload_url = upload_url
     handler.certfile = certfile
