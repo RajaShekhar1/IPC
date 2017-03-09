@@ -213,7 +213,7 @@ def main(port, certfile, upload_url, auth_token):
     handler = TAAHandler
     
     handler.tls_control_required = True
-    handler.
+    handler.tls_data_required = True
     handler.auth_token = auth_token
     handler.upload_url = upload_url
     handler.certfile = certfile
