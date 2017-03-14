@@ -638,7 +638,8 @@ class EnrollmentApplicationService(DBService):
                 product = case_products[x]
                 """:type: taa.services.products.Product"""
             else:
-                product = None
+                # See if we have any other products that have been enrolled
+                None
             if product and product.id not in product_ids:
                 product = None
             prefix = 'product_{0}'.format(x + 1)
