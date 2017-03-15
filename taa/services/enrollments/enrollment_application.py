@@ -636,7 +636,6 @@ class EnrollmentApplicationService(DBService):
         for x in range(6):
             if x < len(case_products):
                 product = case_products[x]
-                """:type: taa.services.products.Product"""
             else:
                 # See if we have any other products that have been enrolled
                 None
