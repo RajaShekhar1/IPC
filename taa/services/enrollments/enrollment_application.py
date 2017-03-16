@@ -638,9 +638,8 @@ class EnrollmentApplicationService(DBService):
                 product = case_products[x]
             else:
                 # See if we have any other products that have been enrolled
-                None
-            #if product and product.id not in product_ids:
-            #    product = None
+                product = None
+            
             prefix = 'product_{0}'.format(x + 1)
             product_data = {u'{}_name'.format(prefix): product.name if product else ''}
 
