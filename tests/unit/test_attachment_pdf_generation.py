@@ -95,7 +95,8 @@ class TestPDFAttachments(TestCase):
         child_attachment_form = ChildAttachmentForm(self.test_recipients,
                                                     enrollment_data=EnrollmentDataWrap(dict(
                                                         agent_data=dict(company_name="DelMar SD"),
-                                                        employee=dict(first="Test", last="Employee", ssn="123-12-1234")
+                                                        employee=dict(first="Test", last="Employee", ssn="123-12-1234"),
+                    product_id=1
                                                     ), self.case)
         )
 
@@ -147,7 +148,8 @@ class TestPDFAttachments(TestCase):
                     replaced_or_financing="R",
                     replacement_reason="Testing Reason ntahoensuthansoe hunsao a oeunaoenu hane unaoe a asoe unaeu",
                 )
-            ]
+            ],
+                product_id=1
         ), self.case))
 
         attachment.generate()
@@ -165,6 +167,7 @@ class TestPDFAttachments(TestCase):
         ]
         self.test_enrollment_data = dict(
             agent_data=dict(company_name="DelMar SD"),
-            employee=dict(first="Test", last="Employee", ssn="123-12-1234")
+            employee=dict(first="Test", last="Employee", ssn="123-12-1234"),
+            product_id=1
         )
         self.case = Mock(company_name="DelMar SD")
