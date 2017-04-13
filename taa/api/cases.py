@@ -583,13 +583,22 @@ def update_self_enrollment_setup(case_id):
 def update_agent_split_setup(case_id):
     case = case_service.get_if_allowed(case_id)
 
-    case_service.delete_agent_splits_setup_for_case(case)
-
     if not case_service.can_current_user_edit_case(case):
         abort(401)
         return
 
+    # Deduplicate records based on agent_id and product_id combination.
+    used_agent_products = set()
+    deduped_splits = []
     for split in request.json:
+        if (split['agent_id'], split['product_id']) not in used_agent_products:
+            used_agent_products.add((split['agent_id'], split['product_id']))
+            deduped_splits.append(split)
+        
+    # Delete all existing for case, then insert.
+    case_service.delete_agent_splits_setup_for_case(case)
+    
+    for split in deduped_splits:
         case_service.create_agent_splits_setup(case, split)
 
     return True

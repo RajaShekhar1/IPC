@@ -636,11 +636,10 @@ class EnrollmentApplicationService(DBService):
         for x in range(6):
             if x < len(case_products):
                 product = case_products[x]
-                """:type: taa.services.products.Product"""
             else:
+                # See if we have any other products that have been enrolled
                 product = None
-            if product and product.id not in product_ids:
-                product = None
+            
             prefix = 'product_{0}'.format(x + 1)
             product_data = {u'{}_name'.format(prefix): product.name if product else ''}
 

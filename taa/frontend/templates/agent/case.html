@@ -701,7 +701,7 @@
                         </div>
                         <div class="widget-toolbox clearfix padding-8">
                           <button class="btn btn-primary btn-md pull-right" data-bind="
-                              disable: !can_edit_case,
+                              disable: !can_edit_case || loading_modal() !== null,
                               click: save_settings,
                               css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}
                       ">Save
@@ -831,7 +831,7 @@
                         <div class="widget-toolbox clearfix padding-8">
                           <div class="pull-right clearfix">
                             <button type="submit" class="btn btn-primary" data-bind="visible: is_self_enrollment,
-          disable: !can_edit_case,
+          disable: !can_edit_case || loading_modal() !== null,
           click: save_settings,
           css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}">Save
                             </button>
@@ -977,7 +977,7 @@
                                                       Close
                                                     </button>
                                                     <button type="button" class="btn btn-primary" data-bind="
-                                                        disable: !$root.can_edit_case,
+                                                        disable: !$root.can_edit_case || $root.loading_modal() !== null,
                                                         click: $root.save_settings,
                                                         css: {'btn-primary': $root.has_unsaved_data(), 'btn-default': !$root.has_unsaved_data()}">
                                                       Save
@@ -1016,7 +1016,7 @@
                           <div class="widget-toolbox clearfix padding-8">
                             <div class="pull-right clearfix">
                               <button type="submit" class="btn btn-primary" data-bind="visible: has_agent_splits,
-                        disable: !can_edit_case,
+                        disable: !can_edit_case || loading_modal() !== null,
                         click: save_settings,
                         css: {'btn-primary': has_unsaved_data, 'btn-default': !has_unsaved_data()}">Save
                               </button>
