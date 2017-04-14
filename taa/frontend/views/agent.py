@@ -208,6 +208,7 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars['setup'] = case.self_enrollment_setup
     vars['form'] = form
     vars['case_owner'] = case_service.get_case_owner(case)
+    # These are sorted by the order provided on the case setup.
     vars['products'] = case.products
     vars['company_name'] = case.company_name
     vars['agent_id'] = agent_id
@@ -310,32 +311,6 @@ def format_enroll_data(enrollment, enrollment_data, wrapped_data):
     product = wrapped_data.get_product()
     product_name = product.name
     
-    product_number = None
-    for i in range(1, 6+1):
-        if enrollment_data['product_{}_name'.format(i)] == product_name:
-            product_number = i
-            break
-    
-    if not product_number:
-        return
-    
-    #if enrollment_data["product_{}_name".format(product_number)]:
-
-    
-    #if product_data:
-    #    status = get_status_for_enrollment_data(products[enrollment_data["product_{}_name".format(product_number)]])
-    #else:
-    #    status = format_status(enrollment_data["application_status"])
-    
-    # # TODO: This is fragile and needs to be fixed
-    # product_name = enrollment_data["product_{}_name".format(product_number)]
-    # product = product_service.search(by_name=product_name)[-1]
-    # query = db.session.query(EnrollmentApplicationCoverage).filter(
-    #     and_(EnrollmentApplicationCoverage.enrollment_application_id == enrollment_data['enrollment_id'],
-    #          EnrollmentApplicationCoverage.product_id == product.id)).all()[-1]
-    # if query:
-    #     effective_date = query.effective_date
-    # else:
     effective_date = None
 
     if enrollment.application_status == EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT:
@@ -345,16 +320,21 @@ def format_enroll_data(enrollment, enrollment_data, wrapped_data):
     else:
         status = 'Enrolled'
     
+    # Coverage types based on census data in enrollment
+    coverage_types = [EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE]
+    if wrapped_data['spouse'] and wrapped_data.get_spouse_name().strip():
+        coverage_types.append(EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
+    if wrapped_data['children']:
+        coverage_types.append(EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
     
     return dict(
         id=enrollment.id,
         product_name=product_name,
         time=enrollment.signature_time,
-        coverage=[get_coverage_for_product(enrollment_data, product_number, j) for j in ["emp", "sp", "ch"]],
+        coverage=[get_coverage_for_product(wrapped_data, j) for j in coverage_types],
         effective_date=effective_date,
         status=status,
-        total=reduce(lambda coverage_type, accum: calc_total(enrollment_data, product_number, coverage_type, accum),
-                     ["emp", "sp", "ch"], 0),
+        total=sum(c.get_annualized_premium() for c in wrapped_data.get_coverage_records() if c.get_annualized_premium()),
         envelope_id=enrollment_data['docusign_envelope_id'],
         agent_id=enrollment_data['agent_id'],
         is_docusign_signed=enrollment_data["signature_method"] == EnrollmentApplication.SIGNATURE_METHOD_DOCUSIGN,
@@ -378,25 +358,52 @@ def capitalize_words(val):
     return ' '.join([word.capitalize() for word in val.split()])
 
 
-def get_coverage_for_product(enrollment_data, product_number, coverage_type):
-    if coverage_type == "emp":
+def get_coverage_for_product(wrapped_data, applicant_type):
+    
+    if applicant_type == EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE:
         coverage_label = "Employee"
-    elif coverage_type == "sp":
+        data = wrapped_data.get_employee_coverage_data()
+        coverage_records = [c for c in wrapped_data.get_coverage_records() if c.applicant_type == applicant_type]
+        if coverage_records:
+            premium = coverage_records[0].get_annualized_premium()
+        else:
+            premium = ''
+        coverage = data['coverage']
+    elif applicant_type == EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE:
         coverage_label = "Spouse"
+        data = wrapped_data.get_spouse_coverage_data()
+        if data:
+            coverage_records = [c for c in wrapped_data.get_coverage_records() if c.applicant_type == applicant_type]
+            if coverage_records:
+                premium = coverage_records[0].get_annualized_premium()
+            else:
+                premium = ''
+            coverage = data['coverage']
+        else:
+            premium = ''
+            coverage = ''
     else:
         coverage_label = "Child"
+        if not wrapped_data['children']:
+            return None
+        data = wrapped_data.get_child_coverage_data()
+        if data:
+            coverage_records = [c for c in wrapped_data.get_coverage_records() if c.applicant_type == applicant_type]
+            if coverage_records:
+                premium = sum(c.get_annualized_premium() for c in coverage_records)
+            else:
+                premium = ''
+            coverage = ', '.join(d['coverage'] for d in data)
+        else:
+            premium = ''
+            coverage = ''
+            
     return dict(
         who=coverage_label,
-        annual_premium=enrollment_data["product_{}_{}_annual_premium".format(product_number, coverage_type)],
-        coverage=enrollment_data["product_{}_{}_coverage".format(product_number, coverage_type)],
+        annual_premium=premium,
+        coverage=coverage,
     )
 
-
-def calc_total(enrollment_data, product_number, x, y):
-    premium = enrollment_data["product_{}_{}_annual_premium".format(product_number, y)]
-    if not premium:
-        return x
-    return x + premium
 
 
 @app.route('/sample-census-upload.csv')

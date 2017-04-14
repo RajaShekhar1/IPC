@@ -685,6 +685,21 @@ class EnrollmentDataWrap(object):
 
         return applicants
 
+    def get_employee_coverage_data(self):
+        for d in self.get_applicant_data():
+            if d['relationship'] == 'self':
+                return d
+            
+    def get_spouse_coverage_data(self):
+        for d in self.get_applicant_data():
+            if d['relationship'] == 'spouse':
+                return d
+    
+    def get_child_coverage_data(self):
+        return [d for d in self.get_applicant_data()
+                if d['relationship'] == 'child'
+        ]
+
     def get_selected_employee_riders(self):
         return self.data.get('rider_data', {}).get('emp', [])
 

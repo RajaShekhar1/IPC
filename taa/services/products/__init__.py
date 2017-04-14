@@ -448,9 +448,30 @@ class ProductService(DBService):
             ]))
         return [p for p in case.products if p.id not in excluded_product_ids]
 
-    def get_ordered_products_for_case(self, case_id):
+    def get_ordered_products_for_case(self, case_id, include_inactive=True):
         from taa.services.cases.models import case_products
-        return db.session.query(Product).join(case_products).join(Case).filter(Case.id == case_id).order_by(case_products.c.ordinal).all()
+        active_products = db.session.query(Product).join(case_products).join(Case).filter(Case.id == case_id).order_by(case_products.c.ordinal).all()
+
+        if not include_inactive:
+            return active_products
+        
+        # Also include any inactive products that have at one point been enrolled on this case
+        from taa.services.enrollments import EnrollmentApplicationCoverage
+        from taa.services.enrollments import EnrollmentApplication
+        result_set = db.session.query(EnrollmentApplicationCoverage.product_id
+                ).filter(EnrollmentApplicationCoverage.enrollment.has(EnrollmentApplication.case_id == case_id)
+                ).group_by(EnrollmentApplicationCoverage.product_id
+                ).order_by(EnrollmentApplicationCoverage.product_id
+                ).all()
+        
+        all_product_ids = [r.product_id for r in result_set]
+        
+        other_products = [self.get(product_id)
+                          for product_id in all_product_ids
+                          if product_id not in [p.id for p in active_products]
+                          ]
+        
+        return active_products + other_products
 
     def filter_products_by_enrollment_state(self, product_options, state, case):
         product_state_mapping = self.get_product_states(product_options, case)
