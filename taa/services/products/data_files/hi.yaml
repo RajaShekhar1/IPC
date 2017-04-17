@@ -39,7 +39,7 @@ cost_components:
 
   - name: "Flat-fee for included rider-like components"
     type: "Fixed Annual Fee"
-    fee: "120.96"
+    fee: "104.00"
     is_eligible:
       # All coverage selections have the same fee.
       or:
