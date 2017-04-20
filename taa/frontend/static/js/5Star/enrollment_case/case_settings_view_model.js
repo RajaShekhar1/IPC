@@ -869,7 +869,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.hi_occupation_classes = [];
 
   // Product base codes that will display occupation class mapping widgets
-  self.eligible_product_codes = ['ACC', 'HI'];
+  self.eligible_product_codes = ['ACC', 'HI', 'HIL01'];
 
   self.is_product_occupation_class_eligible = function (product) {
     return self.eligible_product_codes.indexOf(product.base_product_type) != -1;

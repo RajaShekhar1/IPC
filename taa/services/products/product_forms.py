@@ -503,6 +503,10 @@ def get_product_application_forms():
             ApplicationForm('Generic', HI_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
+        'HIL01': [
+            ApplicationForm('Generic', HI_STATECODES,
+                            [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
+        ],
         'Static Benefit': [
             ApplicationForm('Generic', all_statecodes,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
