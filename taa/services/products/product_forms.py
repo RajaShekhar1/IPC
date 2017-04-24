@@ -499,6 +499,10 @@ def get_product_application_forms():
             ApplicationForm('Generic', ACC_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
+        'ACMOF': [
+            ApplicationForm('Generic', ACC_STATECODES,
+                            [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
+        ],
         'HI': [
             ApplicationForm('Generic', HI_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
@@ -522,87 +526,7 @@ def get_product_application_forms():
     return app_forms
 
 
-HI_STATECODES = [s for s in all_statecodes]
-#[
-#     'AL',
-#     'AK',
-#     'AZ',
-#     'AR',
-#     'DE',
-#     'FL',
-#     'GA',
-#     'IL',
-#     'IN',
-#     'IA',
-#     'KS',
-#     'KY',
-#     'LA',
-#     'ME',
-#     'MI',
-#     'MS',
-#     'MO',
-#     'MT',
-#     'NE',
-#     'NV',
-#     'NC',
-#     'OH',
-#     'OK',
-#     'OR',
-#     'PA',
-#     'RI',
-#     'SC',
-#     'TN',
-#     'TX',
-#     'UT',
-#     'VA',
-#     'WV',
-#     'WI',
-# ]
-
-ACC_STATECODES = [s for s in all_statecodes]
-# [
-#     'AL',
-#     'AK',
-#     'AZ',
-#     'AR',
-#     'CO',
-#     'DE',
-#     'DC',
-#     'FL',
-#     'GA',
-#     'HI',
-#     'ID',
-#     'IL',
-#     'IN',
-#     'IA',
-#     'KS',
-#     'KY',
-#     'LA',
-#     'MI',
-#     'MS',
-#     'MO',
-#     'MT',
-#     'NE',
-#     'NV',
-#     'NM',
-#     'NC',
-#     'ND',
-#     'OH',
-#     'OK',
-#     'OR',
-#     'RI',
-#     'SC',
-#     'SD',
-#     'TN',
-#     'TX',
-#     'UT',
-#     'VT',
-#     'VA',
-#     'WV',
-#     'WI',
-#     'WY',
-# ]
-
+ACC_STATECODES = HI_STATECODES = [s for s in all_statecodes]
 
 class ReplacementForm(object):
     def __init__(self, statecodes, docusign_template_id, paragraphs):
@@ -959,5 +883,8 @@ def get_replacement_forms():
         'FPPTIY': fpp_forms,
         'FPPTIW': fpp_forms,
         'ACC': fpp_forms,
+        'ACMOF': fpp_forms,
         'HI': fpp_forms,
+        'HIL01': fpp_forms,
+
     }

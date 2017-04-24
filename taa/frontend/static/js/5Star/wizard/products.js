@@ -33,6 +33,8 @@ var wizard_products = (function () {
       base_product = new FPPGovProduct(product_data);
     } else if (base_type === "ACC") {
       base_product = new ACCProduct(product_data);
+    } else if (base_type === "ACMOF") {
+      base_product = new ACMOFProduct(product_data);
     } else if (base_type === 'HI') {
       base_product = new HIProduct(product_data);
     } else if (base_type === 'HIL01') {
@@ -723,7 +725,62 @@ var wizard_products = (function () {
     return 26;
   };
   //endregion
-    
+
+  //region ACMOFProduct
+  function ACMOFProduct(product_data) {
+    Product.call(this);
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Simple, configurable: true});
+    this.product_type = "ACMOF";
+    this.product_data = product_data;
+  }
+
+  ACMOFProduct.prototype = Object.create(Product.prototype);
+
+  ACMOFProduct.prototype.has_simple_coverage = function () {
+    return true;
+  };
+
+  ACMOFProduct.prototype.get_occupations = function () {
+    return ['Management', 'Worker', 'Secretary'];
+  };
+
+  ACMOFProduct.prototype.requires_occupation = function () {
+    return true;
+  };
+
+  ACMOFProduct.prototype.get_coverage_tiers = function (applicant_types) {
+    var acmof_coverage_tiers = ['EE', 'ES', 'EC', 'EF'];
+    if (Array.isArray(applicant_types)) {
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.SpouseType })) {
+        _.remove(acmof_coverage_tiers, function (tier) { return tier === 'ES' || tier === 'EF'; })
+      }
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.ChildType; })) {
+        _.remove(acmof_coverage_tiers, function (tier) { return tier === 'EC' || tier === 'EF'; })
+      }
+    }
+    return acmof_coverage_tiers;
+  };
+
+  ACMOFProduct.prototype.create_coverage_option = function (options) {
+    return new SimpleCoverageOption(options);
+  };
+
+  ACMOFProduct.prototype.is_fpp_product = function () {
+    return false;
+  };
+
+  ACMOFProduct.prototype.should_show_step_two = function () {
+    return false;
+  };
+
+  ACMOFProduct.prototype.should_show_step_four = function () {
+    return false;
+  };
+  ACMOFProduct.prototype.max_child_age = function() {
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 26.
+    return 26;
+  };
+  //endregion
     
   //region ACCProduct
   function ACCProduct(product_data) {

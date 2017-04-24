@@ -88,11 +88,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.should_show_max_coverage = function(product) {
-    return !_.includes(["HI", 'HIL01', "ACC", "Static Benefit"], product.base_product_type);
+    return !_.includes(["HI", 'HIL01', "ACC", 'ACMOF', "Static Benefit"], product.base_product_type);
   };
 
   self.should_show_max_age = function(product) {
-    return !_.includes(["HI", 'HIL01', "ACC", "Static Benefit"], product.base_product_type);
+    return !_.includes(["HI", 'HIL01', "ACC", 'ACMOF', "Static Benefit"], product.base_product_type);
+
   };
 
   self.get_product_effective_date_settings = function (product) {
@@ -111,11 +112,13 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   };
 
   self.should_show_max_coverage = function(product) {
-    return !_.includes(["HI", 'HIL01', "ACC", "Static Benefit"], product.base_product_type);
+
+    return !_.includes(["HI", 'HIL01', "ACC", 'ACMOF', "Static Benefit"], product.base_product_type);
   };
 
   self.should_show_max_age = function(product) {
-    return !_.includes(["HI", 'HIL01', "ACC", "Static Benefit"], product.base_product_type);
+    return !_.includes(["HI", 'HIL01', "ACC", 'ACMOF', "Static Benefit"], product.base_product_type);
+
   };
 
 
@@ -869,7 +872,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.hi_occupation_classes = [];
 
   // Product base codes that will display occupation class mapping widgets
-  self.eligible_product_codes = ['ACC', 'HI', 'HIL01'];
+  self.eligible_product_codes = ['ACC', 'ACMOF', 'HI', 'HIL01'];
 
   self.is_product_occupation_class_eligible = function (product) {
     return self.eligible_product_codes.indexOf(product.base_product_type) != -1;

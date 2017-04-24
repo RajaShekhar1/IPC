@@ -106,6 +106,13 @@ def init_basic_data():
             is_fpp_gov=False,
         ),
         dict(
+            code=u"ACMOF",
+            name=u"Accident Off Work Insurance Plan",
+            product_type=u"base",
+            visible_to_agents=True,
+            is_fpp_gov=False,
+        ),
+        dict(
             code=u"HI",
             name=u"Family Healthcare Indemnity Plan",
             product_type=u"base",
