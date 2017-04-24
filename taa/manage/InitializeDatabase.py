@@ -127,6 +127,13 @@ def init_basic_data():
             is_fpp_gov=False,
         ),
         dict(
+            code=u"HIAOBG",
+            name=u"Family Healthcare Low Indemnity Plan for AOBG",
+            product_type=u"base",
+            visible_to_agents=True,
+            is_fpp_gov=False,
+        ),
+        dict(
             code=u'Static Benefit',
             name=u'Single-Fee Generic Product',
             product_type=u'base',
