@@ -18,6 +18,7 @@ from nav import get_nav_menu
 from taa import app
 from taa.models import db
 from taa.old_model.States import get_states
+from taa.services.products.plan_codes import PLAN_CODES_SIMPLE
 from taa.services.products.states import get_all_states
 from taa.services.products import get_payment_modes, is_payment_mode_changeable, get_full_payment_modes
 from taa.services.docusign.service import DocusignEnvelope
@@ -385,7 +386,7 @@ def self_enrollment(company_name, uuid):
     # Determine if we need to disallow due to products.
     if case and setup and setup.self_enrollment_type == setup.TYPE_CASE_GENERIC:
         for product in case.products:
-            if product.get_base_product_code() in ['ACC', 'HI']:
+            if product.get_base_product_code() in PLAN_CODES_SIMPLE:
                 # Disallow generic-link self-enrollment cases containing
                 # these products
                 is_self_enrollable = False

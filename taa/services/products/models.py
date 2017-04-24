@@ -1,12 +1,11 @@
-from collections import defaultdict
-
 import json
 
 from taa import db
 from taa.helpers import JsonSerializable
+from taa.services.products.plan_codes import PLAN_CODE_STATIC_BENEFIT, PLAN_CODE_GROUP_CI, PLAN_CODES_SIMPLE, \
+    PLAN_CODES_GENERATES_FORM
 from taa.services.products.product_forms import ProductFormService
 from taa.services.products.riders import RiderService
-from decimal import Decimal
 
 product_form_service = ProductFormService()
 
@@ -56,13 +55,6 @@ db.Index('ix_product_restricted_agents_agent', product_restricted_agents.c.agent
 
 
 class Product(ProductJsonSerializable, db.Model):
-    TYPE_STATIC_BENEFIT = u'Static Benefit'
-    TYPE_GROUP_CI = u'Group CI'
-    TYPE_FPPCI = u'FPPCI'
-    TYPE_FPPTI = u'FPPTI'
-    TYPE_HI = u'HI'
-    TYPE_ACC = u'ACC'
-
     __tablename__ = 'products'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -118,30 +110,30 @@ class Product(ProductJsonSerializable, db.Model):
         return self.is_fpp()
 
     def is_group_ci(self):
-        return self.get_base_product_code() == Product.TYPE_GROUP_CI
+        return self.get_base_product_code() == PLAN_CODE_GROUP_CI
 
     def can_override_state_selections(self):
         return self.is_group_ci()
 
     def is_static_benefit(self):
-        return self.get_base_product_code() == Product.TYPE_STATIC_BENEFIT
+        return self.get_base_product_code() == PLAN_CODE_STATIC_BENEFIT
 
     def does_generate_form(self):
         # Temporary solution to identify products that include output in PDFs
-        return self.is_fpp() or self.get_base_product_code() in [Product.TYPE_GROUP_CI, Product.TYPE_STATIC_BENEFIT]
+        return self.is_fpp() or self.get_base_product_code() in PLAN_CODES_GENERATES_FORM
 
     def does_situs_state_determine_form(self):
         # These
-        return self.get_base_product_code() in [Product.TYPE_GROUP_CI, Product.TYPE_ACC, Product.TYPE_HI]
+        return self.get_base_product_code() in [PLAN_CODE_GROUP_CI] + PLAN_CODES_SIMPLE
 
     def requires_dell_csv_submission(self):
-        return self.get_base_product_code() in [Product.TYPE_HI, Product.TYPE_ACC]
+        return self.get_base_product_code() in PLAN_CODES_SIMPLE
 
     def is_base_fpp_gov(self):
         return self.get_base_product().is_fpp_gov if self.get_base_product() else self.is_fpp_gov
 
     def is_simple_coverage(self):
-        return self.get_base_product_code() in [Product.TYPE_HI, Product.TYPE_ACC]
+        return self.get_base_product_code() in PLAN_CODES_SIMPLE
 
     def is_applicant_covered(self, applicant_type, coverage_tier):
         """
@@ -213,10 +205,10 @@ class Product(ProductJsonSerializable, db.Model):
         return False
 
     def requires_occupation(self):
-        return self.get_base_product_code() == self.TYPE_HI or self.get_base_product_code() == self.TYPE_ACC
+        return self.get_base_product_code() in PLAN_CODES_SIMPLE
 
     def requires_signature(self):
-        return self.get_base_product_code() not in [self.TYPE_HI, self.TYPE_ACC]
+        return self.get_base_product_code() not in PLAN_CODES_SIMPLE
 
     def requires_paylogix_export(self, enrollment_record):
         return enrollment_record.case.requires_paylogix_export and enrollment_record.case.include_bank_draft_form
@@ -225,7 +217,7 @@ class Product(ProductJsonSerializable, db.Model):
         """
         Is this product only billed to the employee?
         """
-        return self.get_base_product_code() in [self.TYPE_STATIC_BENEFIT, self.TYPE_ACC, self.TYPE_HI]
+        return self.get_base_product_code() in [PLAN_CODE_STATIC_BENEFIT] + PLAN_CODES_SIMPLE
 
     def is_children_coverage_grouped(self):
         return not self.is_fpp()

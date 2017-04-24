@@ -8,6 +8,7 @@ from flask import Blueprint, request, abort, make_response, send_file
 from flask import session
 from flask.ext.login import current_user
 from flask_stormpath import login_required, groups_required
+from taa.services.products.plan_codes import PLAN_CODES_SIMPLE
 from taa.tasks import send_admin_error_email
 
 from taa.api import route
@@ -244,7 +245,7 @@ def generate_xml(enrollment_record, form_for='employee'):
 def render_acc_hi_csv(from_, to_):
     # Get cases for ACC/HI products
     case_ids = []
-    for code in ['ACC', 'HI']:
+    for code in PLAN_CODES_SIMPLE:
         case_ids.extend([c.id for p in product_service.search(by_code=code)
                          for c in p.cases])
     case_ids = set(case_ids)
