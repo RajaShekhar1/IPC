@@ -1,14 +1,15 @@
 import csv
 import json
 
-from taa.services.cases import AgentSplitsSetup
-from taa.services import LookupService
-
 import dateutil.parser
+
+from taa.services import LookupService
+from taa.services.cases import AgentSplitsSetup
+from taa.services.products.plan_codes import PLAN_CODES_SIMPLE, PLAN_CODES_ACC_CLASS, PLAN_CODES_HI_CLASS
 
 __all__ = ['export_hi_acc_enrollments']
 
-DEFAULT_EXPORT_TARGETS = ['ACC', 'HI']
+DEFAULT_EXPORT_TARGETS = PLAN_CODES_SIMPLE
 AGENT_SPACES = 4
 DEPENDENT_SPACES = 4
 
@@ -156,8 +157,8 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 'SELF',
                 data.get('employee_beneficiary1_name').upper(),
                 data.get('employee_beneficiary1_relationship').upper(),
-                coverage.coverage_selection if coverage.product.code == 'ACC' else '',
-                coverage.coverage_selection if coverage.product.code == 'HI' else '',
+                coverage.coverage_selection if coverage.product.code in PLAN_CODES_ACC_CLASS else '',
+                coverage.coverage_selection if coverage.product.code in PLAN_CODES_HI_CLASS else '',
             ]
             # Agent(s) info
             agent_splits = [s for s in case_service.get_agent_splits_setup(case) if s.product_id == product.id]

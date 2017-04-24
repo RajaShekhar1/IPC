@@ -1,6 +1,13 @@
 from StringIO import StringIO
 
 import yaml
+PLAN_RIDER_AIR = 'AIR'
+PLAN_RIDER_WP = 'WP'
+PLAN_RIDER_QOL3 = 'QOL3'
+PLAN_RIDER_QOL4 = 'QOL4'
+PLAN_RIDERS = [PLAN_RIDER_AIR, PLAN_RIDER_WP, PLAN_RIDER_QOL3, PLAN_RIDER_QOL4]
+PLAN_RIDERS_QOL = [PLAN_RIDER_QOL3, PLAN_RIDER_QOL4]
+
 
 
 class RiderService(object):
@@ -23,7 +30,7 @@ class RiderService(object):
 
     def get_import_rider_codes(self):
         # These will match what is on the form(s) for importable products.
-        return ['AIR', 'WP', 'QOL3', 'QOL4']
+        return PLAN_RIDERS
 
     def get_case_level_riders_for_product(self, case, product):
         # Case-level riders are in the product config.
@@ -81,7 +88,10 @@ class RiderConfiguration(object):
             'FPPTIB': StringIO(rider_config_fpp),
             # These don't have riders
             'ACC': StringIO(no_riders),
+            'ACMOF': StringIO(no_riders),
             'HI': StringIO(no_riders),
+            'HIL01': StringIO(no_riders),
+            'HIAOBG': StringIO(no_riders),
             'Static Benefit': StringIO(no_riders),
             # This is just so we can serialize products in the process of being created.
             '': StringIO(rider_config_fpp),
