@@ -499,7 +499,7 @@ def get_product_application_forms():
             ApplicationForm('Generic', ACC_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
-        'ACMOF': [
+        'ACAOF': [
             ApplicationForm('Generic', ACC_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
