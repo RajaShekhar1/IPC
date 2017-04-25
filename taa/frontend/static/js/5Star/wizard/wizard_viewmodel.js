@@ -16,7 +16,6 @@ var wizard_viewmodel = (function () {
   //  product that is being offered.
   function CoverageVM(available_products, applicant_list, case_data, all_payment_modes,
                       should_include_spouse, should_include_children, root) {
-
     this.products = available_products;
     this.applicants = applicant_list;
     this.case_data = case_data;
@@ -287,7 +286,6 @@ var wizard_viewmodel = (function () {
 
     self.selected_simple_coverage_value = ko.computed({
       read: function () {
-        console.log(self.root)
         if (!self.selected_simple_coverage_option().is_valid()) {
           return null;
         } else {
@@ -300,7 +298,6 @@ var wizard_viewmodel = (function () {
     });
 
     self.did_decline.subscribe(function(newValue) {
-        console.log("got here!");
         if (self.product.product_data.code == "HIAOBG")
           _.each(self.root.product_coverage_viewmodels(),function(coverage_view_model){
             if (coverage_view_model.product.product_data.customer_short_name == "Hospital Indemnity Administration Fee")
