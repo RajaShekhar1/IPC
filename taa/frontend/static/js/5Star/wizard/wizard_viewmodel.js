@@ -297,6 +297,14 @@ var wizard_viewmodel = (function () {
       }
     });
 
+    self.did_decline.subscribe(function(newValue) {
+        if (self.product.product_data.code == "HIAOBG")
+          _.each(self.root.product_coverage_viewmodels(),function(coverage_view_model){
+            if (coverage_view_model.product.product_data.customer_short_name == "Hospital Indemnity Administration Fee")
+              coverage_view_model.did_decline(newValue);
+          });
+    });
+
     //region Membership Product Coverage
     self.is_forced_coverage = ko.pureComputed(function () {
       return product.is_forced_coverage;
