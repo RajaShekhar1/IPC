@@ -1,0 +1,67 @@
+---
+# HI Low Rate Plan
+
+
+name: "HI Low Base Rates"
+
+rate_levels:
+  - name: "Level 1"
+    value: 1
+
+cost_components:
+  - name: "Employee Only Premium"
+    type: "Annual Premium Lookup"
+    rate_table: "EE"
+    is_eligible:
+      coverage_selection: "EE"
+
+  - name: "Employee and Spouse Premium"
+    type: "Annual Premium Lookup"
+    rate_table: "ES"
+    is_eligible:
+      coverage_selection: "ES"
+
+  - name: "Employee, Children Premium"
+    type: "Annual Premium Lookup"
+    rate_table: "EC"
+    is_eligible:
+      coverage_selection: "EC"
+
+  - name: "Employee, Spouse, and Children Premium"
+    type: "Annual Premium Lookup"
+    rate_table: "EF"
+    is_eligible:
+      coverage_selection: "EF"
+
+  - name: "Flat-fee for included rider-like components"
+    type: "Fixed Annual Fee"
+    fee: "104.00"
+    is_eligible:
+      # All coverage selections have the same fee.
+      or:
+        - coverage_selection: "EE"
+        - coverage_selection: "ES"
+        - coverage_selection: "EC"
+        - coverage_selection: "EF"
+
+
+rate_tables:
+  - name: "EE"
+    key: "rate_level"
+    table:
+      1:    "448.24"
+
+  - name: "ES"
+    key: "rate_level"
+    table:
+      1:    "851.76"
+
+  - name: "EC"
+    key: "rate_level"
+    table:
+      1:    "807.04"
+
+  - name: "EF"
+    key: "rate_level"
+    table:
+      1:    "1210.04"
