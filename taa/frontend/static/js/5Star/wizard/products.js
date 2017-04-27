@@ -33,8 +33,14 @@ var wizard_products = (function () {
       base_product = new FPPGovProduct(product_data);
     } else if (base_type === "ACC") {
       base_product = new ACCProduct(product_data);
+    } else if (base_type === "ACMOF") {
+      base_product = new ACMOFProduct(product_data);
     } else if (base_type === 'HI') {
       base_product = new HIProduct(product_data);
+    } else if (base_type === 'HIL01') {
+      base_product = new HIL01Product(product_data);
+    } else if (base_type === 'HIAOBG') {
+      base_product = new HIAOBGProduct(product_data);
     } else if (base_type === 'Static Benefit') {
       base_product = new MembershipProduct(product_data);
     } else {
@@ -642,7 +648,221 @@ var wizard_products = (function () {
     return 26;
   };
   //endregion
+    
+  //region HIL01 Product
+  function HIL01Product(product_data) {
+    Product.call(this);
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Simple, configurable: true});
+    this.product_type = "HIL01";
+    this.product_data = product_data;
+  }
 
+  HIL01Product.prototype = Object.create(Product.prototype);
+
+  HIL01Product.prototype.requires_gender = function () {
+    return false;
+  };
+
+  HIL01Product.prototype.requires_height = function () {
+    return false;
+  };
+
+  HIL01Product.prototype.requires_weight = function () {
+    return false;
+  };
+
+  HIL01Product.prototype.requires_is_smoker = function () {
+    return false;
+  };
+
+  HIL01Product.prototype.has_critical_illness_coverages = function () {
+    return false;
+  };
+
+  HIL01Product.prototype.has_critical_illness_coverages = function () {
+    return false;
+  };
+
+  HIL01Product.prototype.has_simple_coverage = function () {
+    return true;
+  };
+
+  HIL01Product.prototype.requires_occupation = function () {
+    return true;
+  };
+
+  HIL01Product.prototype.get_coverage_tiers = function (applicant_types) {
+    var hi_coverage_tiers = ['EE', 'ES', 'EC', 'EF'];
+    if (Array.isArray(applicant_types)) {
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.SpouseType })) {
+        _.remove(hi_coverage_tiers, function (tier) { return tier === 'ES' || tier === 'EF'; })
+      }
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.ChildType; })) {
+        _.remove(hi_coverage_tiers, function (tier) { return tier === 'EC' || tier === 'EF'; })
+      }
+    }
+    return hi_coverage_tiers;
+  };
+
+  HIL01Product.prototype.create_coverage_option = function (options) {
+    return new SimpleCoverageOption(options);
+  };
+
+  HIL01Product.prototype.is_fpp_product = function () {
+    return false;
+  };
+
+  HIL01Product.prototype.should_show_step_two = function () {
+    return false;
+  };
+
+  HIL01Product.prototype.should_show_step_four = function () {
+    return false;
+  };
+
+  HIL01Product.prototype.should_show_step_5 = function () {
+    return false;
+  };
+  HIL01Product.prototype.max_child_age = function () {
+    return 26;
+  };
+  //endregion
+
+  //region HIAOBG Product
+  function HIAOBGProduct(product_data) {
+    Product.call(this);
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Simple, configurable: true});
+    this.product_type = "HIAOBG";
+    this.product_data = product_data;
+  }
+
+  HIAOBGProduct.prototype = Object.create(Product.prototype);
+
+  HIAOBGProduct.prototype.requires_gender = function () {
+    return false;
+  };
+
+  HIAOBGProduct.prototype.requires_height = function () {
+    return false;
+  };
+
+  HIAOBGProduct.prototype.requires_weight = function () {
+    return false;
+  };
+
+  HIAOBGProduct.prototype.requires_is_smoker = function () {
+    return false;
+  };
+
+  HIAOBGProduct.prototype.has_critical_illness_coverages = function () {
+    return false;
+  };
+
+  HIAOBGProduct.prototype.has_critical_illness_coverages = function () {
+    return false;
+  };
+
+  HIAOBGProduct.prototype.has_simple_coverage = function () {
+    return true;
+  };
+
+  HIAOBGProduct.prototype.requires_occupation = function () {
+    return true;
+  };
+
+  HIAOBGProduct.prototype.get_coverage_tiers = function (applicant_types) {
+    var hi_coverage_tiers = ['EE', 'ES', 'EC', 'EF'];
+    if (Array.isArray(applicant_types)) {
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.SpouseType })) {
+        _.remove(hi_coverage_tiers, function (tier) { return tier === 'ES' || tier === 'EF'; })
+      }
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.ChildType; })) {
+        _.remove(hi_coverage_tiers, function (tier) { return tier === 'EC' || tier === 'EF'; })
+      }
+    }
+    return hi_coverage_tiers;
+  };
+
+  HIAOBGProduct.prototype.create_coverage_option = function (options) {
+    return new SimpleCoverageOption(options);
+  };
+
+  HIAOBGProduct.prototype.is_fpp_product = function () {
+    return false;
+  };
+
+  HIAOBGProduct.prototype.should_show_step_two = function () {
+    return false;
+  };
+
+  HIAOBGProduct.prototype.should_show_step_four = function () {
+    return false;
+  };
+
+  HIAOBGProduct.prototype.should_show_step_5 = function () {
+    return false;
+  };
+  HIAOBGProduct.prototype.max_child_age = function () {
+    return 26;
+  };
+  //endregion
+
+  //region ACMOFProduct
+  function ACMOFProduct(product_data) {
+    Product.call(this);
+    Object.defineProperty(this, 'coverage_type', {value: CoverageType.Simple, configurable: true});
+    this.product_type = "ACMOF";
+    this.product_data = product_data;
+  }
+
+  ACMOFProduct.prototype = Object.create(Product.prototype);
+
+  ACMOFProduct.prototype.has_simple_coverage = function () {
+    return true;
+  };
+
+  ACMOFProduct.prototype.get_occupations = function () {
+    return ['Management', 'Worker', 'Secretary'];
+  };
+
+  ACMOFProduct.prototype.requires_occupation = function () {
+    return true;
+  };
+
+  ACMOFProduct.prototype.get_coverage_tiers = function (applicant_types) {
+    var acmof_coverage_tiers = ['EE', 'ES', 'EC', 'EF'];
+    if (Array.isArray(applicant_types)) {
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.SpouseType })) {
+        _.remove(acmof_coverage_tiers, function (tier) { return tier === 'ES' || tier === 'EF'; })
+      }
+      if (!_.any(applicant_types, function (applicant_type) { return applicant_type === wizard_applicant.Applicant.ChildType; })) {
+        _.remove(acmof_coverage_tiers, function (tier) { return tier === 'EC' || tier === 'EF'; })
+      }
+    }
+    return acmof_coverage_tiers;
+  };
+
+  ACMOFProduct.prototype.create_coverage_option = function (options) {
+    return new SimpleCoverageOption(options);
+  };
+
+  ACMOFProduct.prototype.is_fpp_product = function () {
+    return false;
+  };
+
+  ACMOFProduct.prototype.should_show_step_two = function () {
+    return false;
+  };
+
+  ACMOFProduct.prototype.should_show_step_four = function () {
+    return false;
+  };
+  ACMOFProduct.prototype.max_child_age = function() {
+    // If there are limits on the case that further restrict the age, we want those to override; otherwise use 26.
+    return 26;
+  };
+  //endregion
+    
   //region ACCProduct
   function ACCProduct(product_data) {
     Product.call(this);

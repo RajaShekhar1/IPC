@@ -153,11 +153,6 @@ var product_rates_service = (function() {
 
   function update_product_rates(products, payment_mode, applicant_list, error_callback, statecode, coverage_vm, classification_mappings, occupation) {
 
-    //// TODO: Remove once HI/ACC rates are implemented
-    //products = _.filter(products, function (product) {
-    //  return product.product_data.base_product_type !== 'HI' && product.product_data.base_product_type !== 'ACC';
-    //});
-
     // Signal we have started updating rates data.
     is_loading_rates(true);
 

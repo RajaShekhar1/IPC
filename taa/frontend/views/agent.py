@@ -11,6 +11,7 @@ from nav import get_nav_menu
 from sqlalchemy import and_
 from taa.services.cases import CaseService, SelfEnrollmentSetup
 from taa.services.cases.models import case_products
+from taa.services.products.plan_codes import PLAN_CODES_SIMPLE
 from taa.services.products.riders import RiderService
 from taa.services.cases.forms import (CensusRecordForm,
                                       NewCaseEnrollmentPeriodForm,
@@ -201,9 +202,8 @@ Please follow the instructions carefully on the next page, stepping through the 
     from taa.services.products.RatePlan import load_rate_plan_for_base_product
     product_rate_levels = dict()
     # TODO: Change this later to accommodate for other plans that have rates
-    for product in [p for p in products if p.get_base_product_code() == 'HI' or p.get_base_product_code() == 'ACC']:
-        product_rate_levels[product.get_base_product_code()] = load_rate_plan_for_base_product(
-            product.get_base_product_code()).rate_levels
+    for product in set(p.get_base_product_code() for p in products).intersection(PLAN_CODES_SIMPLE):
+        product_rate_levels[product] = load_rate_plan_for_base_product(product).rate_levels
 
     vars['setup'] = case.self_enrollment_setup
     vars['form'] = form

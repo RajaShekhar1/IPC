@@ -3,6 +3,7 @@ import decimal
 from flask import abort
 from flask_stormpath import current_user
 
+from taa.services.products.plan_codes import PLAN_CODES_SIMPLE
 from ..cases import Case, CaseCensus
 from taa.services.products.rates import GILimitedRatesDecorator
 
@@ -25,6 +26,9 @@ from .payment_modes import get_payment_modes, is_payment_mode_changeable, get_fu
 
 from product_forms import ProductFormService
 
+
+PLAN_CODE_COVERAGE_TIERS = [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC,
+                            COVERAGE_SELECTION_EF]
 
 class ProductService(DBService):
     __model__ = Product
@@ -253,17 +257,15 @@ class ProductService(DBService):
         
         if product.get_base_product_code() == 'Group CI':
             product_rates = get_rates(product, **demographics)
-        elif product.get_base_product_code() in ['ACC', 'HI']:
+        elif product.get_base_product_code() in PLAN_CODES_SIMPLE:
             # Set up the rate calculator to use 'tiers' of coverage options + rate levels.
-            coverage_tiers = [COVERAGE_SELECTION_EE, COVERAGE_SELECTION_ES, COVERAGE_SELECTION_EC,
-                              COVERAGE_SELECTION_EF]
             rate_response = {'employee': {
                 'bytier': [{
                                'coverage_tier': tier,
                                'premium': self.calc_rate_for_tier(product, tier, rate_level, demographics),
                                'payment_mode': demographics['payment_mode']
                            }
-                           for tier in coverage_tiers
+                           for tier in PLAN_CODE_COVERAGE_TIERS
                            ]
             }}
 
