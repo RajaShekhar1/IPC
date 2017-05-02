@@ -88,8 +88,9 @@ class RiderConfiguration(object):
             'FPPTIB': StringIO(rider_config_fpp),
             # These don't have riders
             'ACC': StringIO(no_riders),
-            'ACMOF': StringIO(no_riders),
+            'ACAOF': StringIO(no_riders),
             'HI': StringIO(no_riders),
+            'HIA01': StringIO(no_riders),
             'HIL01': StringIO(no_riders),
             'HIAOBG': StringIO(no_riders),
             'Static Benefit': StringIO(no_riders),
