@@ -1,8 +1,8 @@
 ---
-# HI Low Rate Plan
+# HI Basic Rate Plan
 
 
-name: "HI Low Base Rates"
+name: "HI Basic Rates"
 
 rate_levels:
   - name: "Level 1"
