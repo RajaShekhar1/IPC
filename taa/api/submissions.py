@@ -20,7 +20,7 @@ blueprint = Blueprint('submissions', __name__, url_prefix='/submissions')
 @groups_required(['admins'], all=False)
 def get_submissions():
     MAX_RESULTS = 500
-    
+
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     submission_type = request.args.get('submission_type')
@@ -34,14 +34,14 @@ def get_submissions():
         return {'clipped_length': total_submissions, 'submissions': all_submissions_query.limit(MAX_RESULTS).all()}
     else:
         return {'submissions': all_submissions_query.all()}
-    
+
 @route(blueprint, '/<submission_id>', methods=['GET'])
 @login_required
 @groups_required(['admins'], all=False)
 def get_submission(submission_id):
-    
+
     return enrollment_submission_service.get_submission(submission_id)
-    
+
 
 @route(blueprint, '/<submission_id>/applications', methods=['GET'])
 @login_required
@@ -86,19 +86,19 @@ def get_hi_acc_submissions():
     except Exception:
         abort(400, 'Valid start and end dates are required. Dates must be in the form of YYYY-MM-DD.')
         return
-    
+
     application_service = LookupService('EnrollmentApplicationService')
     """:type: taa.services.enrollments.enrollment_application.EnrollmentApplicationService"""
-    
+
     applications = application_service.get_applications_by_submission_date(start_date, end_date)
-    
+
     csv_data = export_hi_acc_enrollments(applications)
     headers = {
         'Content-Type': 'text/csv',
         'Content-Disposition': 'attachment; filename=submission_export_%s.csv' % datetime.date.today().strftime(
             '%Y-%m-%d')
     }
-    
+
     return make_response(csv_data, 200, headers)
 
 
@@ -108,36 +108,27 @@ def get_hi_acc_submissions():
 def paylogix_export():
     """
     Output a CSV containing all of the Paylogix export information for a given date range
-
-    :param case_id: Id of the Case
-    :type case_id: int
     """
-    enrollment_application_service = LookupService('EnrollmentApplicationService')
-    """:type: taa.services.enrollments.EnrollmentApplicationService"""
-    
+
+    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+
     # noinspection PyBroadException
     try:
         start_date = datetime.datetime.strptime(request.args.get('start_date'),
-                                                '%Y-%m-%d') if 'start_date' in request.args else None
+                                                '%Y-%m-%d') if 'start_date' in request.args else "2017-1-1"
         end_date = datetime.datetime.strptime(request.args.get('end_date'),
-                                              '%Y-%m-%d') if 'end_date' in request.args else None
+                                              '%Y-%m-%d') if 'end_date' in request.args else date_str
     except Exception:
         abort(400, 'Valid start and end dates are required. Dates must be in the form of YYYY-MM-DD.')
         return
-    
-    if start_date and end_date:
-        applications = enrollment_application_service.get_paylogix_applications_between_dates(start_date, end_date)
-    else:
-        applications = enrollment_application_service.get_paylogix_applications()
-    
-    csv_data = create_paylogix_csv(applications)
-    
-    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+
+    csv_data = create_paylogix_csv(start_date, end_date, False)
+
     headers = {
         'Content-Type': 'text/csv',
         'Content-Disposition': 'attachment; filename=paylogix_export_{0}.csv'.format(date_str)
     }
-    
+
     # Optional encryption for the download for testing purposes
     if 'encrypt' in request.args and bool(request.args.get('encrypt', False)):
         ftp_service = LookupService('FtpService')
