@@ -624,7 +624,7 @@ class EnrollmentSubmissionService(object):
             import taa.services.enrollments.paylogix as paylogix
 
             log = self.start_submission(submission)
-            csv = paylogix.create_paylogix_csv(submission.enrollment_applications)
+            csv = paylogix.create_paylogix_csv('2017-01-01', '2099-01-01', True)
             self.complete_submission(submission, log)
 
             return self.create_paylogix_export_submission(submission, csv)

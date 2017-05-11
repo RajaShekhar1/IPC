@@ -499,7 +499,7 @@ def get_product_application_forms():
             ApplicationForm('Generic', ACC_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
-        'ACMOF': [
+        'ACAOF': [
             ApplicationForm('Generic', ACC_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
@@ -507,7 +507,11 @@ def get_product_application_forms():
             ApplicationForm('Generic', HI_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
-        'HIL01': [
+        'HIA01': [
+            ApplicationForm('Generic', HI_STATECODES,
+                            [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
+        ],
+        'HIB01': [
             ApplicationForm('Generic', HI_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
@@ -887,8 +891,9 @@ def get_replacement_forms():
         'FPPTIY': fpp_forms,
         'FPPTIW': fpp_forms,
         'ACC': fpp_forms,
-        'ACMOF': fpp_forms,
+        'ACAOF': fpp_forms,
         'HI': fpp_forms,
-        'HIL01': fpp_forms,
+        'HIA01': fpp_forms,
+        'HIB01': fpp_forms,
         'HIAOBG': fpp_forms,
     }
