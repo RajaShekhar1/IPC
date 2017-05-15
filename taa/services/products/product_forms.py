@@ -511,7 +511,7 @@ def get_product_application_forms():
             ApplicationForm('Generic', HI_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
-        'HIL01': [
+        'HIB01': [
             ApplicationForm('Generic', HI_STATECODES,
                             [], is_generic=True, docusign_template_id=u'FAKE TEMPLATE')
         ],
@@ -894,6 +894,6 @@ def get_replacement_forms():
         'ACAOF': fpp_forms,
         'HI': fpp_forms,
         'HIA01': fpp_forms,
-        'HIL01': fpp_forms,
+        'HIB01': fpp_forms,
         'HIAOBG': fpp_forms,
     }

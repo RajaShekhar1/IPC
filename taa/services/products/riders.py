@@ -91,7 +91,7 @@ class RiderConfiguration(object):
             'ACAOF': StringIO(no_riders),
             'HI': StringIO(no_riders),
             'HIA01': StringIO(no_riders),
-            'HIL01': StringIO(no_riders),
+            'HIB01': StringIO(no_riders),
             'HIAOBG': StringIO(no_riders),
             'Static Benefit': StringIO(no_riders),
             # This is just so we can serialize products in the process of being created.

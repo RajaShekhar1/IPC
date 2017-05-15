@@ -84,10 +84,14 @@ def get_draft_day(application_date):
     return draft_date
 
 
-def create_paylogix_csv(applications):
+def create_paylogix_csv(start, end, update_submission_table):
     """
     Create a CSV Export file for a collection of EnrollmentApplications
-    :param applications: Enrollment applications to put in the CSV
+    
+    :param start: the date to start searching for entries
+    :param end: the date to stop searching for entries
+    :param update_submission_table: weather or not to include the submission status of a submission in filtering and 
+           update
     :type applications: list[taa.services.enrollments.models.EnrollmentApplication]
     :return: The CSV
     """
@@ -126,71 +130,9 @@ def create_paylogix_csv(applications):
     enrollment_service = LookupService('EnrollmentApplicationService')
     """:type: taa.services.enrollments.EnrollmentApplicationService"""
 
-    for application in applications:
-
-        if application.did_decline():
-            continue
-
-        enrollment_data = enrollment_service.get_standardized_json_for_enrollment(application)
-        for enrollment_item in enrollment_data:
-            data_wrap = EnrollmentDataWrap(enrollment_item, application.case, application)
-            product = data_wrap.get_product()
-
-            if not product.requires_paylogix_export(application) or not data_wrap.has_bank_draft_info():
-                continue
-
-
-            for applicant_data in data_wrap.get_applicant_data():
-
-                # We skip over any applicants who have no premium, for instance spouse and children for membership and HI
-                if not applicant_data['premium']:
-                    continue
-
-                coverage = applicant_data['coverage']
-
-                # Use coverage tier if it is provided
-                if applicant_data['coverage_tier'] is not None:
-                    coverage = applicant_data['coverage_tier']
-
-                # If coverage is a simple boolean, make it say "Selected" on the export
-                if coverage is True:
-                    coverage = 'Selected'
-
-                row = [
-                    application.signature_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
-                    data_wrap.get_effective_date().strftime('%Y-%m-%d'),
-                    application.census_record.employee_ssn,
-                    application.census_record.employee_last,
-                    application.census_record.employee_first,
-                    data_wrap.get_account_holder_name(),
-                    data_wrap.get_routing_number(),
-                    data_wrap.get_account_number(),
-                    data_wrap.get_account_type_shorthand(),
-                    data_wrap.get_bank_name(),
-                    data_wrap.get_address_one(),
-                    data_wrap.get_address_two(),
-                    data_wrap.get_city_state_zip(),
-                    get_deduction_week(application.signature_time),
-
-                    # Product
-                    data_wrap.get_product_code(),
-                    data_wrap.get_product().name,
-
-                    # Insured data
-                    applicant_data['last_name'],
-                    applicant_data['name'],
-                    applicant_data['birthdate'],
-                    applicant_data['formatted_premium'],
-                    coverage,
-
-                    data_wrap.get_agent_code(),
-                    application.case.group_number,
-                    application.case.company_name,
-                ]
-                csv_data.writerow(row)
-
+    rows = enrollment_service.get_paylogix_report(start, end, update_submission_table)
+    [csv_data.writerow([row[column] for column in headers]) for row in rows]
     return csv_buffer.getvalue()
-
 
 if __name__ == '__main__':
     # assert get_deduction_week('2016-06-01') == 3

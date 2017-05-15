@@ -918,6 +918,9 @@ class EnrollmentApplicationService(DBService):
             ).order_by(db.desc(EnrollmentApplication.signature_time)
             ).all()
 
+    def get_paylogix_report(self, start, end, update_submission_table):
+        return db.session.execute("select * from paylogix_report(to_date('" + str(start) + "','yyyy-mm-dd'), to_date('" + str(end) + "','yyyy-mm-dd'), '" + str(update_submission_table).upper() + "'::BOOL)")
+
 
 def export_string(val):
     return val.strip()
