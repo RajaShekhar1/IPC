@@ -1,12 +1,16 @@
 ---
-# HI Low Rate Plan
+# HI Association plan
 
 
-name: "HI Low Base Rates"
+name: "Association plan"
 
 rate_levels:
   - name: "Level 1"
     value: 1
+  - name: "Level 2"
+    value: 2
+  - name: "Level 3"
+    value: 3
 
 cost_components:
   - name: "Employee Only Premium"
@@ -49,19 +53,27 @@ rate_tables:
   - name: "EE"
     key: "rate_level"
     table:
-      1:    "448.24"
+      1:    "1005.68"
+      2:    "1804.92"
+      3:    "2542.28"
 
   - name: "ES"
     key: "rate_level"
     table:
-      1:    "851.76"
+      1:    "1911.00"
+      2:    "3428.88"
+      3:    "4829.76"
 
   - name: "EC"
     key: "rate_level"
     table:
-      1:    "807.04"
+      1:    "1810.12"
+      2:    "3248.44"
+      3:    "4576.00"
 
   - name: "EF"
     key: "rate_level"
     table:
-      1:    "1210.04"
+      1:    "2715.44"
+      2:    "4872.92"
+      3:    "6863.48"
