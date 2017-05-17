@@ -298,10 +298,9 @@ var wizard_viewmodel = (function () {
     });
 
     self.did_decline.subscribe(function(newValue) {
-        if (self.product.product_data.code.match(/(HIAOBG)|(HIA01)/i) ||
-            self.product.product_data.base_product_type.match(/(FP.?P)|(Family\s?Protection\s?Plan)/i) )
+        if (self.product.product_data.code.match(/(HIAOBG)|(HIA01)/i))
           _.each(self.root.product_coverage_viewmodels(),function(coverage_view_model){
-            if (coverage_view_model.product.product_data.name.match(/(Administration)|(Membership)\s?Fee/i))
+            if (coverage_view_model.product.product_data.name.match(/Administration\s?Fee/i))
               coverage_view_model.did_decline(newValue);
           });
     });
