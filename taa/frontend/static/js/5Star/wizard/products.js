@@ -1014,7 +1014,18 @@ var wizard_products = (function () {
 
   MembershipProduct.prototype = Object.create(Product.prototype);
 
+  MembershipProduct.prototype.should_show_step_two = function () {return false;};
   MembershipProduct.prototype.should_show_step_5 = function () {return false;};
+  MembershipProduct.prototype.should_show_other_insurance_questions  = function () {return false;};
+  MembershipProduct.prototype.should_show_step_four = function () {return false;};
+
+  MembershipProduct.prototype.create_coverage_option = function (options) {
+    return new SimpleCoverageOption(options);
+  };
+
+  MembershipProduct.prototype.is_fpp_product = function () {return false;};
+
+
   //endregion
 
   return {
