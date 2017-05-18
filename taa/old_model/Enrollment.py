@@ -111,7 +111,10 @@ class NotifyAdminEmail(object):
     
     def send_registration_notice(self, agent_name):
         
-        recipient = "admin@5StarEnroll.com"
+        recipient = app.config.get(
+            'USER_REGISTRATION_NOTICE_EMAIL',
+            'enroll-activation-requests-noreply@5starlifeinnsurance.com')
+
         body = render_template(
             "emails/notify_admin_email.html",
             agent_name=agent_name
