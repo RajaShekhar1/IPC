@@ -1,11 +1,208 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Diagram>
   <ID>DATABASE</ID>
-  <OriginalElement />
-  <nodes />
+  <OriginalElement>22d0360d-d74b-46e4-87e9-f538851540bd.SCHEMA:dfrasi3di0qauk.public</OriginalElement>
+  <nodes>
+    <node x="2301.0000000000005" y="3930.5">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_links</node>
+    <node x="2641.999999999999" y="1932.499999999999">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_application_submissions</node>
+    <node x="3039.9999999999964" y="1867.4999999999982">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_submissions</node>
+    <node x="1197.0000000000007" y="1279.4999999999998">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_import_batches</node>
+    <node x="2997.0" y="2970.499999999999">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_partner_agents</node>
+    <node x="3775.999999999999" y="2003.7499999999982">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products_custom_guaranteed_issue</node>
+    <node x="3820.4999999999986" y="2171.749999999999">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products_gi_bypass_questions</node>
+    <node x="2596.9285714285716" y="2647.1428571428564">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents</node>
+    <node x="2126.0" y="3223.4999999999995">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_email_log</node>
+    <node x="2964.75" y="2546.9999999999986">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.product_agents</node>
+    <node x="3713.999999999999" y="3232.499999999999">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_enrollment_periods</node>
+    <node x="2182.499999999999" y="1189.5000000000032">22d0360d-d74b-46e4-87e9-f538851540bd.VIEW:dfrasi3di0qauk.public.pg_stat_statements</node>
+    <node x="2707.999999999999" y="1284.5000000000032">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.api_tokens</node>
+    <node x="3356.499999999999" y="2121.999999999999">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products</node>
+    <node x="2549.999999999998" y="2059.4999999999986">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_application_coverage</node>
+    <node x="3222.499999999999" y="2760.9999999999986">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agent_split_setups</node>
+    <node x="3040.5" y="3173.4999999999995">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases</node>
+    <node x="3538.4999999999995" y="1337.4999999999995">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.form_templates</node>
+    <node x="2952.0" y="1181.9999999999995">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.form_template_tabs</node>
+    <node x="3720.4999999999986" y="3522.9999999999986">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.background_exports</node>
+    <node x="1159.2499999999993" y="1861.5000000000002">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_applications</node>
+    <node x="3746.499999999999" y="2324.7499999999986">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products_gi_criteria</node>
+    <node x="2472.0000000000005" y="3225.0">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_email_batches</node>
+    <node x="2556.999999999999" y="3735.9999999999995">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_setups</node>
+    <node x="3051.9999999999995" y="2660.7499999999995">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.product_restricted_agents</node>
+    <node x="886.428571428571" y="3039.2857142857138">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_census</node>
+    <node x="3348.9999999999977" y="1882.4999999999986">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.submission_logs</node>
+    <node x="3480.000000000001" y="2785.499999999999">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_products</node>
+    <node x="2695.4999999999986" y="1184.5000000000025">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.alembic_version</node>
+    <node x="1648.0000000000002" y="1568.0000000000005">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.summary_confirmation_email_log</node>
+    <node x="1265.500000000001" y="1628.5">22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_import_batch_items</node>
+  </nodes>
   <notes />
-  <edges />
-  <settings layout="Hierarchic Group" zoom="1.0999999999999994" x="1670.0" y="1683.0" />
+  <edges>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_email_batches" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_application_submissions" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_submissions">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_applications" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_census">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_email_log" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_import_batch_items" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_applications">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.product_agents" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_setups" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents">
+      <point x="0.0" y="5.2322049073327435" />
+      <point x="0.0" y="5.232204907332687" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_census" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.submission_logs" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_submissions">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_setups" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.background_exports" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.form_template_tabs" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.form_templates">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.product_restricted_agents" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_applications" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products_custom_guaranteed_issue" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products">
+      <point x="-5.011909292958492" y="0.0" />
+      <point x="-5.011909292958492" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agent_split_setups" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.summary_confirmation_email_log" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_applications">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_application_coverage" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_products" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_enrollment_periods" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agent_split_setups" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_partner_agents" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_application_submissions" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_applications">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agent_split_setups" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_products" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.cases">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.product_agents" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_email_log" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_email_batches">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_email_log" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_census">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_applications" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.product_restricted_agents" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_submissions" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_links" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_census">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_import_batch_items" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_import_batches">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.case_partner_agents" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_links" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_setups">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products_gi_bypass_questions" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_application_coverage" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.enrollment_applications">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_email_log" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_links">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.self_enrollment_email_batches" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.agents">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+    <edge source="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products_gi_criteria" target="22d0360d-d74b-46e4-87e9-f538851540bd.TABLE:dfrasi3di0qauk.public.products">
+      <point x="0.0" y="0.0" />
+      <point x="0.0" y="0.0" />
+    </edge>
+  </edges>
+  <settings layout="Hierarchic Group" zoom="1.0999999999999994" x="1669.818181818182" y="1682.8686868686855" />
   <SelectedNodes />
   <Categories>
     <Category>Columns</Category>
