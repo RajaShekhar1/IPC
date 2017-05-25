@@ -28,6 +28,14 @@ ASSETS_DEBUG = env_get_bool('ASSETS_DEBUG', True)
 ASSETS_AUTO_BUILD = env_get_bool('ASSETS_AUTO_BUILD', True)
 SECRET_KEY = env_get_text('SECRET_KEY', 'sSYpq8m5vL68/1VKLQwst6II0PjAIP0cYQ31mzdA')
 
+# Flask-S3 configuration for uploading static assets to S3
+FLASK_ASSETS_USE_S3 = env_get_bool('FLASK_ASSETS_USE_S3', not ASSETS_DEBUG)
+FLASKS3_BUCKET_NAME = env_get_text('FLASKS3_BUCKET_NAME', 'heroku-work-bucket')
+FLASKS3_ACTIVE = env_get_bool('FLASKS3_ACTIVE', not ASSETS_DEBUG)
+FLASKS3_DEBUG = env_get_bool('FLASKS3_DEBUG', ASSETS_DEBUG)
+FLASKS3_GZIP = env_get_bool('FLASKS3_GZIP', False)
+FLASKS3_FORCE_MIMETYPE = env_get_bool('FLASKS3_FORCE_MIMETYPE', True)
+
 # Flask-WTF forms extension config
 WTF_CSRF_ENABLED = False
 
