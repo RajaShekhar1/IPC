@@ -17,7 +17,7 @@ enum34==1.1.2
 eventlet==0.18.4
 extras==0.0.3
 Flask==0.10.1
-Flask-Assets==0.11
+Flask-Assets==0.12
 Flask-Compress==1.3.0
 Flask-ErrorMail==0.2.2
 Flask-Login==0.2.9
@@ -94,7 +94,7 @@ testtools==1.8.0
 traceback2==1.4.0
 tzlocal==1.2.2
 unittest2==1.1.0
-webassets==0.11.1
+webassets==0.12.1
 wheel==0.24.0
 WTForms==2.1
 xmltodict==0.10.1
@@ -102,3 +102,4 @@ Werkzeug==0.11.9
 pysftp==0.2.9
 paramiko==2.0.1
 pycurl==7.43.0
+Flask-S3==0.3.3
