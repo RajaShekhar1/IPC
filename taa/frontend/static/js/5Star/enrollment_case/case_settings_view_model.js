@@ -169,9 +169,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.unselected_products = ko.pureComputed(function () {
-    return _.sortBy(_.difference(self.product_choices(), self.products()), function (product) {
-      return product.ordinal;
-    });
+      var sorted_unselected_productes = _.sortBy(_.difference(self.product_choices(), self.products()), function (product) {
+          //return product.ordinal;
+          return product.name;
+      });
+      return sorted_unselected_productes;
   });
 
   self.selected_product = ko.observable(null);
