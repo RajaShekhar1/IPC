@@ -72,8 +72,11 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
         'PrimaryBenefRelationship',
         'Accident',
         'Hospital Indemnity',
+        'Agent_1',
+        'Commission Agent_1',
+        'Subcount Code_1',
     ]
-    for index in range(1, AGENT_SPACES + 1):
+    for index in range(2, AGENT_SPACES + 1):
         header.extend([
             'Agent_{}'.format(index),
             'Commission Agent_{:02}'.format(index),
@@ -129,6 +132,12 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             occ_class = data.get('occupation_class') if data.get('occupation_class') else enrollment.census_record.occupation_class
             rate_level = case_service.get_classification_for_label(occ_class, case, int(data['product_id']))
 
+            # Agent(s) info
+            agent_splits = [s for s in case_service.get_agent_splits_setup(case) if s.product_id == product.id]
+            writing_agent_split = get_writing_agent_split_for_product(agent_splits, product, enrollment)
+            writing_agent = get_writing_agent_for_case(case, product, agents, agent_splits, enrollment)
+            agent_spaces = 3
+
             # Member coverage info
             row = [
                 case.company_name.upper(),
@@ -159,12 +168,10 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 data.get('employee_beneficiary1_relationship').upper(),
                 coverage.coverage_selection if coverage.product.code in PLAN_CODES_ACC_CLASS else '',
                 coverage.coverage_selection if coverage.product.code in PLAN_CODES_HI_CLASS else '',
+                case.owner_agent.agent_code if case.owner_agent.agent_code else '',
+                writing_agent_split.split_percentage if writing_agent_split.split_percentage else '',
+                writing_agent_split.commission_subcount_code if writing_agent_split.commission_subcount_code else '',
             ]
-            # Agent(s) info
-            agent_splits = [s for s in case_service.get_agent_splits_setup(case) if s.product_id == product.id]
-            writing_agent_split = get_writing_agent_split_for_product(agent_splits, product, enrollment)
-            writing_agent = get_writing_agent_for_case(case, product, agents, agent_splits, enrollment)
-            agent_spaces = 4
 
             def is_valid_agent_for_split(agent):
                 split = next((s for s in agent_splits if s.agent_id == agent.id), None)
@@ -172,9 +179,9 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
 
             split_agents = filter(is_valid_agent_for_split, agents)
             
-            if writing_agent_split.split_percentage:
-                row.extend(get_agent_cells(writing_agent, writing_agent_split, product, case))
-                agent_spaces -= 1
+            # if writing_agent_split.split_percentage:
+            #     row.extend(get_agent_cells(writing_agent, writing_agent_split, product, case))
+            #     agent_spaces -= 1
                 
             for idx in range(agent_spaces):
                 if idx >= len(split_agents):
