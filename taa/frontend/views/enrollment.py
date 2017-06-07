@@ -8,7 +8,6 @@ import json
 from flask import (abort, jsonify, render_template, request,
                    send_from_directory, session, url_for, redirect, Response)
 from flask.ext.stormpath import login_required
-from flask_login import _get_user
 from flask_stormpath import current_user
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callcenter_callback_url, \
     build_callback_url
@@ -496,10 +495,10 @@ def get_case_enrollment_data(case):
 
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
-    if session.get('active_case_id') is None:
-        abort(401)
+    #if session.get('active_case_id') is None:
+    #    abort(401)
 
-    case_id = session['active_case_id']
+    case_id = 668  # session['active_case_id']
     case = case_service.get(case_id)
 
     data = request.json
