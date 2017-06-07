@@ -600,7 +600,7 @@ def process_wizard_submission(case, wizard_results):
     if wizard_results[0].get('is_preview'):
         enrollment_application.is_preview = True
 
-    user = agent_service.ensure_agent_in_database(_get_user())
+    user = agent_service.get_logged_in_agent()
     if user:
         enrollment_application.agent_code = user.agent_code
         enrollment_application.agent_id = user.id
