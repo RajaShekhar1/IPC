@@ -495,10 +495,10 @@ def get_case_enrollment_data(case):
 
 @app.route('/submit-wizard-data', methods=['POST'])
 def submit_wizard_data():
-    #if session.get('active_case_id') is None:
-    #    abort(401)
+    if session.get('active_case_id') is None:
+        abort(401)
 
-    case_id = 668  # session['active_case_id']
+    case_id = session['active_case_id']
     case = case_service.get(case_id)
 
     data = request.json
