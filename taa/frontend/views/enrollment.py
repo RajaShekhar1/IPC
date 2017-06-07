@@ -8,6 +8,7 @@ import json
 from flask import (abort, jsonify, render_template, request,
                    send_from_directory, session, url_for, redirect, Response)
 from flask.ext.stormpath import login_required
+from flask_login import _get_user
 from flask_stormpath import current_user
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callcenter_callback_url, \
     build_callback_url
@@ -598,8 +599,15 @@ def process_wizard_submission(case, wizard_results):
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     if wizard_results[0].get('is_preview'):
         enrollment_application.is_preview = True
+
+    user = agent_service.ensure_agent_in_database(_get_user())
+    if user:
+        enrollment_application.agent_code = user.agent_code
+        enrollment_application.agent_id = user.id
+        enrollment_application.agent_name = user.signing_name
+
     db.session.commit()
-    
+
     if enrollment_application.is_preview:
         # We don't need anything else done for a preview, just the DB record created.
         return enrollment_application
