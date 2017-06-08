@@ -1499,13 +1499,31 @@ we load from the server at run time for page speed
 
           <div class="form-panel modal-panel">
             <div class="row">
-              <div data-bind="visible: !download_enrollments_url() && !download_enrollment_error()" class="col-xs-12">
-                <p>
-                  Please wait while the system generates your requested file for download.
-                </p>
-                <br>
-                <div class="text-center"><i class="ace-icon fa fa-spinner blue fa-spin bigger-200"></i></div>
-              </div>
+{#              <div data-bind="visible: !download_enrollments_url() && !download_enrollment_error()" class="col-xs-12">#}
+{#                <p>#}
+{#                  What dates would you like to download between?#}
+{#                </p>#}
+{#                <br>#}
+{#                <div class="text-center"><i class="ace-icon fa fa-spinner blue fa-spin bigger-200"></i></div>#}
+{#              </div>#}
+                <div class="form-panel modal-panel" data-bind="if: add_form_showing">
+              <form data-bind="submit: find_matches">
+                <div class="row">
+                  <div data-bind="visible: !download_enrollments_url() && !download_enrollment_error()" class="col-xs-12 ">
+                    <div class="form-group">
+                      <label for="add-census-ssn-input">
+                          Please select Signature Dates:
+                      </label>
+                      <input type="text" id="add-census-ssn-input" name="ssn"
+                             data-bind="value: ssn, maskedInput: '999-99-9999', valueUpdate: 'afterkeydown'">
+                      <div data-bind="text: ssn.error" class="error"></div>
+                    </div>
+
+
+                  </div>
+                </div>
+              </form>
+            </div>
             </div>
 
             <div class="text-center" data-bind="if: download_enrollments_url() !== null">

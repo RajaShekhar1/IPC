@@ -418,7 +418,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     self.download_enrollment_error(null);
     self.download_enrollments_modal(true);
 
-    var url = urls.get_case_api_enrollment_records_url(self.case_id) + "?format=csv&poll=true";
+    var url = urls.get_case_api_enrollment_records_url(self.case_id) + "?format=csv";
     $.getJSON(url, function (data) {
 
       window.setTimeout(function () {
