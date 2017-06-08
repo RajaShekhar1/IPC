@@ -113,7 +113,7 @@ class NotifyAdminEmail(object):
         
         recipient = app.config.get(
             'USER_REGISTRATION_NOTICE_EMAIL',
-            'enroll-activation-requests-noreply@5starlifeinnsurance.com')
+            'enroll-activation-requests-noreply@5starlifeinsurance.com')
 
         body = render_template(
             "emails/notify_admin_email.html",
