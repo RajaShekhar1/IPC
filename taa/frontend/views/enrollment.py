@@ -598,8 +598,15 @@ def process_wizard_submission(case, wizard_results):
     enrollment_application = get_or_create_enrollment(case, census_record, standardized_data, wizard_results)
     if wizard_results[0].get('is_preview'):
         enrollment_application.is_preview = True
+
+    user = agent_service.get_logged_in_agent()
+    if user:
+        enrollment_application.agent_code = user.agent_code
+        enrollment_application.agent_id = user.id
+        enrollment_application.agent_name = user.signing_name
+
     db.session.commit()
-    
+
     if enrollment_application.is_preview:
         # We don't need anything else done for a preview, just the DB record created.
         return enrollment_application
