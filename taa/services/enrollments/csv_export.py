@@ -6,6 +6,7 @@ import dateutil.parser
 from taa.services import LookupService
 from taa.services.cases import AgentSplitsSetup
 from taa.services.products.plan_codes import PLAN_CODES_SIMPLE, PLAN_CODES_ACC_CLASS, PLAN_CODES_HI_CLASS
+from taa.services.agents import AgentService
 
 __all__ = ['export_hi_acc_enrollments']
 
@@ -163,7 +164,10 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             # Agent(s) info
             agent_splits = [s for s in case_service.get_agent_splits_setup(case) if s.product_id == product.id]
             writing_agent_split = get_writing_agent_split_for_product(agent_splits, product, enrollment)
-            writing_agent = get_writing_agent_for_case(case, product, agents, agent_splits, enrollment)
+            writing_agent = AgentService().get(enrollment.agent_id)
+            if not writing_agent:
+                writing_agent = get_writing_agent_for_case(case, product, agents, agent_splits, enrollment)
+
             agent_spaces = 4
 
             def is_valid_agent_for_split(agent):
