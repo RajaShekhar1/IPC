@@ -17,7 +17,7 @@ from taa.services.cases.forms import (
     SelfEnrollmentSetupForm,
     UpdateCaseForm,
 )
-from taa.services.cases import create_census_records_csv
+from taa.services.cases import create_census_records_csv, create_enrollment_records_csv
 from taa.services.enrollments.models import EnrollmentApplication
 from taa.services import LookupService
 
@@ -310,17 +310,20 @@ def enrollment_records(case_id):
     if request.args.get('start_date') and request.args.get('end_date'):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
-        census_records = db.session.execute("select * from export_enrollment_report(to_date('" + str(start_date) + "','yyyy-mm-dd'), to_date('" + str(end_date) + "','yyyy-mm-dd'), " + str(case.id) + ")")
-    data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
+        file = create_enrollment_records_csv(case.id, start_date, end_date)
+        # census_records = db.session.execute("select * from export_enrollment_report(\
+        #                                      to_date('" + start_date + "','yyyy-mm-dd'),\
+        #                                      to_date('" + end_date + "','yyyy-mm-dd'), " + str(case.id) + ")")
+    # data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
 
     if request.args.get('format') == 'csv':
-        body = enrollment_application_service.export_enrollment_data(data)
+        # body = enrollment_application_service.export_enrollment_data(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',
             'Content-Disposition': 'attachment; filename=enrollment_export_{0}.csv'.format(date_str)
         }
-        return make_response(body, 200, headers)
+        return make_response(file, 200, headers)
     return data
 
 
@@ -397,9 +400,7 @@ def census_records(case_id):
 
     # If we are requesting CSV format, get the whole data set.
     if request.args.get('format') == 'csv' and request.args.get('start_date') and request.args.get('end_date'):
-        # data = case_service.get_census_records(case, **args)
         body = create_census_records_csv(case.id, args.get('start_date'), args.get('end_date'))
-        # body = case_service.export_census_records(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',
