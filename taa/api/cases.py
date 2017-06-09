@@ -304,27 +304,20 @@ def enrollment_records(case_id):
             poll_url='/cases/{}/enrollment_download/{}?poll=1'.format(case_id, export_record.id),
         )
 
-    # census_records = case_service.get_current_user_census_records(case)
-
     # Filter census records based on signature date
     if request.args.get('start_date') and request.args.get('end_date'):
         start_date = request.args.get('start_date')
         end_date = request.args.get('end_date')
-        file = create_enrollment_records_csv(case.id, start_date, end_date)
-        # census_records = db.session.execute("select * from export_enrollment_report(\
-        #                                      to_date('" + start_date + "','yyyy-mm-dd'),\
-        #                                      to_date('" + end_date + "','yyyy-mm-dd'), " + str(case.id) + ")")
-    # data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
+        file_data = create_enrollment_records_csv(case.id, start_date, end_date)
 
     if request.args.get('format') == 'csv':
-        # body = enrollment_application_service.export_enrollment_data(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',
             'Content-Disposition': 'attachment; filename=enrollment_export_{0}.csv'.format(date_str)
         }
-        return make_response(file, 200, headers)
-    return data
+        return make_response(file_data, 200, headers)
+    return file_data
 
 
 @route(bp, '/<case_id>/enrollment_download/<int:export_id>', methods=['GET'])

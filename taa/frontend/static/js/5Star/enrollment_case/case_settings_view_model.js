@@ -411,6 +411,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.download_enrollments_modal = ko.observable(false);
   self.download_enrollments_url = ko.observable(null);
   self.download_enrollment_error = ko.observable(null);
+  self.download_enrollments_by_date_url = ko.observable(null);
   self.enrollment_download_start_date = ko.observable();
   self.enrollment_download_end_date = ko.observable();
   self.enrollment_download_date_error = ko.observable("");
@@ -432,16 +433,18 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var start_date_as_date = new Date(self.enrollment_download_start_date());
     var end_date_as_date = new Date(self.enrollment_download_end_date());
 
-    var data = {
-      'start_date': self.enrollment_download_start_date(),
-      'end_date': self.enrollment_download_end_date(),
-      'format': 'csv'
-    };
+    // var data = {
+    //   'start_date': self.enrollment_download_start_date(),
+    //   'end_date': self.enrollment_download_end_date(),
+    //   'format': 'csv'
+    // };
 
     var url = urls.get_case_api_enrollment_records_url_with_dates(self.case_id, start_date, end_date);
-    $.getJSON(url, data).error(function () {
-      self.download_enrollment_error("There was a problem generating the export file. Please try again later.");
-    });
+    var downloadTab = window.open(url, "_blank");
+    // self.download_enrollments_by_date_url(url);
+    // $.get(url).error(function () {
+    //   self.download_enrollment_error("There was a problem generating the export file. Please try again later.");
+    // });
   };
 
 

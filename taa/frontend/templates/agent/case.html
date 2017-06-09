@@ -1499,9 +1499,9 @@ we load from the server at run time for page speed
             <div class="row">
                 <div class="row">
                   <div data-bind="visible: !download_enrollment_error()" class="col-xs-12 ">
-                    <div class="form-group">
+                    <div class="form-group text-center">
                       <label for="add-census-ssn-input">
-                          Please select Signature Dates:
+                          Please select Signature Dates:&nbsp;
                       </label>
                       <input type="date" id="add-enrollment-date-range" name="enrollment_download_start_date"
                              data-bind="value: enrollment_download_start_date, valueUpdate: 'input'">
@@ -1514,9 +1514,9 @@ we load from the server at run time for page speed
             </div>
 
             <div class="text-center">
-              <button class="btn btn-primary" data-bind="click: download_enrollments_by_date">
+              <a class="btn btn-primary" data-bind="click: download_enrollments_by_date">
                   Download File
-              </button>
+              </a>
             </div>
 
             <div class="text-center text-danger" data-bind="html: download_enrollment_error">
