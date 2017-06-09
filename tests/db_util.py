@@ -43,7 +43,7 @@ def create_agent(first, last, agent_code, email, activated=True):
             'surname': last,
             'username': email,
             'email': email,
-            'password': '12121212',
+            'password': '12121212a',
             'custom_data': {
                 'agent_code': agent_code,
                 'activated': True,

@@ -53,7 +53,7 @@ class UserService(object):
         return current_user
 
     def get_current_user_href(self):
-        if current_user:
+        if hasattr(current_user, 'href'):
             return current_user.href
         else:
             return None
