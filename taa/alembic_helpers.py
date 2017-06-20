@@ -114,7 +114,7 @@ def drop_view(operations, operation):
 @Operations.implementation_for(CreateSPOp)
 def create_sp(operations, operation):
     operations.execute(
-        "CREATE FUNCTION %s %s" % (
+        "CREATE OR REPLACE FUNCTION %s %s" % (
             operation.target.name, operation.target.sqltext
         )
     )
