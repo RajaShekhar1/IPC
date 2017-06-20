@@ -16,7 +16,7 @@ def init_exception_emails(app, recipients):
 
     global error_recipients, error_sender
     error_recipients = recipients
-    error_sender = app.config.get('EMAIL_FROM_ADDRESS', 'error@afba.com')
+    error_sender = app.config.get('EMAIL_FROM_ADDRESS', 'error@5starenroll.com')
 
     # Don't attempt if debug mode is on
     if not app.config.get('DEBUG', False):
