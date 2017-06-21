@@ -9,12 +9,12 @@ from flask import abort
 from flask_stormpath import current_user
 from sqlalchemy.orm import joinedload, eagerload
 
-from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseOngoingEnrollmentPeriod,
-                    SelfEnrollmentSetup)
-from taa.core import DBService
-from taa.core import db
+from taa.core import DBService, db
 from taa.services import RequiredFeature, LookupService
 from taa.services.agents.models import Agent
+
+from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseOngoingEnrollmentPeriod,
+                    SelfEnrollmentSetup)
 
 
 # noinspection PyMethodMayBeStatic
@@ -214,9 +214,11 @@ class CaseService(DBService):
         db.session.flush()
         return added
 
+    # Generate Census Report CSV
+    def get_census_records_csv(self, case_id, start_date, end_date):
+        return db.session.execute("select * from census_report(to_date('" + str(start_date) + "','yyyy-mm-dd'), to_date('" + str(end_date) + "','yyyy-mm-dd'), " + str(case_id) + ")")
+
     # Census records
-
-
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None,
                            sorting=None, sort_desc=False, include_enrolled=True,

@@ -137,6 +137,7 @@ var case_management = (function() {
     }
     function update_table_data(table, data) {
         table.dataTable().fnAddData(data);
+        table.dataTable().fnAddData(data);
         table.DataTable().columns.adjust().draw();
     }
 

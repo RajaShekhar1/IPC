@@ -17,8 +17,10 @@ from taa.services.cases.forms import (
     SelfEnrollmentSetupForm,
     UpdateCaseForm,
 )
+from taa.services.cases import create_census_records_csv, create_enrollment_records_csv
 from taa.services.enrollments.models import EnrollmentApplication
 from taa.services import LookupService
+
 
 bp = Blueprint('cases', __name__, url_prefix='/cases')
 
@@ -302,18 +304,20 @@ def enrollment_records(case_id):
             poll_url='/cases/{}/enrollment_download/{}?poll=1'.format(case_id, export_record.id),
         )
 
-    census_records = case_service.get_current_user_census_records(case)
-    data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
+    # Filter census records based on signature date
+    if request.args.get('start_date') and request.args.get('end_date'):
+        start_date = request.args.get('start_date')
+        end_date = request.args.get('end_date')
+        file_data = create_enrollment_records_csv(case.id, start_date, end_date)
 
     if request.args.get('format') == 'csv':
-        body = enrollment_application_service.export_enrollment_data(data)
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',
             'Content-Disposition': 'attachment; filename=enrollment_export_{0}.csv'.format(date_str)
         }
-        return make_response(body, 200, headers)
-    return data
+        return make_response(file_data, 200, headers)
+    return file_data
 
 
 @route(bp, '/<case_id>/enrollment_download/<int:export_id>', methods=['GET'])
@@ -380,15 +384,16 @@ def census_records(case_id):
     args = {
         'filter_ssn': request.args.get('filter_ssn'),
         'filter_birthdate': request.args.get('filter_birthdate'),
+        'start_date': request.args.get('start_date'),
+        'end_date': request.args.get('end_date'),
     }
     # Restrict access if needed and if not checking for SSN duplicates
     if case_service.is_current_user_restricted_to_own_enrollments(case) and not args['filter_ssn']:
         args['filter_agent'] = agent_service.get_logged_in_agent()
 
     # If we are requesting CSV format, get the whole data set.
-    if request.args.get('format') == 'csv':
-        data = case_service.get_census_records(case, **args)
-        body = case_service.export_census_records(data)
+    if request.args.get('format') == 'csv' and request.args.get('start_date') and request.args.get('end_date'):
+        body = create_census_records_csv(case.id, args.get('start_date'), args.get('end_date'))
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',

@@ -1258,8 +1258,7 @@ we load from the server using ajax at run time (helps with performance, needs to
                             <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
                             {% if can_download_enrollments %}
                               <div class="col-xs-6">
-
-                                <a id="export-enrollments-btn" class="btn btn-default pull-right export-enrollments-btn" data-bind="click: download_enrollments">
+                                <a id="export-enrollments-btn" class="btn btn-default pull-right export-enrollments-btn" data-bind="click: get_download_enrollments_dates">
                                   <i class="ace-icon glyphicon glyphicon-download-alt"></i>
                                   Download Enrollments
                                 </a>
@@ -1496,21 +1495,27 @@ we load from the server at run time for page speed
           <h4 class="modal-title">Generating Enrollments Download</h4>
         </div>
         <div class="modal-body">
-
           <div class="form-panel modal-panel">
             <div class="row">
-              <div data-bind="visible: !download_enrollments_url() && !download_enrollment_error()" class="col-xs-12">
-                <p>
-                  Please wait while the system generates your requested file for download.
-                </p>
-                <br>
-                <div class="text-center"><i class="ace-icon fa fa-spinner blue fa-spin bigger-200"></i></div>
-              </div>
+                <div class="row">
+                  <div data-bind="visible: !download_enrollment_error()" class="col-xs-12 ">
+                    <div class="form-group text-center">
+                      <label for="add-census-ssn-input">
+                          Please select Signature Dates:&nbsp;
+                      </label>
+                      <input type="date" id="add-enrollment-date-range" name="enrollment_download_start_date"
+                             data-bind="value: enrollment_download_start_date, valueUpdate: 'input'">
+                      <input type="date" id="add-enrollment-date-range" name="enrollment_download_end_date"
+                             data-bind="value: enrollment_download_end_date, valueUpdate: 'input'">
+                      <div data-bind="text: enrollment_download_date_error.error" class="error"></div>
+                    </div>
+                  </div>
+                </div>
             </div>
 
-            <div class="text-center" data-bind="if: download_enrollments_url() !== null">
-              <a class="btn btn-primary" target="_blank"
-                    data-bind="attr: {href: download_enrollments_url()}">Download File
+            <div class="text-center">
+              <a class="btn btn-primary" data-bind="click: download_enrollments_by_date">
+                  Download File
               </a>
             </div>
 
