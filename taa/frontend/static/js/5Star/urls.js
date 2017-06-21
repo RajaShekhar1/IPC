@@ -30,6 +30,9 @@ var urls = (function urls() {
     get_case_api_enrollment_records_url: function(case_id) {
       return '/cases/' + case_id + '/enrollment_records';
     },
+    get_case_api_enrollment_records_url_with_dates: function(case_id, start_date, end_date) {
+      return '/cases/' + case_id + '/enrollment_records?format=csv&start_date=' + start_date + '&end_date=' + end_date;
+    },
     get_case_api_enrollment_record_url: function(case_id, census_record_id) {
       return '/cases/' + case_id + '/enrollment_records/' + census_record_id;
     },
