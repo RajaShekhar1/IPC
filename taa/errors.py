@@ -59,7 +59,19 @@ def email_exception(app, exception):
 
     msg = '\n'.join(msg_contents) + '\n'
 
+    # Print to stdout so we can track via normal Heroku logs
+    print(msg)
+
     mailer = LookupService('MailerService')
+
+    mailer.send_email(
+        from_email=error_sender,
+        subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
+        to="5star@ipconsultinginc.onmicrosoft.com",
+        text=msg,
+        track_clicks=False,
+    )
+
     mailer.send_email(
         from_email=error_sender,
         subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
@@ -68,8 +80,15 @@ def email_exception(app, exception):
         track_clicks=False,
     )
 
-    # Print to stdout so we can track via normal Heroku logs
-    print(msg)
+    mailer.send_email(
+        from_email=error_sender,
+        subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
+        to=[e for e in error_recipients],
+        text=msg,
+        track_clicks=False,
+    )
+
+
 
     # Make sure the response still registers as 500
     resp = Response("We're sorry, the server has encountered an error.")

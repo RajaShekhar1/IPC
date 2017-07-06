@@ -100,7 +100,8 @@ class AgentActivationEmail(object):
         print "url is ", url
         
         subject = "Activation Notice for 5Star Online Enrollment"
-        
+
+        EmailGenerator().send("5star@ipconsultinginc.onmicrosoft.com", subject, body)
         EmailGenerator().send(to_email, subject, body)
 
 
@@ -123,4 +124,5 @@ class NotifyAdminEmail(object):
         
         subject = "Activation Request from " + agent_name
 
+        EmailGenerator().send("5star@ipconsultinginc.onmicrosoft.com", subject, body)
         EmailGenerator().send(recipient, subject, body)
