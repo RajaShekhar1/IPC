@@ -122,7 +122,7 @@ def paylogix_export():
         abort(400, 'Valid start and end dates are required. Dates must be in the form of YYYY-MM-DD.')
         return
 
-    csv_data = create_paylogix_csv(start_date, end_date, False)
+    csv_data = create_paylogix_csv(start_date, end_date)
 
     headers = {
         'Content-Type': 'text/csv',

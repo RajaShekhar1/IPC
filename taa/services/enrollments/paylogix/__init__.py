@@ -84,14 +84,12 @@ def get_draft_day(application_date):
     return draft_date
 
 
-def create_paylogix_csv(start, end, update_submission_table):
+def create_paylogix_csv(start, end):
     """
     Create a CSV Export file for a collection of EnrollmentApplications
     
     :param start: the date to start searching for entries
     :param end: the date to stop searching for entries
-    :param update_submission_table: weather or not to include the submission status of a submission in filtering and 
-           update
     :type applications: list[taa.services.enrollments.models.EnrollmentApplication]
     :return: The CSV
     """
@@ -130,7 +128,7 @@ def create_paylogix_csv(start, end, update_submission_table):
     enrollment_service = LookupService('EnrollmentApplicationService')
     """:type: taa.services.enrollments.EnrollmentApplicationService"""
 
-    rows = enrollment_service.get_paylogix_report(start, end, update_submission_table)
+    rows = enrollment_service.get_paylogix_report(start, end)
     [csv_data.writerow([row[column] for column in headers]) for row in rows]
     return csv_buffer.getvalue()
 
