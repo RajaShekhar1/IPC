@@ -101,7 +101,7 @@ class AgentActivationEmail(object):
         
         subject = "Activation Notice for 5Star Online Enrollment"
 
-        EmailGenerator().send("5star@ipconsultinginc.onmicrosoft.com", subject, body)
+        EmailGenerator().send("5star@ipconsultinginc.com", subject, body)
         EmailGenerator().send(to_email, subject, body)
 
 
@@ -124,5 +124,12 @@ class NotifyAdminEmail(object):
         
         subject = "Activation Request from " + agent_name
 
-        EmailGenerator().send("5star@ipconsultinginc.onmicrosoft.com", subject, body)
-        EmailGenerator().send(recipient, subject, body)
+        try:
+            EmailGenerator().send("5star@ipconsultinginc.com", subject, body)
+        except Exception:
+            print "email notification of admin failed"
+
+        try:
+            EmailGenerator().send(recipient, subject, body)
+        except Exception:
+            print "email notification of admin failed"

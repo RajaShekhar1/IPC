@@ -64,30 +64,27 @@ def email_exception(app, exception):
 
     mailer = LookupService('MailerService')
 
-    mailer.send_email(
-        from_email=error_sender,
-        subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
-        to="5star@ipconsultinginc.onmicrosoft.com",
-        text=msg,
-        track_clicks=False,
-    )
+    try:
+        mailer.send_email(
+            from_email=error_sender,
+            subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
+            to="5star@ipconsultinginc.com",
+            text=msg,
+            track_clicks=False,
+        )
+    except Exception:
+        print "failed to send admin email notification:"
 
-    mailer.send_email(
-        from_email=error_sender,
-        subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
-        to=[e for e in error_recipients],
-        text=msg,
-        track_clicks=False,
-    )
-
-    mailer.send_email(
-        from_email=error_sender,
-        subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
-        to=[e for e in error_recipients],
-        text=msg,
-        track_clicks=False,
-    )
-
+    try:
+        mailer.send_email(
+            from_email=error_sender,
+            subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
+            to=[e for e in error_recipients],
+            text=msg,
+            track_clicks=False,
+        )
+    except Exception:
+        print "failed to send admin email notification:"
 
 
     # Make sure the response still registers as 500
