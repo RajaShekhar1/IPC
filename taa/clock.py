@@ -16,3 +16,7 @@ if __name__ == '__main__':
         tasks.process_hi_acc_enrollments.delay()
     elif command == 'paylogix-export' and datetime.datetime.today().weekday() == WEEKDAY_THURSDAY:
         tasks.process_paylogix_csv_generation.delay()
+    elif command == 'paylogix-export-debug':
+        tasks.process_paylogix_csv_generation.run()
+    elif command == 'paylogix-export-debug-just-export':
+        tasks.process_paylogix_export.run(submission_id=sys.argv[1])
