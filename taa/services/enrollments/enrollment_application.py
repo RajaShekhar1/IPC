@@ -961,7 +961,6 @@ with temp_json as(
       ON
         enrollment_application_submissions.enrollment_submission_id = enrollment_submissions.id
   WHERE
-    cases.id = 22 AND
     NOT enrollment_applications.standardized_data IS NULL AND
     NOT cast(enrollment_applications.standardized_data AS TEXT) = 'null' AND
     enrollment_applications.is_preview != TRUE AND
@@ -1281,7 +1280,6 @@ FROM
       enrollment_application_submissions.enrollment_submission_id = enrollment_submissions.id
 
 WHERE
-  cases.id = 22 AND
   NOT enrollment_applications.standardized_data IS NULL AND
   NOT cast(enrollment_applications.standardized_data AS TEXT) = 'null' AND
   NOT (temp_json.json_data->0->'bank_info') IS NULL AND
