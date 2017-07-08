@@ -413,7 +413,7 @@ def process_paylogix_export(task, submission_id):
 
 
 @celery.task(bind=True, default_retry_delay=ONE_HOUR)
-def process_paylogix_csv_generation(task):
+def process_paylogix_csv_generation(task, run_now=False):
     submission_service = LookupService('EnrollmentSubmissionService')
     """:type: taa.services.submissions.EnrollmentSubmissionService"""
     submission = None
@@ -423,7 +423,12 @@ def process_paylogix_csv_generation(task):
         if not submission:
             return
         export_submission = submission_service.process_paylogix_csv_generation_submission(submission)
-        process_paylogix_export.delay(submission_id=export_submission.id)
+
+        if run_now:
+            process_paylogix_export.run(submission_id=export_submission.id)
+        else:
+            process_paylogix_export.delay(submission_id=export_submission.id)
+
     except Exception as ex:
         submission_service.set_submissions_status(EnrollmentSubmission.STATUS_FAILURE, [submission], error_message=ex.message)
 
