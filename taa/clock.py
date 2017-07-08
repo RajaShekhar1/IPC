@@ -18,5 +18,5 @@ if __name__ == '__main__':
         tasks.process_paylogix_csv_generation.delay()
     elif command == 'paylogix-export-debug':
         tasks.process_paylogix_csv_generation.run()
-    elif command == 'paylogix-export-debug-just-export':
-        tasks.process_paylogix_export.run(submission_id=sys.argv[1])
+    elif command == 'paylogix-export-debug-force-export':
+        tasks.process_paylogix_export.run(submission_id=sys.argv[2])
