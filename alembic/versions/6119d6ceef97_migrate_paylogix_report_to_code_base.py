@@ -1,14 +1,14 @@
-"""paylogix export procedure
+"""migrate paylogix report to code base
 
-Revision ID: 146bba82e494
-Revises: 5bbb4335a759
-Create Date: 2017-06-07 17:18:31.811590
+Revision ID: 6119d6ceef97
+Revises: 75522d63df0d
+Create Date: 2017-07-03 17:39:34.257393
 
 """
 
 # revision identifiers, used by Alembic.
-revision = '146bba82e494'
-down_revision = '5bbb4335a759'
+revision = '6119d6ceef97'
+down_revision = '75522d63df0d'
 
 import sys
 from os.path import dirname, abspath
@@ -43,14 +43,14 @@ paylogix_report = ReplaceableObject(
             LANGUAGE plpgsql
         AS $$
             BEGIN
-            
+
                 CREATE TEMPORARY TABLE temp_json (
                     case_id INTEGER,
                     case_census_id INTEGER,
                     enrollment_applicaiton_id INTEGER,
                     json_data JSON
                 ) ON COMMIT DROP;
-                
+
                 INSERT INTO temp_json
                 SELECT
                     cases.id,
@@ -99,22 +99,23 @@ paylogix_report = ReplaceableObject(
                     cases.requires_paylogix_export = TRUE AND
                     enrollment_applications.signature_time > min AND
                     enrollment_applications.signature_time < max AND
+                    enrollment_submissions.submission_type = 'Paylogix CSV Generation' and
                         ((pending_only = TRUE AND
-                                enrollment_submissions.status = 'processing') OR
+                                enrollment_submissions.status = 'pending') OR
                             pending_only = FALSE)
                 ;
-                
+
                 RETURN QUERY SELECT DISTINCT
                     to_char(
                         enrollment_applications.signature_time,
                         'YYYY-MM-ddThh24:MI:SS'
                     ) AS "Signature Time",
-                
+
                     to_char(
                         enrollment_application_coverage.effective_date,
                         'YYYY-MM-DD'
                     ) AS "Effective Date",
-                
+
                     to_char(
                         to_number(
                             substring(
@@ -123,26 +124,26 @@ paylogix_report = ReplaceableObject(
                             ),
                         '999999999'),
                     '000000000') AS "EE SSN",
-                
+
                     case_census.employee_last AS "EE Last Name",
-                
+
                     case_census.employee_first AS "EE First Name",
-                
+
                     substring(
                         regexp_replace(
                             (temp_json.json_data -> 0 -> 'bank_info' -> 'account_holder_name')::TEXT,
                             '\\t',
                             ''),
                         '([^"]+)') AS "Account Holder Name",
-                    
+
                     substring(
                         (temp_json.json_data  -> 0 -> 'bank_info' -> 'routing_number')::TEXT,
                         '([0-9]+)') AS "ACH Routing Number",
-                    
+
                     substring(
                         (temp_json.json_data -> 0 -> 'bank_info' -> 'account_number')::TEXT,
                         '([0-9]+)') AS "ACH Account Number",
-                
+
                     upper(
                         substring(
                             (temp_json.json_data  -> 0 -> 'bank_info' -> 'account_type')::TEXT,
@@ -155,26 +156,26 @@ paylogix_report = ReplaceableObject(
                             '')
                         )
                         AS "Bank Name",
-                    
+
                     substring(
                         regexp_replace(
                             (temp_json.json_data  -> 0 -> 'bank_info' -> 'address_one')::TEXT,
                             '\\t',
                             ''),
                         '([^"]+)') AS "Address One",
-                
+
                     coalesce(
                         substring(
                             (temp_json.json_data  -> 0 -> 'bank_info' -> 'address_two')::TEXT,
                             '([^"]+)'),'') AS "Address Two",
-                    
+
                     substring(
                         (temp_json.json_data  -> 0 -> 'bank_info' -> 'city_state_zip')::TEXT,
                         '([^"]+)')as "City, State, Zip",
-                    
+
                     get_draft_week(enrollment_applications.signature_time::DATE)
                     AS "Deduction Week",
-                
+
                     CASE
                         WHEN
                             base_products.code <> ''
@@ -188,9 +189,9 @@ paylogix_report = ReplaceableObject(
                             'Static Benefit'
                     END
                        AS "Product Code",
-                    
+
                     products.name AS "Product Name",
-                
+
                     substring(
                         CASE
                             WHEN
@@ -210,7 +211,7 @@ paylogix_report = ReplaceableObject(
                                 (temp_json.json_data  -> 0 -> 'employee' -> 'last')::TEXT
                         END,
                         '([^"]+)')  AS "Insured Last Name",
-                
+
                     substring(
                         CASE
                             WHEN
@@ -231,7 +232,7 @@ paylogix_report = ReplaceableObject(
                         END,
                         '([^"]+)') 
                     AS "Insured First Name",
-                
+
                     to_char(
                         to_date(
                             substring(
@@ -256,7 +257,7 @@ paylogix_report = ReplaceableObject(
                             'MM/DD/YYYY'), 
                         'MM/DD/YYYY') 
                     AS "Insured Birth DOB",
-                
+
                     trim( 
                         BOTH
                             '[" ]' 
@@ -266,7 +267,7 @@ paylogix_report = ReplaceableObject(
                                 '999,999,999,990.00'
                             )
                     ) AS "Insured Premium",
-                  
+
                     CASE 
                         WHEN 
                             enrollment_application_coverage.coverage_face_value ~ E'^\\d+$' 
@@ -275,11 +276,11 @@ paylogix_report = ReplaceableObject(
                         ELSE
                             'Selected'
                     END AS "Insured Coverage",
-                
+
                     enrollment_applications.agent_code,
-                    
+
                     cases.group_number,
-                    
+
                     cases.company_name
                 FROM
                     cases 
@@ -312,7 +313,7 @@ paylogix_report = ReplaceableObject(
                         ON
                             products_custom_guaranteed_issue.base_product_id = base_products.id
                         LEFT JOIN
-                
+
                         (SELECT
                             DISTINCT
                             d ->> 'first' AS child_first,
@@ -337,7 +338,7 @@ paylogix_report = ReplaceableObject(
                     enrollment_submissions
                         ON
                             enrollment_application_submissions.enrollment_submission_id = enrollment_submissions.id
-                
+
                 WHERE
                     cases.id = 22 AND
                     NOT enrollment_applications.standardized_data IS NULL AND 
@@ -349,8 +350,9 @@ paylogix_report = ReplaceableObject(
                     NOT effective_date IS NULL AND 
                     enrollment_applications.signature_time > min AND 
                     enrollment_applications.signature_time < max AND 
+                    enrollment_submissions.submission_type = 'Paylogix CSV Generation' and
                     ((pending_only = TRUE AND
-                            enrollment_submissions.status = 'processing') OR
+                            enrollment_submissions.status = 'pending') OR
                         pending_only = FALSE)
                 ORDER BY
                     "Signature Time",
@@ -361,12 +363,10 @@ paylogix_report = ReplaceableObject(
 
     """)
 
-
-def upgrade():
+def downgrade():
     op.create_sp(get_draft_week)
     op.create_sp(paylogix_report)
 
-
-def downgrade():
+def upgrade():
     op.drop_sp(get_draft_week)
     op.drop_sp(paylogix_report)

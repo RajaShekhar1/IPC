@@ -413,6 +413,42 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.download_enrollments_modal = ko.observable(false);
   self.download_enrollments_url = ko.observable(null);
   self.download_enrollment_error = ko.observable(null);
+  self.download_enrollments_by_date_url = ko.observable(null);
+  self.enrollment_download_start_date = ko.observable();
+  self.enrollment_download_end_date = ko.observable();
+  self.enrollment_download_date_error = ko.observable("");
+
+  self.get_download_enrollments_dates = function () {
+    // reset dialogue, show modal
+    self.download_enrollments_url(null);
+    self.download_enrollment_error(null);
+    self.download_enrollments_modal(true);
+  };
+
+  self.download_enrollments_by_date = function () {
+    self.download_enrollments_modal(false);
+
+    // Capture start_date and end_date from modal
+    var start_date = self.enrollment_download_start_date();
+    var end_date = self.enrollment_download_end_date();
+
+    var start_date_as_date = new Date(self.enrollment_download_start_date());
+    var end_date_as_date = new Date(self.enrollment_download_end_date());
+
+    // var data = {
+    //   'start_date': self.enrollment_download_start_date(),
+    //   'end_date': self.enrollment_download_end_date(),
+    //   'format': 'csv'
+    // };
+
+    var url = urls.get_case_api_enrollment_records_url_with_dates(self.case_id, start_date, end_date);
+    var downloadTab = window.open(url, "_blank");
+    // self.download_enrollments_by_date_url(url);
+    // $.get(url).error(function () {
+    //   self.download_enrollment_error("There was a problem generating the export file. Please try again later.");
+    // });
+  };
+
 
   self.download_enrollments = function () {
     // reset dialogue, show modal
@@ -420,7 +456,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     self.download_enrollment_error(null);
     self.download_enrollments_modal(true);
 
-    var url = urls.get_case_api_enrollment_records_url(self.case_id) + "?format=csv&poll=true";
+    var url = urls.get_case_api_enrollment_records_url(self.case_id) + "?format=csv";
     $.getJSON(url, function (data) {
 
       window.setTimeout(function () {
@@ -780,7 +816,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     var start = self.parent_start_date();
     return today_before(start);
   });
-  
+
   self.check_between_or_before = function(){
     return ((self.open_enrollment_status() && !self.today_between() && !self.ongoing_enrollment_status()) || (self.open_enrollment_status() && self.ongoing_enrollment_status() && self.today_before()))
   }

@@ -918,9 +918,383 @@ class EnrollmentApplicationService(DBService):
             ).order_by(db.desc(EnrollmentApplication.signature_time)
             ).all()
 
-    def get_paylogix_report(self, start, end, update_submission_table):
-        return db.session.execute("select * from paylogix_report(to_date('" + str(start) + "','yyyy-mm-dd'), to_date('" + str(end) + "','yyyy-mm-dd'), '" + str(update_submission_table).upper() + "'::BOOL)")
+    def get_paylogix_report(self, start, end):
+        return db.session.execute("""
+with temp_json as(
+  SELECT
+    cases.id,
+    case_census.id             AS case_census_id,
+    enrollment_applications.id AS enrollment_applicaiton_id,
+    cast(
+      replace(
+        replace(
+          substring(
+            cast(
+              enrollment_applications.standardized_data AS TEXT),
+            2,
+            length(
+              cast(
+                enrollment_applications.standardized_data AS TEXT)
+            ) -
+            2),
+          '\\"',
+          '"'),
+        '\\\\',
+        '\\') AS JSON
+    ) AS json_data
+  FROM
+    cases
+    INNER JOIN
+    case_census
+      ON
+        cases.id = case_census.case_id
+    INNER JOIN
+    enrollment_applications
+      ON
+        case_census.id = enrollment_applications.census_record_id
+    INNER JOIN
+    enrollment_application_submissions
+      ON
+        enrollment_applications.id = enrollment_application_submissions.enrollment_application_id
+    INNER JOIN
+    enrollment_submissions
+      ON
+        enrollment_application_submissions.enrollment_submission_id = enrollment_submissions.id
+  WHERE
+    NOT enrollment_applications.standardized_data IS NULL AND
+    NOT cast(enrollment_applications.standardized_data AS TEXT) = 'null' AND
+    enrollment_applications.is_preview != TRUE AND
+    cases.requires_paylogix_export = TRUE AND
+    enrollment_applications.signature_time > to_date('""" + str(start) + """','yyyy-mm-dd') AND
+    enrollment_applications.signature_time < to_date('""" + str(end) + """','yyyy-mm-dd') AND
+    enrollment_submissions.status = 'processing'
+)
+SELECT DISTINCT
+  to_char(
+    enrollment_applications.signature_time,
+    'YYYY-MM-ddThh24:MI:SS'
+  ) AS "Signature Time",
 
+  to_char(
+    enrollment_application_coverage.effective_date,
+    'YYYY-MM-DD'
+  ) AS "Effective Date",
+
+  to_char(
+    to_number(
+      substring(
+        case_census.employee_ssn,
+        '([0-9]+)'
+      ),
+    '999999999'),
+  '000000000') AS "EE SSN",
+
+  case_census.employee_last AS "EE Last Name",
+
+  case_census.employee_first AS "EE First Name",
+
+  substring(
+    regexp_replace(
+      (temp_json.json_data -> 0 -> 'bank_info' -> 'account_holder_name')::TEXT,
+      '\\\\t',
+      ''),
+    '([^"]+)') AS "Account Holder Name",
+
+  substring(
+      (temp_json.json_data  -> 0 -> 'bank_info' -> 'routing_number')::TEXT,
+      '([0-9]+)') AS "ACH Routing Number",
+
+  substring(
+    (temp_json.json_data -> 0 -> 'bank_info' -> 'account_number')::TEXT,
+    '([0-9]+)') AS "ACH Account Number",
+
+  upper(
+    substring(
+      (temp_json.json_data  -> 0 -> 'bank_info' -> 'account_type')::TEXT,
+      2,
+      1)) AS "ACH Account Type",
+  trim(BOTH '" ' FROM
+    regexp_replace(
+      (temp_json.json_data  -> 0 -> 'bank_info' -> 'bank_name')::TEXT,
+      '\\\\t',
+      '')
+    )
+    AS "Bank Name",
+
+  substring(
+    regexp_replace(
+      (temp_json.json_data  -> 0 -> 'bank_info' -> 'address_one')::TEXT,
+      '\\\\t',
+      ''),
+    '([^"]+)') AS "Address One",
+
+  coalesce(
+    substring(
+    (temp_json.json_data  -> 0 -> 'bank_info' -> 'address_two')::TEXT,
+    '([^"]+)'),'') AS "Address Two",
+
+  substring(
+    (temp_json.json_data  -> 0 -> 'bank_info' -> 'city_state_zip')::TEXT,
+    '([^"]+)')as "City, State, Zip",
+
+  GREATEST(((extract(DAY FROM ((((enrollment_applications.signature_time :: DATE + 2) + (5 - (extract(ISODOW FROM (
+    enrollment_applications.signature_time :: DATE + 2))) :: INTEGER)) + CASE WHEN
+    (extract(ISODOW FROM (enrollment_applications.signature_time :: DATE + 2))) :: INTEGER > 5
+    THEN 7
+                                                                         ELSE 0 END) + CASE WHEN extract(ISODOW FROM (
+    ((enrollment_applications.signature_time :: DATE + 2) +
+     (5 - (extract(ISODOW FROM (enrollment_applications.signature_time :: DATE + 2))) :: INTEGER)) +
+    CASE WHEN (extract(ISODOW FROM (enrollment_applications.signature_time :: DATE + 2))) :: INTEGER > 5
+      THEN 7
+    ELSE 0 END)) = 5
+    THEN 0
+      ELSE 5 - extract(ISODOW FROM (((
+           enrollment_applications.signature_time :: DATE
+           +
+           2)
+         +
+         (5
+          -
+          (extract(
+              ISODOW
+              FROM
+              (
+                enrollment_applications.signature_time :: DATE
+                +
+                2))) :: INTEGER))
+        +
+        CASE WHEN
+          (extract(
+              ISODOW
+              FROM
+              (
+                enrollment_applications.signature_time :: DATE
+                +
+                2))) :: INTEGER
+          >
+          5
+          THEN 7
+        ELSE 0 END)) :: INTEGER END)) :: INTEGER
+             / 7) % 4) + 1 - (extract(ISODOW FROM (date_trunc('month', ((((
+                                                                            enrollment_applications.signature_time :: DATE
+                                                                            + 2) + (5 - (extract(ISODOW FROM (
+    enrollment_applications.signature_time :: DATE + 2))) :: INTEGER)) + CASE WHEN
+    (extract(ISODOW FROM (enrollment_applications.signature_time :: DATE + 2))) :: INTEGER > 5
+    THEN 7
+                                                                         ELSE 0 END) + CASE WHEN extract(ISODOW FROM (
+    ((enrollment_applications.signature_time :: DATE + 2) +
+     (5 - (extract(ISODOW FROM (enrollment_applications.signature_time :: DATE + 2))) :: INTEGER)) +
+    CASE WHEN (extract(ISODOW FROM (enrollment_applications.signature_time :: DATE + 2))) :: INTEGER > 5
+      THEN 7
+    ELSE 0 END)) = 5
+    THEN 0
+      ELSE 5 - extract(ISODOW FROM (((
+           enrollment_applications.signature_time :: DATE
+           +
+           2)
+         +
+         (5
+          -
+          (extract(
+              ISODOW
+              FROM
+              (
+                enrollment_applications.signature_time :: DATE
+                +
+                2))) :: INTEGER))
+        +
+        CASE WHEN
+          (extract(
+              ISODOW
+              FROM
+              (
+                enrollment_applications.signature_time :: DATE
+                +
+                2))) :: INTEGER
+          >
+          5
+          THEN 7
+        ELSE 0 END)) :: INTEGER END))))
+        = 6) :: INTEGER, 1)
+  AS "Deduction Week",
+
+ CASE
+    WHEN
+      base_products.code <> ''
+    THEN
+       base_products.code
+    WHEN
+      products.code <> ''
+    THEN
+      products.code
+    ELSE
+      'Static Benefit'
+  END
+    AS "Product Code",
+
+  products.name AS "Product Name",
+
+   substring(
+    CASE
+      WHEN
+        applicant_type = 'children' AND
+        children.child_last IS NOT NULL
+        THEN
+          children.child_last
+      WHEN
+        applicant_type = 'children'
+        THEN
+          (temp_json.json_data  -> 0 -> 'children' -> 0 -> 'last')::TEXT
+      WHEN
+        applicant_type = 'spouse'
+        THEN
+        (temp_json.json_data  -> 0 -> 'spouse' -> 'last')::TEXT
+      ELSE
+        (temp_json.json_data  -> 0 -> 'employee' -> 'last')::TEXT
+    END,
+    '([^"]+)')  AS "Insured Last Name",
+
+    substring(
+      CASE
+        WHEN
+          applicant_type = 'children' AND
+          children.child_first IS NOT NULL
+          THEN
+            children.child_first
+        WHEN
+          applicant_type = 'children'
+          THEN
+            (temp_json.json_data  -> 0 -> 'children' -> 0 -> 'first')::TEXT
+        WHEN
+          applicant_type = 'spouse'
+          THEN
+          (temp_json.json_data  -> 0 -> 'spouse' -> 'first')::TEXT
+        ELSE
+          (temp_json.json_data  -> 0 -> 'employee' -> 'first')::TEXT
+      END,
+      '([^"]+)') AS "Insured First Name",
+  
+    to_char(
+      to_date(
+        substring(
+          CASE
+        WHEN
+          applicant_type = 'children' AND
+          children.child_birthdate IS NOT NULL
+          THEN
+            children.child_birthdate
+        WHEN
+          applicant_type = 'children'
+          THEN
+            (temp_json.json_data  -> 0 -> 'children' -> 0 -> 'birthdate')::TEXT
+            WHEN
+              applicant_type = 'spouse'
+              THEN
+              (temp_json.json_data  -> 0 -> 'spouse' -> 'birthdate')::TEXT
+            ELSE
+              (temp_json.json_data  -> 0 -> 'employee' -> 'birthdate')::TEXT
+          END,
+          '[0-9/]+'),
+        'MM/DD/YYYY'),
+      'MM/DD/YYYY') AS "Insured DOB",
+
+   trim(
+      BOTH
+        '[" ]'
+        FROM
+          to_char(
+            enrollment_application_coverage.monthly_premium::FLOAT,
+            '999,999,999,990.00'
+          )
+   ) AS "Insured Premium",
+
+   CASE
+     WHEN
+       enrollment_application_coverage.coverage_face_value ~ E'^\\\\d+$'
+       THEN
+       trim( BOTH '[" ]' FROM to_char(enrollment_application_coverage.coverage_face_value::FLOAT, '999,999,999,990'))
+     ELSE
+       'Selected'
+   END AS "Insured Coverage",
+
+   enrollment_applications.agent_code as "Agent Code",
+ 
+   cases.group_number as "Group Number",
+ 
+   cases.company_name as "Company Name"
+FROM
+  cases
+    INNER JOIN
+  case_census
+    ON
+      cases.id = case_census.case_id
+    INNER JOIN
+  enrollment_applications
+    ON
+      case_census.id = enrollment_applications.census_record_id
+    INNER JOIN
+  enrollment_application_coverage
+    ON
+      enrollment_applications.id = enrollment_application_coverage.enrollment_application_id
+    INNER JOIN
+  products
+    ON
+      enrollment_application_coverage.product_id = products.id
+    INNER JOIN
+  temp_json
+    ON
+      enrollment_applications.id = temp_json.enrollment_applicaiton_id
+  LEFT JOIN
+    products_custom_guaranteed_issue
+    ON
+      products.id = products_custom_guaranteed_issue.id
+  LEFT JOIN
+    products AS base_products
+    ON
+      products_custom_guaranteed_issue.base_product_id = base_products.id
+  LEFT JOIN
+
+    (SELECT
+       DISTINCT
+       d ->> 'first' AS child_first,
+       d ->> 'last' AS child_last,
+       d ->> 'birthdate' AS child_birthdate,
+       t.enrollment_applicaiton_id AS enrollment_applicaiton_id,
+       (t.json_data -> 0 -> 'child_coverages' -> (row_number() OVER(ORDER BY t.enrollment_applicaiton_id)::INTEGER) ->> 'coverage_selection')::BOOL AS coverage_selection,
+       (t.json_data -> 0 -> 'child_coverages' -> (row_number() OVER(ORDER BY t.enrollment_applicaiton_id)::INTEGER) ->> 'premium')::FLOAT AS premium,
+       (t.json_data -> 0 -> 'child_coverages' -> (row_number() OVER(ORDER BY t.enrollment_applicaiton_id)::INTEGER) ->> 'flat_fee')::FLOAT AS flat_fee
+     FROM
+       temp_json t,
+           json_array_elements(t.json_data -> 0 -> 'children') AS d
+    ) AS children
+    ON
+      children.enrollment_applicaiton_id = temp_json.enrollment_applicaiton_id AND
+       applicant_type = 'children'
+    INNER JOIN
+      enrollment_application_submissions
+    ON
+      enrollment_applications.id = enrollment_application_submissions.enrollment_application_id
+    INNER JOIN
+      enrollment_submissions
+    ON
+      enrollment_application_submissions.enrollment_submission_id = enrollment_submissions.id
+
+WHERE
+  NOT enrollment_applications.standardized_data IS NULL AND
+  NOT cast(enrollment_applications.standardized_data AS TEXT) = 'null' AND
+  NOT (temp_json.json_data->0->'bank_info') IS NULL AND
+  enrollment_applications.is_preview != TRUE AND
+  cases.requires_paylogix_export = TRUE AND
+  enrollment_application_coverage.monthly_premium > 0 AND
+  NOT effective_date IS NULL AND
+  enrollment_applications.signature_time > to_date('""" + str(start) + """','yyyy-mm-dd') AND
+  enrollment_applications.signature_time < to_date('""" + str(end) + """','yyyy-mm-dd') AND
+  enrollment_submissions.status = 'processing'
+ORDER BY
+  "Signature Time",
+  "EE SSN",
+  "Product Name" DESC;
+""")
 
 def export_string(val):
     return val.strip()
