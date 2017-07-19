@@ -68,12 +68,15 @@ def email_exception(app, exception):
         mailer.send_email(
             from_email=error_sender,
             subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
-            to="5star@ipconsultinginc.com",
+            to=["5star@ipconsultinginc.com"],
             text=msg,
             track_clicks=False,
         )
     except Exception as ex:
-        print "failed to send admin email notification:"
+        print "failed to send first admin email notification:"
+        print "from_email = " + error_sender
+        print "subject = " + u'5Star Exception ({hostname})'
+        print "to = [\"5star@ipconsultinginc.com\"]"
         print ex
 
     try:
@@ -85,7 +88,11 @@ def email_exception(app, exception):
             track_clicks=False,
         )
     except Exception as ex:
-        print "failed to send admin email notification:"
+        print "failed to send second admin email notification:"
+        print "from_email = " + error_sender
+        print "subject = " + u'5Star Exception ({hostname})'
+        print "to = "
+        print [e for e in error_recipients]
         print ex
 
 
