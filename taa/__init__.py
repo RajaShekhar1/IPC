@@ -31,7 +31,7 @@ def create_app(bind=None):
 
     # Exception error handling
     from .errors import init_exception_emails
-    init_exception_emails(app, ['david.meyer@ipconsultinginc.com', 'DWagner@afba.com', 'MCoulter@afba.com', 'PStephenson@afba.com'])
+    init_exception_emails(app, ['david.meyer@ipconsultinginc.com', 'support@ipconsultinginc.com'])
 
     # Init compression (only active if debug is False)
     Compress(app)
@@ -59,11 +59,13 @@ def create_app(bind=None):
     from api.enrollments import bp as enrollments_api
     from api.envelopes import bp as envelopes_api
     from api.submissions import blueprint as submissions_api
+    from api.api_helpers import bp as helper_api
     app.register_blueprint(cases_api)
     app.register_blueprint(products_api)
     app.register_blueprint(enrollments_api)
     app.register_blueprint(envelopes_api)
     app.register_blueprint(submissions_api)
+    app.register_blueprint(helper_api)
 
     # API custom JSON encoder
     app.json_encoder = JSONEncoder
