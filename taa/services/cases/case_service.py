@@ -214,10 +214,6 @@ class CaseService(DBService):
         db.session.flush()
         return added
 
-    # Generate Census Report CSV
-    def get_census_records_csv(self, case_id, start_date, end_date):
-        return db.session.execute("select * from census_report(to_date('" + str(start_date) + "','yyyy-mm-dd'), to_date('" + str(end_date) + "','yyyy-mm-dd'), " + str(case_id) + ")")
-
     # Census records
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None,
