@@ -1,11 +1,10 @@
-from io import StringIO
-
-from flask import Blueprint, request, make_response, abort
-
-from taa.config_defaults import PAYLOGIX_PGP_KEY_ID
-from taa.api import route
-from flask_stormpath import groups_required, login_required
 import datetime
+
+from flask import Blueprint, request, make_response
+from flask_stormpath import groups_required, login_required
+
+from taa.api import route
+from taa.api.api_helpers import parse_dates_from_request, parse_dates_as_str_from_request
 from taa.services import LookupService
 from taa.services.enrollments.csv_export import export_hi_acc_enrollments
 from taa.services.enrollments.paylogix import create_paylogix_csv
@@ -21,8 +20,7 @@ blueprint = Blueprint('submissions', __name__, url_prefix='/submissions')
 def get_submissions():
     MAX_RESULTS = 500
 
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+    end_date, start_date = parse_dates_as_str_from_request()
     submission_type = request.args.get('submission_type')
     submission_status = request.args.get('submission_status')
 
@@ -77,15 +75,7 @@ def get_submission_data(submission_id):
 @login_required
 @groups_required(['admins'], all=False)
 def get_hi_acc_submissions():
-    # noinspection PyBroadException
-    try:
-        start_date = datetime.datetime.strptime(request.args.get('start_date'),
-                                                '%Y-%m-%d') if 'start_date' in request.args else None
-        end_date = datetime.datetime.strptime(request.args.get('end_date'),
-                                              '%Y-%m-%d') if 'end_date' in request.args else None
-    except Exception:
-        abort(400, 'Valid start and end dates are required. Dates must be in the form of YYYY-MM-DD.')
-        return
+    end_date, start_date = parse_dates_from_request()
 
     application_service = LookupService('EnrollmentApplicationService')
     """:type: taa.services.enrollments.enrollment_application.EnrollmentApplicationService"""
@@ -110,28 +100,24 @@ def paylogix_export():
     Output a CSV containing all of the Paylogix export information for a given date range
     """
 
-    date_str = datetime.datetime.now().strftime('%Y-%m-%d')
+    end_date, start_date = parse_dates_from_request()
 
-    # noinspection PyBroadException
-    try:
-        start_date = datetime.datetime.strptime(request.args.get('start_date'),
-                                                '%Y-%m-%d') if 'start_date' in request.args else "2017-1-1"
-        end_date = datetime.datetime.strptime(request.args.get('end_date'),
-                                              '%Y-%m-%d') if 'end_date' in request.args else date_str
-    except Exception:
-        abort(400, 'Valid start and end dates are required. Dates must be in the form of YYYY-MM-DD.')
-        return
-
-    csv_data = create_paylogix_csv(start_date, end_date)
+    csv_data = create_paylogix_csv(start_date, end_date, True)
 
     headers = {
         'Content-Type': 'text/csv',
-        'Content-Disposition': 'attachment; filename=paylogix_export_{0}.csv'.format(date_str)
+        'Content-Disposition': 'attachment; filename=paylogix_export_{0}.csv'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
     }
 
     # Optional encryption for the download for testing purposes
     if 'encrypt' in request.args and bool(request.args.get('encrypt', False)):
-        ftp_service = LookupService('FtpService')
-        csv_data = ftp_service.encrypt(csv_data, PAYLOGIX_PGP_KEY_ID)
+        encryption_service = LookupService("PGPEncryptionService")
+        csv_data = encryption_service.encrypt(csv_data, encryption_service.get_paylogix_key())
+        headers = {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': 'attachment; filename=five_star_paylogix_export_{0}.csv.pgp'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
+        }
+
     return make_response(unicode(csv_data), 200, headers)
+
 

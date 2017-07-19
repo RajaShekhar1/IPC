@@ -72,8 +72,9 @@ def email_exception(app, exception):
             text=msg,
             track_clicks=False,
         )
-    except Exception:
+    except Exception as ex:
         print "failed to send admin email notification:"
+        print ex
 
     try:
         mailer.send_email(
@@ -83,8 +84,9 @@ def email_exception(app, exception):
             text=msg,
             track_clicks=False,
         )
-    except Exception:
+    except Exception as ex:
         print "failed to send admin email notification:"
+        print ex
 
 
     # Make sure the response still registers as 500
