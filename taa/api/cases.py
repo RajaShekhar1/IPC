@@ -305,19 +305,26 @@ def enrollment_records(case_id):
         )
 
     # Filter census records based on signature date
-    if request.args.get('start_date') and request.args.get('end_date'):
-        start_date = request.args.get('start_date')
-        end_date = request.args.get('end_date')
-        file_data = create_enrollment_records_csv(case.id, start_date, end_date)
+    if request.args.get('start_date') or request.args.get('end_date'):
+        body = create_enrollment_records_csv(
+            case.id,
+            request.args.get('start_date') if 'start_date' in request.args else datetime.min.strftime("%Y-%m-%d"),
+            request.args.get('end_date')   if 'end_date'   in request.args else datetime.max.strftime("%Y-%m-%d"))
+    else:
+        census_records = case_service.get_current_user_census_records(case)
+        data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
+        body = enrollment_application_service.export_enrollment_data(data)
 
-    if request.args.get('format') == 'csv':
-        date_str = datetime.now().strftime('%Y-%m-%d')
-        headers = {
-            'Content-Type': 'text/csv',
-            'Content-Disposition': 'attachment; filename=enrollment_export_{0}.csv'.format(date_str)
-        }
-        return make_response(file_data, 200, headers)
-    return file_data
+        if not request.args.get('format') == 'csv':
+            return data
+
+    date_str = datetime.now().strftime('%Y-%m-%d')
+    headers = {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': 'attachment; filename=enrollment_export_{0}.csv'.format(date_str)
+    }
+    return make_response(body, 200, headers)
+
 
 
 @route(bp, '/<case_id>/enrollment_download/<int:export_id>', methods=['GET'])
@@ -384,16 +391,21 @@ def census_records(case_id):
     args = {
         'filter_ssn': request.args.get('filter_ssn'),
         'filter_birthdate': request.args.get('filter_birthdate'),
-        'start_date': request.args.get('start_date'),
-        'end_date': request.args.get('end_date'),
     }
     # Restrict access if needed and if not checking for SSN duplicates
     if case_service.is_current_user_restricted_to_own_enrollments(case) and not args['filter_ssn']:
         args['filter_agent'] = agent_service.get_logged_in_agent()
 
     # If we are requesting CSV format, get the whole data set.
-    if request.args.get('format') == 'csv' and request.args.get('start_date') and request.args.get('end_date'):
-        body = create_census_records_csv(case.id, args.get('start_date'), args.get('end_date'))
+    if request.args.get('format') == 'csv':
+        body = create_census_records_csv(
+            case.id,
+            request.args.get(
+             'start_date') if 'start_date' in request.args else datetime.min.strftime(
+             "%Y-%m-%d"),
+            request.args.get(
+             'end_date') if 'end_date' in request.args else datetime.max.strftime(
+             "%Y-%m-%d"))
         date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',

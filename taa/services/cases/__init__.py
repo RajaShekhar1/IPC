@@ -47,8 +47,8 @@ def create_enrollment_records_csv(case_id, start_date, end_date):
     """
     Create a CSV Export file for an Enrollment Report
 
-    :param start: the date to start searching for entries
-    :param end: the date to stop searching for entries
+    :param start_date: the date to start searching for entries
+    :param end_date: the date to stop searching for entries
     :param case_id: Id of case that Case Census records are related to
     :return: The CSV
     """
