@@ -5,6 +5,7 @@ import re
 from flask import Blueprint, request, abort, make_response, Response
 from flask_stormpath import current_user, groups_required, login_required
 from taa import JSONEncoder
+from taa.api.api_helpers import parse_dates_as_str_from_request
 
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
@@ -306,10 +307,8 @@ def enrollment_records(case_id):
 
     # Filter census records based on signature date
     if request.args.get('start_date') or request.args.get('end_date'):
-        body = create_enrollment_records_csv(
-            case.id,
-            request.args.get('start_date') if 'start_date' in request.args else datetime.min.strftime("%Y-%m-%d"),
-            request.args.get('end_date')   if 'end_date'   in request.args else datetime.max.strftime("%Y-%m-%d"))
+        start_date, end_date = parse_dates_as_str_from_request()
+        body = create_enrollment_records_csv(case.id, start_date, end_date)
     else:
         census_records = case_service.get_current_user_census_records(case)
         data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
@@ -318,10 +317,10 @@ def enrollment_records(case_id):
         if not request.args.get('format') == 'csv':
             return data
 
-    date_str = datetime.now().strftime('%Y-%m-%d')
     headers = {
         'Content-Type': 'text/csv',
-        'Content-Disposition': 'attachment; filename=enrollment_export_{0}.csv'.format(date_str)
+        'Content-Disposition': 'attachment; filename=enrollment_export_{0}.csv'.format(
+            datetime.now().strftime('%Y-%m-%d'))
     }
     return make_response(body, 200, headers)
 
@@ -398,19 +397,12 @@ def census_records(case_id):
 
     # If we are requesting CSV format, get the whole data set.
     if request.args.get('format') == 'csv':
-        body = create_census_records_csv(
-            case.id,
-            request.args.get(
-             'start_date') if 'start_date' in request.args else datetime.min.strftime(
-             "%Y-%m-%d"),
-            request.args.get(
-             'end_date') if 'end_date' in request.args else datetime.max.strftime(
-             "%Y-%m-%d"))
-        date_str = datetime.now().strftime('%Y-%m-%d')
+        start_date, end_date = parse_dates_as_str_from_request()
+        body = create_census_records_csv(case.id, start_date, end_date)
         headers = {
             'Content-Type': 'text/csv',
             'Content-Disposition':
-                'attachment; filename=case_export_{0}.csv'.format(date_str)
+                'attachment; filename=case_export_{0}.csv'.format(datetime.now().strftime('%Y-%m-%d'))
         }
         return make_response(body, 200, headers)
 
