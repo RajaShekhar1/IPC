@@ -918,7 +918,10 @@ class EnrollmentApplicationService(DBService):
             ).order_by(db.desc(EnrollmentApplication.signature_time)
             ).all()
 
-    def get_paylogix_report(self, start, end):
+    def get_paylogix_report(self, start, end, debug):
+
+        no_duplicate_filter = " AND enrollment_submissions.status = 'processing'" if not debug else ''
+
         return db.session.execute("""
 with temp_json as(
   SELECT
@@ -966,8 +969,7 @@ with temp_json as(
     enrollment_applications.is_preview != TRUE AND
     cases.requires_paylogix_export = TRUE AND
     enrollment_applications.signature_time > to_date('""" + str(start) + """','yyyy-mm-dd') AND
-    enrollment_applications.signature_time < to_date('""" + str(end) + """','yyyy-mm-dd') AND
-    enrollment_submissions.status = 'processing'
+    enrollment_applications.signature_time < to_date('""" + str(end) + """','yyyy-mm-dd') """ + no_duplicate_filter + """
 )
 SELECT DISTINCT
   to_char(
@@ -1288,8 +1290,7 @@ WHERE
   enrollment_application_coverage.monthly_premium > 0 AND
   NOT effective_date IS NULL AND
   enrollment_applications.signature_time > to_date('""" + str(start) + """','yyyy-mm-dd') AND
-  enrollment_applications.signature_time < to_date('""" + str(end) + """','yyyy-mm-dd') AND
-  enrollment_submissions.status = 'processing'
+  enrollment_applications.signature_time < to_date('""" + str(end) + """','yyyy-mm-dd') """ + no_duplicate_filter + """
 ORDER BY
   "Signature Time",
   "EE SSN",
