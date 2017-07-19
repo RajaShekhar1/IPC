@@ -43,3 +43,4 @@ api_groups = ['admins']
 @groups_required(api_groups, all=False)
 def error_email_test():
     errors.email_exception(app, Exception("test"))
+    return {'status':'ok'}
