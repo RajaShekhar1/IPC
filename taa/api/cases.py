@@ -18,7 +18,7 @@ from taa.services.cases.forms import (
     SelfEnrollmentSetupForm,
     UpdateCaseForm,
 )
-from taa.services.cases import create_census_records_csv, create_enrollment_records_csv
+from taa.services.cases import create_enrollment_records_csv
 from taa.services.enrollments.models import EnrollmentApplication
 from taa.services import LookupService
 
@@ -307,8 +307,10 @@ def enrollment_records(case_id):
 
     # Filter census records based on signature date
     if request.args.get('start_date') or request.args.get('end_date'):
-        start_date, end_date = parse_dates_as_str_from_request()
+        end_date, start_date,  = parse_dates_as_str_from_request()
         body = create_enrollment_records_csv(case.id, start_date, end_date)
+        if not request.args.get('format') == 'csv':
+            abort(400, "Date filtered queries must use csv format")
     else:
         census_records = case_service.get_current_user_census_records(case)
         data = enrollment_application_service.get_enrollment_records_for_census_records(census_records)
@@ -397,12 +399,13 @@ def census_records(case_id):
 
     # If we are requesting CSV format, get the whole data set.
     if request.args.get('format') == 'csv':
-        start_date, end_date = parse_dates_as_str_from_request()
-        body = create_census_records_csv(case.id, start_date, end_date)
+        data = case_service.get_census_records(case, **args)
+        body = case_service.export_census_records(data)
+        date_str = datetime.now().strftime('%Y-%m-%d')
         headers = {
             'Content-Type': 'text/csv',
             'Content-Disposition':
-                'attachment; filename=case_export_{0}.csv'.format(datetime.now().strftime('%Y-%m-%d'))
+                'attachment; filename=case_export_{0}.csv'.format(date_str)
         }
         return make_response(body, 200, headers)
 
