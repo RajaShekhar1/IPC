@@ -6,7 +6,7 @@ from flask_stormpath import groups_required, login_required
 from taa import config_defaults
 from taa.api import route
 from taa.api.api_helpers import parse_dates_from_request, parse_dates_as_str_from_request
-from taa.services import LookupService
+from taa.services import LookupService, RequiredFeature
 from taa.services.enrollments.csv_export import export_hi_acc_enrollments
 from taa.services.enrollments.paylogix import create_paylogix_csv
 from taa.services.submissions.encryption import PGPEncryptionKey
@@ -114,7 +114,7 @@ def paylogix_export():
     # Optional encryption for the download for testing purposes
     if 'encrypt' in request.args and bool(request.args.get('encrypt', False)):
         encryption_service = LookupService("PGPEncryptionService")
-        csv_data = encryption_service.encrypt(csv_data, PGPEncryptionKey(config_defaults.PAYLOGIX_PGP_KEY, config_defaults.PAYLOGIX_PGP_KEY_ID))
+        csv_data = encryption_service.encrypt(csv_data, encryption_service.get_paylogix_key())
         headers = {
             'Content-Type': 'text/csv',
             'Content-Disposition': 'attachment; filename=five_star_paylogix_export_{0}.csv.pgp'.format(datetime.datetime.now().strftime('%Y-%m-%d'))
