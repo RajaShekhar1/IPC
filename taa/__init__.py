@@ -31,7 +31,7 @@ def create_app(bind=None):
 
     # Exception error handling
     from .errors import init_exception_emails
-    init_exception_emails(app, ['david.meyer@ipconsultinginc.com', 'DWagner@afba.com', 'MCoulter@afba.com', 'PStephenson@afba.com', 'support@ipconsultinginc.com'])
+    init_exception_emails(app, ['david.meyer@ipconsultinginc.com', 'support@ipconsultinginc.com'])
 
     # Init compression (only active if debug is False)
     Compress(app)
