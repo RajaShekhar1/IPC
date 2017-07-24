@@ -1,0 +1,69 @@
+{% extends "base_ace_latest.html" %}
+{% block title %} - Forgot Password {% endblock %}
+
+{% block content %}
+    <br>
+    <br>
+    <form data-bind="submit: do_reset">
+        <div class="col-xs-6 col-xs-offset-3 panel panel-default">
+            <div class="panel-body" data-bind="visible: success_message() !== ''">
+                <div class="label label-success" data-bind="text: success_message"></div>
+            </div>
+            <div class="panel-body" data-bind="visible: success_message() === ''">
+                <h3>Forgot your password?</h3>
+                <p>
+                    Enter your email address below to reset your password. You will be sent an email which you will need to
+                    open to continue. You may need to check your spam folder.
+                </p>
+                <p>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <label>Email:</label>
+                        </div>
+                        <div class="col-xs-9">
+                            <input type="text" class="form-control" name="reset-email" data-bind="value: reset_email">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <br>
+                        <div class="error" data-bind="text: error_message"></div>
+                        <br>
+                        <div class="col-xs-12">
+                            <button class="pull-right btn btn-success">Submit</button>
+                        </div>
+                    </div>
+                </p>
+            </div>
+        </div>
+    </form>
+
+{% endblock %}
+{% block page_js %}
+    <script>
+    function ResetPasswordVM() {
+        var self = this;
+        self.error_message = ko.observable("");
+        self.success_message = ko.observable("");
+        self.reset_email = ko.observable("");
+        self.do_reset = function() {
+            self.error_message("");
+            if (!self.reset_email()) {
+                self.error_message("Please enter your email address.");
+                return;
+            }
+
+            send_json_data("POST", "/reset_password_email", {email: self.reset_email()}).success(function(resp) {
+                if (resp.success) {
+                    self.success_message("Your reset password email has been sent.");
+                } else {
+                    self.error_message(resp.error);
+                }
+            }).fail(function(resp) {
+                self.error_message("There was a problem sending the email.");
+            });
+        }
+    }
+    var vm = new ResetPasswordVM();
+    ko.applyBindings(vm);
+    </script>
+{% endblock %}
