@@ -129,7 +129,7 @@ def create_paylogix_csv(start, end, debug):
     """:type: taa.services.enrollments.EnrollmentApplicationService"""
 
     rows = enrollment_service.get_paylogix_report(start, end, debug)
-    [csv_data.writerow([row[column] for column in headers]) for row in rows]
+    [csv_data.writerow([unicode(row[column]).encode('utf-8', 'backslashreplace') for column in headers]) for row in rows]
     return csv_buffer.getvalue()
 
 if __name__ == '__main__':
