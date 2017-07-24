@@ -210,5 +210,5 @@ WHERE
   AND enrollment_applications.signature_time < to_date('""" + end_date   + """','yyyy-mm-dd')
   AND case_census.case_id = """ + str(case_id) + ";")
 
-    print[csv_data.writerow([unicode(row[column]).encode('utf-8') for column in headers]) for row in rows]
+    [csv_data.writerow([unicode(row[column]).encode('utf-8', 'backslashreplace') for column in headers]) for row in rows]
     return csv_buffer.getvalue()
