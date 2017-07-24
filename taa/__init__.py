@@ -1,21 +1,26 @@
+import os
 import locale
 
 # Make sure this is set for the whole app for formatting dates, times, currency, etc.
+from flask_login import LoginManager, login_required
+from functools import wraps
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
-from flask import Flask
+from flask import Flask, abort
 from flask_sslify import SSLify
 from flask_sqlalchemy import SQLAlchemy
-from flask.ext.stormpath import StormpathManager
-from flask.ext.compress import Compress
+from flask_compress import Compress
 
 from .helpers import JSONEncoder
+from okta import UsersClient
+from okta import AuthClient
+from okta import UserGroupsClient
+from afba_okta import RelatedResourcesClient
 
 # Globals
 app = None
 db = None
-""":type : SQLAlchemy"""
-stormpath_manager = None
+login_manager = None
 
 
 # initialization and config
@@ -28,7 +33,14 @@ def create_app(bind=None):
 
     # Load the config from environment variables, defaulting to some dev settings
     app.config.from_object('taa.config_defaults')
+    app.config['IS_5STAR'] = True
+    app.config['IS_AFBA'] = False
 
+    app.usersClient =  UsersClient(app.config['OKTA_BASEURL'], app.config['OKTA_API_KEY_ID'])
+    app.authClient =  AuthClient(app.config['OKTA_BASEURL'], app.config['OKTA_API_KEY_ID'])
+    app.relatedResourcesClient = RelatedResourcesClient(app.config['OKTA_BASEURL'], app.config['OKTA_API_KEY_ID'])
+    app.groupsClient = UserGroupsClient(app.config['OKTA_BASEURL'], app.config['OKTA_API_KEY_ID'])
+    app.Cache={}
     # Exception error handling
     from .errors import init_exception_emails
     init_exception_emails(app, ['david.meyer@ipconsultinginc.com', 'DWagner@afba.com', 'MCoulter@afba.com', 'PStephenson@afba.com'])
@@ -40,15 +52,41 @@ def create_app(bind=None):
     if app.config.get('IS_SSL', False):
         SSLify(app)
 
-    # Init user management config
-    global stormpath_manager
-    stormpath_manager = StormpathManager(app)
-    stormpath_manager.login_view = 'login'
-
     # Init database - export the db variable here so other parts of the app can access the database
     global db
     db = SQLAlchemy(app)
 
+    global login_manager
+    login_manager = LoginManager()
+    login_manager.login_view = "login"
+    login_manager.session_protection = "strong"
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        from taa.services.agents import AgentService
+        if not user_id:
+            return None
+
+        try:
+            return AgentService().find(okta_id=user_id).first()
+        except Exception:
+            print("Error fetching user with id {}".format(user_id))
+            return None
+
+    login_manager.init_app(app)
+
+
+    # Set up session expiration and refresh at each request.
+    @app.before_request
+    def before_request():
+        import flask
+        import flask_login
+        import datetime
+        flask.session.permanent = True
+        app.permanent_session_lifetime = datetime.timedelta(minutes=app.config['SESSION_TIMEOUT_MINUTES'])
+        flask.session.modified = True
+        flask.g.user = flask_login.current_user
+    
     # Initialize our model service classes
     from taa.services import initialize_services
     initialize_services()
@@ -84,6 +122,9 @@ def create_app(bind=None):
     from assets import init_app as init_assets
     init_assets(app)
 
+    from flask_s3 import FlaskS3
+    flasks3 = FlaskS3()
+    flasks3.init_app(app)
     # Initialize Celery task extension
     from taa.tasks import celery
     celery.init_app(app)
@@ -91,4 +132,24 @@ def create_app(bind=None):
     return app
 
 
+def groups_required(group_list, all=None):
+
+    
+    def decorator(f):
+        @wraps(f)
+        @login_required
+        def wrapper(*args, **kwargs):
+            from flask import session
+            from flask_login import current_user
+            # If we are not logged in, we always abort
+            if current_user.is_anonymous:
+                # Unauthenticated
+                abort(401)
+            if not current_user.is_in_groups(group_list, all):
+                # Unauthorized
+                abort(403)
+            return f(*args, **kwargs)
+        return wrapper
+    
+    return decorator
 create_app()

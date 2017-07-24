@@ -1,7 +1,7 @@
 import traceback
 
 from flask import request, Response
-from flask_stormpath import current_user
+from flask_login import current_user
 
 from services import LookupService
 
@@ -11,7 +11,7 @@ error_recipients = []
 
 def init_exception_emails(app, recipients):
     """
-    Rewrote Flask-errormail to use mandrill module rather than flask-mail
+    Rewrote Flask-errormail to use our own mail service
     """
 
     global error_recipients, error_sender
@@ -28,13 +28,14 @@ def email_exception(app, exception):
         # No-op if no recipients.
         return
 
-    if current_user.is_authenticated():
+    if current_user.is_authenticated:
         user_info = [
-            u'Username: {}'.format(current_user.username),
+
             u'Email: {}'.format(current_user.email),
-            u'Full Name: {}'.format(current_user.full_name),
-            u'Groups: {}'.format([g.name for g in current_user.groups]),
-            u'Directory: {}'.format(current_user.directory.name),
+            u'Name: {}'.format(current_user.name()),
+            u'Groups: {}'.format([g.group for g in current_user.groups]),
+            u'ID: {}'.format(current_user.id),
+            u'Okta ID: {}'.format(current_user.okta_id),
         ]
     else:
         user_info = [

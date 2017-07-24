@@ -1,7 +1,8 @@
 from flask import Blueprint, request
-from flask_stormpath import login_required, groups_required, user
+from flask_login import login_required
 from taa.services.cases import CaseService
 
+from taa import groups_required
 from taa.core import TAAFormError
 from taa.api import route
 from taa.helpers import get_posted_data

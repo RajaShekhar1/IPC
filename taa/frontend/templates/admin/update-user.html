@@ -1,4 +1,4 @@
-  {% extends "base.html" %}
+{% extends "base_ace_latest.html" %}
   {% set active_page = "NULL" -%}
   {% block title %} - Admin Console{% endblock %}
 
@@ -26,7 +26,12 @@
         <div class="box row">
           <div class="col-sm-12">
             <div class="header">
+            {% if is_new %}
+                <span>Add New Account</span>
+            {% endif %}
+            {% if not is_new %}
               <span>Update an Account</span>
+            {% endif %}
             </div>
 
             <!-- <form> -->
@@ -49,6 +54,23 @@
                   {{ form.email(class='form-control', required='true') }}
                 </div>
 
+              {% if is_new %}
+              <label class="col-sm-3">Password</label>
+              <div class="col-sm-9">
+                  {{ form.password(class='form-control', placeholder='Password', required='false', type='password') }}
+              </div>
+              <label class="col-sm-3">Re-enter Password</label>
+              <div class="col-sm-9">
+                  {{ form.repassword(class='form-control', placeholder='Repeat password', required='false', type='password') }}
+              </div>
+
+              {% endif %}
+              {% if not is_new %}
+              <label class="col-sm-3">Reset Password</label>
+              <div class="col-sm-9">
+                  <button type="button" class="btn btn-sm btn-warning reset-password">Send Password Reset Email</button>
+              </div>
+              {% endif %}
                 <label class="col-sm-3">Agency</label>
                 <div class="col-sm-9">
                   {{ form.agency(class='form-control') }}
@@ -56,7 +78,7 @@
 
                 <label class="col-sm-3">5Star Agent Code</label>
                 <div class="col-sm-9">
-                  {{ form.agent_code(class='form-control', required='true') }}
+                  {{ form.agent_code(class='form-control', required='true', style='text-transform: uppercase') }}
                 </div>
 
                 <label class="col-sm-3">Signing Name</label>
@@ -64,86 +86,68 @@
                   {{ form.signing_name(class='form-control', required='true') }}
                 </div>
 
-                <label class="col-sm-3 hidden">Docusign key</label>
-                <div class="col-sm-9 hidden">
-                  {{ form.ds_apikey(class='form-control') }}
-                </div>
+
+              {% if not is_new %}
 
                 <br>
                 <span class="col-sm-3"></span>
-                <div class="col-sm-4 bigger-140 center">
+                <div class="col-sm-4 center">
                   {{form.activated}}
                   {% if form.activated.data %}
-                  <span class="label bigger-140 label-success">Activated!
+                  <span class="label label-success">Activated!
                     {% else %}
-                    <span class="label bigger-140 label-danger">Activated?
+                    <span class="label label-danger">Activated?
                       {% endif %}
                     </span>
                   </div>
-                  <div class="col-sm-5 bigger-140 center">
+                  <div class="col-sm-5 center">
                     {{form.send_notice}}
                     <span class="text-danger">Send activation email?</span>
                   </div>
                 </fieldset>
 
-                <br />
-                <hr />
+                <hr>
+
                 <label class="col-sm-3">API Token</label>
                 <div class="col-sm-9">
+                  <div class="">
+                    <label>
+                      <input type="checkbox" {% if token and token.activated %}checked="checked"{% endif %} name="groups" value="api_users" class="ace ace-switch ace-switch-7" />
+                      <span class="lbl"></span>
+                    <strong>
+                      API Access
+                    </strong>
+                    </label>
+                  </div>
                   <input type="text" onClick="this.select();" id="api_token" disabled='disabled' value="{{token.api_token}}" class="form-control" />
                 </div>
                 <br /><br />
                 <label class="col-sm-3">Access Control</label>
                 <div class="col-sm-9">
 
-                  <div class="text-center col-sm-2">
-                    <strong>
-                      API Access
-                    </strong>
-                    <br />
-                    <label>
-                      <input type="checkbox" {% if token and token.activated %}checked="checked"{% endif %} name="groups" value="api_users" class="ace ace-switch ace-switch-7" />
-                      <span class="lbl"></span>
-                    </label>
-                  </div>
+                    <div class="row">
+                    <div class=" col-sm-12">
 
-                  {% for group in groups %}
-                    <div class="text-center col-sm-2">
-                      <strong>
-                        {{ group }}
-                      </strong>
-                      <br />
                       <label>
-                        <input type="checkbox" {% if group in group_membership %}checked="checked"{% endif %}  name="groups" value="{{ group }}" class="ace ace-switch ace-switch-7" />
+                        <input type="checkbox" data-bind="checked: $parent.selected_groups, checkedValue: $data.value, disable: $parent.is_group_disabled($data)"
+                               name="groups" class="ace ace-switch ace-switch-7" />
                         <span class="lbl"></span>
+                      <strong>
+                        <span data-bind="text: label"></span>
+
+                          <i class="glyphicon glyphicon-question-sign" data-bind="attr: {title: info}, tooltip: {}" data-toggle="tooltip" data-placement="right"></i>
+
+                      </strong>
                       </label>
                     </div>
-                  {% endfor %}
-{#                  <div class="text-center col-sm-3">#}
-{#                    <strong>#}
-{#                      Home Office Admin#}
-{#                    </strong>#}
-{#                    <br />#}
-{#                    <label>#}
-{#                      <input type="checkbox" {% for gms in group_membership if gms.group.name=="admins" %}checked="checked"{% endfor %}  name="groups" value="admins" class="ace ace-switch ace-switch-7" />#}
-{#                      <span class="lbl"></span>#}
-{#                    </label>#}
-{#                  </div>#}
-{#                  <div class="text-center col-sm-3">#}
-{#                    <strong>#}
-{#                      Agent#}
-{#                    </strong>#}
-{#                    <br />#}
-{#                    <label>#}
-{#                      <input type="checkbox" {% for gms in group_membership if gms.group.name=="agents" %}checked="checked"{% endfor %} name="groups" value="agents" class="ace ace-switch ace-switch-7" />#}
-{#                      <span class="lbl"></span>#}
-{#                    </label>#}
-{#                  </div>#}
+                    </div>
+                  <!--/ko-->
+
                 </div>
             {% for gms in group_memberships  %}
               member of {{ gms }}
             {% endfor %}
-                <br><br><br />
+                <br><br><br>
 
                 <div class="clearfix">
                 </div>
@@ -167,6 +171,17 @@
               </button>
             </div>
           </div>
+      {# End if not new hiding bottom section if new user #}
+        {% endif %}
+          {% if is_new %}
+          <div class="col-xs-12">
+            <div class="pull-right">
+              <button type="submit" class="create-user pull-right btn btn-info">
+                <span class="bigger-110">Create User</span>
+              </button>
+            </div>
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>
@@ -177,11 +192,82 @@
     var chkAdmins = $('input[name="groups"][value="admins"]');
     var chkAgents = $('input[name="groups"][value="agents"]');
     var chkHomeOffice = $('input[name="groups"][value="home_office"]');
+    var chkCaseAdmins = $('input[name="groups"][value="case_admins"]');
 
-    var groupChange = function() {
+    var groupInfo = {{ groups | tojson }};
+
+    function GroupVM(group_info) {
+      var self = this;
+
+      self.value = group_info.value;
+      self.label = group_info.label;
+      self.info = group_info.info;
+      self.exclusive_with = group_info.exclusive_with || [];
+      self.depends_on = group_info.depends_on || [];
+
+      self.is_exclusive_with = function(other_group) {
+        if (self.exclusive_with && self.exclusive_with.indexOf(other_group.value) >= 0) {
+           return true;
+        } else if (other_group.exclusive_with && other_group.exclusive_with.indexOf(self.value) >= 0) {
+          return true;
+        }
+        return false;
+      }
+    }
+
+
+    function GroupsVM(initial_group_values) {
+      var self = this;
+
+      self.all_groups = _.map(groupInfo, function(group_info) {
+        return new GroupVM(group_info);
+      });
+      self.all_groups_by_value = _.reduce(self.all_groups, function(output, g) {
+        output[g.value] = g;
+        return output;
+      }, {});
+
+      self.selected_groups = ko.observableArray(initial_group_values);
+
+      // When selection changes, check to see if any dependent groups need to be deselected as well.
+      self.selected_groups.subscribe(function() {
+        _.each(self.all_groups, function(group) {
+          if (self.is_group_disabled(group) && self.selected_groups.indexOf(group.value) >= 0) {
+            self.selected_groups.splice(self.selected_groups.indexOf(group.value), 1);
+          }
+        })
+      });
+
+      self.can_enroll_in_group = function (group) {
+        // Get the group VM from the value.
+        var filtered_groups = _.filter(self.selected_groups(), function(g) {return g !== "api_users"});
+        var selected = _.map(filtered_groups, function(g) {return self.all_groups_by_value[g]});
+
+        // See if any currently-selected group excludes the given group.
+        var is_excluded = _.any(selected, function(g) {return g.is_exclusive_with(group)})
+
+        return !is_excluded && self.meets_all_dependencies(group);
+      };
+
+      self.meets_all_dependencies = function(group) {
+        if (!group.depends_on) {
+          return true;
+        }
+        return _.all(group.depends_on, function(group_val) {
+          return self.selected_groups.indexOf(group_val) >= 0;
+        });
+      };
+
+      self.is_group_disabled = function(group) {
+        return !self.can_enroll_in_group(group);
+      };
+    }
+
+    var _groupChange = function() {
       var isAgents = chkAgents.prop('checked');
       var isAdmins = chkAdmins.prop('checked');
       var isHomeOffice = chkHomeOffice.prop('checked');
+      var isCaseAdmins = chkCaseAdmins.prop('checked');
 
       if(isAgents) {
         if(!isAdmins) {
@@ -190,13 +276,18 @@
         if(!isHomeOffice) {
           chkHomeOffice.prop('disabled', isAgents);
         }
+
         chkAdmins.prop('title', "Can't be in the 'admins' group when in the 'agents' group");
         chkHomeOffice.prop('title', "Can't be in the 'home_office' group when in the 'agents' group");
       } else {
         chkAdmins.prop('disabled', isAgents);
         chkHomeOffice.prop('disabled', isAgents);
+        chkCaseAdmins.prop('disabled', isAgents);
+        chkCaseAdmins.prop('disabled', isAgents);
+
         chkAdmins.prop('title', '');
         chkHomeOffice.prop('title', '');
+        chkCaseAdmins.prop('title', "Can't be in the 'case admins' group unless the user is in the 'agents' group");
       }
 
       if(isAdmins || isHomeOffice) {
@@ -233,24 +324,74 @@
     };
 
     $(document).ready(function() {
-      chkAgents.change(function() {
-        groupChange();
-      }).change();
+      // Groups
+      window.groups_vm = new GroupsVM({{ group_membership |tojson}});
+      ko.applyBindings(groups_vm);
 
-      chkAdmins.change(function() {
-        groupChange();
-      }).change();
+      // Agent state licensing
+      {% if config.IS_AGENT_STATE_LICENSING_ENABLED -%}
+      var $isLicensed = $('#is_restricted_to_licensed_states');
+      var $stateSection = $('.licensed-states');
+      $isLicensed.change(function(e) {
+        $stateSection.slideToggle(300);
+        if(e.target.checked) {
+          $('html,body').animate({
+            scrollTop: $stateSection[0].offsetTop
+          }, 300);
+        }
+      });
+      $('#licensed-states').bootstrapDualListbox({
+        infoTextFiltered: '<span class="label label-purple label-lg">Filtered</span>',
+        showFilterInputs: true,
+        moveOnSelect: true,
+        selectorMinimalHeight: 500,
+        nonSelectedListLabel: '<span class="red">Unlicensed States</span>',
+        selectedListLabel: '<span class="green">Licensed States</span>'
+      });
+      if($isLicensed.prop('checked')) {
+        $stateSection.show();
+      }
 
-      chkHomeOffice.change(function() {
-        groupChange();
-      }).change();
+      // Make the licensing section hide and show as the groups change.
+      function check_should_show_license_section(groups) {
+        if (groups.indexOf("agents") >= 0) {
+          $('.licensed-states-section').show(100)
+        } else {
+          $('.licensed-states-section').hide(100)
+        }
+      }
+      groups_vm.selected_groups.subscribe(check_should_show_license_section);
+
+      // Check license section showing on startup.
+      check_should_show_license_section(groups_vm.selected_groups());
+
+      {% endif -%}
+
 
       $('.delete-user').click(function() {
         delete_user();
       });
       $('.update-user').click(function() {
         $('form').submit();
-      })
+      });
+      $('.create-user').click(function() {
+        var form = $('form');
+        var is_valid = form.validate();
+        if (is_valid) {
+          form.submit();
+        }
+      });
+      $('.reset-password').click(function() {
+          send_json_data("POST", "/reset_password_email", {email: "{{ form.email.data }}"}).success(function(d) {
+              if (d.success) {
+                  alert("Successfully sent reset password email");
+              } else {
+                  alert("There was a problem: " + d.error);
+              }
+          }).fail(function() {
+              alert("There was a problem communicating with the server");
+          });
+      });
     });
   </script>
   {% endblock %}

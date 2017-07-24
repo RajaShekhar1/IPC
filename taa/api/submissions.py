@@ -4,8 +4,10 @@ from flask import Blueprint, request, make_response, abort
 
 from taa.config_defaults import PAYLOGIX_PGP_KEY_ID
 from taa.api import route
-from flask_stormpath import groups_required, login_required
+from flask_login import login_required
 import datetime
+
+from taa import groups_required
 from taa.services import LookupService
 from taa.services.enrollments.csv_export import export_hi_acc_enrollments
 from taa.services.enrollments.paylogix import create_paylogix_csv

@@ -1,3 +1,5 @@
+import traceback
+import urllib
 from flask import (
     render_template,
     url_for,
@@ -5,55 +7,129 @@ from flask import (
     json,
     redirect,
     request,
-)
-from flask.ext.stormpath import groups_required, StormpathError, current_user
-from stormpath.error import Error
+    session, jsonify)
+from flask_login import current_user, login_required
 
-from taa import app
+
+from taa import app, groups_required
 from nav import get_nav_menu
 from taa.models import db
-from taa.old_model.Registration import TAA_UserForm
-from taa.old_model.Enrollment import AgentActivationEmail
+from taa.old_model.Registration import TAA_UserForm, AdminNewUserForm
+from taa.old_model.Enrollment import AgentActivationEmail, NotifyAdminEmail
 from taa.services import LookupService
-from taa.services.users.UserService import search_stormpath_accounts, get_stormpath_application
-from datetime import date, timedelta, datetime
+from taa.services.users.UserService import search_stormpath_accounts, get_stormpath_application, UserService
 
 agent_service = LookupService('AgentService')
 api_token_service = LookupService('ApiTokenService')
 
 
 @app.route('/admin', methods=['GET', 'POST'])
+@login_required
 @groups_required(['admins', 'home_office'], all=False)
 def admin():
     accounts = []
     for agent in agent_service.get_sorted_agents():
-        # Skip over deleted users, they have no stormpath entry so there is no
-        # use showing them here (clicking would error)
-        if agent.get_status() == 'Deleted':
-            continue
 
         accounts.append({
             'fname': agent.first,
             'lname': agent.last,
             'email': agent.email,
+            'email_url': urllib.quote_plus(agent.email),
             'agency': agent.agency,
             'agent_code': agent.agent_code,
             'signing_name': agent.signing_name,
             'status': agent.get_status(),
         })
 
-    # for acc in search_stormpath_accounts():
-    #     accounts.append(
-    #         {'fname': acc.given_name,
-    #          'lname': acc.surname,
-    #          'email': acc.email,
-    #          'agency': acc.custom_data.get('agency'),
-    #          'agent_code': acc.custom_data.get('agent_code'),
-    #          'signing_name': acc.custom_data.get('signing_name'),
-    #          'status': "Activated" if acc.custom_data.get('activated') else "Not Activated",
-    #      })
-
     return render_template('admin/admin.html', accounts=accounts, nav_menu=get_nav_menu(), is_user_admin=agent_service.is_user_admin(current_user))
+@app.route('/new-user', methods=['GET', 'POST'])
+@login_required
+@groups_required(['admins', 'home_office'], all=False)
+def new_user():
+    form = AdminNewUserForm()
+    if form.validate_on_submit():
+        data = form.data
+
+        from taa.services.agents import OktaService
+        okta_service = OktaService()
+        if okta_service.get_user_by_email(data['email']):
+            flash("This email is already associated with an account in this organization.")
+            render_template('admin/update-user.html',
+                            form=form,
+                            group_membership=[],
+                            groups=get_group_options(),
+                            token="",
+                            nav_menu=get_nav_menu(),
+                            is_new=True,
+                            )
+
+        if data['password'] != data['repassword']:
+            flash("Passwords don't match.")
+            return redirect(request.url)
+
+        # Attempt to create the user's account in Okta.
+        try:
+            okta_user_data = okta_service.create_user(dict(
+                profile=dict(
+                    firstName=data['fname'],
+                    lastName=data['lname'],
+                    email=data['email'],
+                    login=data['email'],
+                    agent_code=data['agent_code'].upper(),
+                    agency=data['agency'],
+                    signing_name=data['signing_name'],
+                ),
+                credentials=dict(
+                    password=dict(value=data['password'])
+                )
+            ))
+
+            if not okta_user_data:
+                flash(okta_service.last_error_message)
+            else:
+                # Create the user account
+                agent = agent_service.create_user(
+                    email = data['email'],
+                    password = data['password'],
+                    given_name = data['fname'],
+                    middle_name = data.get('middle_name'),
+                    surname = data['lname'],
+                    signing_name=data['signing_name'],
+                    agent_code=data['agent_code'].upper(),
+                    agency=data['agency'],
+                    activated=True,
+                    okta_id = okta_user_data['id'],
+                )
+
+                # Add to the agents group
+                agent.add_group("agents")
+
+                # Add the group in okta too
+                OktaService().set_user_groups(agent, ['agents'])
+
+                session['registered_name'] = data['fname']
+
+                db.session.commit()
+
+                # Go to the edit user page
+                flash("User created successfully!")
+
+                return redirect(url_for('updateUser', user=data['email']))
+        except Exception as err:
+            flash('There was a problem creating the user.')
+            from taa.tasks import send_admin_error_email
+            send_admin_error_email("Admin create user error:<br>{}".format(err.message), [traceback.format_exc()])
+
+
+
+    return render_template('admin/update-user.html',
+                           form=form,
+                           group_membership=[],
+                           groups=get_group_options(),
+                           token="",
+                           nav_menu=get_nav_menu(),
+                           is_new=True,
+                           )
 
 
 @app.route('/edituser', methods=['GET', 'POST'])
@@ -66,39 +142,41 @@ def updateUser():
 
     # initially pre-populate the form with account values
     if request.method == 'GET':
-        accounts = search_stormpath_accounts(filter_email=user_email)
-        if not accounts:
+
+        user = agent_service.find(email=user_email).first()
+        if not user:
             flash('Failed to find user ' + user_email)
             return redirect(url_for('admin'))
-        else:
-            account = accounts[0]
 
-            custom_data = account.custom_data
-            keyset = custom_data.keys()
-            form.fname.data = account.given_name
-            form.lname.data = account.surname
-            form.email.data = account.email
+        form.fname.data = user.first
+        form.lname.data = user.last
+        form.email.data = user.email
 
-            group_membership = account.group_memberships
+        group_membership = [g.group for g in user.groups]
 
-            token = api_token_service.get_token_by_sp_href(account.href)
+        token = api_token_service.get_token_by_sp_href(user.okta_id)
 
-            form.agency.data = custom_data['agency'] if 'agency' in keyset else ""
-            form.agent_code.data = custom_data['agent_code'] if 'agent_code' in keyset else ""
-            form.ds_apikey.data = custom_data['ds_apikey'] if 'ds_apikey' in keyset else ""
-            form.signing_name.data = custom_data['signing_name'] if 'signing_name' in keyset else ""
-            form.activated.data = custom_data['activated'] if 'activated' in keyset else False
-            # form.status.data = "Activated" if custom_data['activated'] else "Not Activated"
+        if not user.custom_data:
+            user.custom_data = {}
 
-    sp_app = get_stormpath_application()
+        form.agency.data = user.agency
+        form.agent_code.data = user.agent_code
+        form.signing_name.data = user.signing_name
+        form.activated.data = user.activated
+
+        # Agents only
+        if 'agents' in group_membership:
+            # Load agent-specific items.
+            form.is_restricted_to_licensed_states.data = user.is_restricted_to_licensed_states
+            form.licensed_states.data = user.licensed_states
 
     if form.validate_on_submit():
         try:
-            accounts = search_stormpath_accounts(filter_email=user_email)
-            if not accounts:
+            user = agent_service.find(email=user_email).first()
+            if not user:
                 flash('Failed to find user ' + user_email)
+                return redirect(request.url)
             else:
-                account = accounts[0]
                 data = form.data
 
                 # Ensure new email address is not already being used
@@ -108,16 +186,18 @@ def updateUser():
                           "someone else".format(data['email']))
                     return redirect(request.url)
 
-                # edit some custom data fields
-                account.given_name = data['fname']
-                account.surname = data['lname']
-                account.email = data['email']
+                # Update the database user
+                user.first = data['fname']
+                user.last = data['lname']
+                user.email = data['email']
 
-                account.custom_data['agency'] = data['agency']
-                account.custom_data['agent_code'] = data['agent_code']
-                account.custom_data['signing_name'] = data['signing_name']
-                account.custom_data['ds_apikey'] = data['ds_apikey']
-                account.custom_data['activated'] = data['activated']
+                user.agency = data['agency']
+                user.agent_code = data['agent_code'].upper()
+                user.signing_name = data['signing_name']
+                user.activated = data['activated']
+
+                user.licensed_states = json.dumps(data['licensed_states'])
+                user.is_restricted_to_licensed_states = data['is_restricted_to_licensed_states']
 
                 groups = request.values.getlist('groups')
                 if 'agents' in groups and ('home_office' in groups or
@@ -126,7 +206,7 @@ def updateUser():
                           "'home_office' groups at the same time")
                     return redirect(request.url)
 
-                token = api_token_service.get_token_by_sp_href(account.href)
+                token = api_token_service.get_token_by_sp_href(user.okta_id)
 
                 # "api_users" is not a real group, we just pass it along with
                 # the groups to indicate if the user has an active api token
@@ -140,75 +220,101 @@ def updateUser():
                         token.activated = True
                         db.session.commit()
                     else:
-                        full_name = u"{} {}".format(account.given_name, account.surname)
-                        api_token_service.create_new_token(full_name, account.href, activated=True)
+                        full_name = u"{} {}".format(user.first, user.last)
+                        api_token_service.create_new_token(full_name, user.okta_id, activated=True)
                         db.session.commit()
 
                 # If the account has a group membership that is not in the
                 # posted data, delete it
-                for gms in account.group_memberships:
-                    if gms.group.name not in groups:
-                        gms.delete()
+                for group_name in [g.group for g in user.groups]:
+                    if group_name not in groups:
+                        user.remove_group(group_name)
 
                 # For each group name that is in the posted data,
                 #  add a membership link between the account and the group
-                # TODO: See if there is a way to get rid of these list comprehension (something like a .get() function from Stormpath)
-                for group in groups:
-                    matching_groups = [item
-                                       for item in sp_app.groups.items
-                                       if item.name == group]
-                    if not matching_groups:
-                        continue
-                    sp_group = matching_groups[0]
-                    #existing_membership = [acct_mem
-                    #                       for acct_mem in sp_group.account_memberships
-                    #                       if acct_mem.account.email == account.email]
-                    existing_membership = [membership for membership in account.group_memberships if membership.group.name == sp_group.name]
-                    if not existing_membership:
-                        # Add this account to the group
-                        sp_group.add_account(account)
 
-                # save your changes
-                account.save()
+                for group in groups:
+                    matching_groups = [n
+                                       for n in UserService().get_groups()
+                                       if n.name == group]
+                    if not matching_groups:
+                        print("No group {}".format(group))
+                        continue
+
+                    if not user.is_in_group(group):
+                        # Add this user to the group.
+                        user.add_group(group)
+
+                # Update the Okta user
+                from taa.services.agents import OktaService
+                OktaService().update_user(user.okta_id, dict(
+                    profile=dict(
+                        firstName=data['fname'],
+                        lastName=data['lname'],
+                        email=data['email'],
+                        login=data['email'],
+                        agent_code=data['agent_code'].upper(),
+                        agency=data['agency'],
+                        signing_name=data['signing_name'],
+                    ),
+                    #credentials=dict(
+                    #    password=dict(value=data['password'])
+                    #)
+                ))
+
+                # Update the Okta groups
+                service = OktaService()
+                service.set_user_groups(user, groups)
+
                 current_email = (user_email if data['email'] == user_email
                                  else "{} (formerly {})".format(data['email'],
                                                                 user_email))
                 flash('User {} updated successfully!'.format(current_email))
 
-                # Update in database also
-                agent = agent_service.ensure_agent_in_database(account)
-                agent_service.update(agent, **{
-                    'email': data['email'],
-                    'first': data['fname'],
-                    'last': data['lname'],
-                    'agent_code': data['agent_code'],
-                    'activated': data['activated']
-                })
+
                 db.session.commit()
 
                 # if we've just activated a user, then send a notice
                 if data['activated'] and data['send_notice']:
                     try:
-                        AgentActivationEmail().send_activation_notice(data['email'], data['fname'], url_for('home'))
+                        AgentActivationEmail().send_activation_notice(data['email'], data['fname'], url_for('home', _external=True))
                         flash('Activation email sent.')
                     except:
                         flash('>> Problem sending activation email <<')
                         print('>> Problem sending activation email <<')
 
             return redirect(url_for('admin'))
-        except Error as err:
+        except Exception as err:
             flash(err.message)
 
 
-    all_group_names = [g.name for g in sp_app.groups]
-
     return render_template('admin/update-user.html',
                            form=form,
-                           group_membership=[g.group.name for g in group_membership],
-                           groups=all_group_names,
+                           group_membership=group_membership,
+                           groups=get_group_options(),
                            token=token,
                            nav_menu=get_nav_menu()
                            )
+
+
+def get_group_options():
+    return [
+        dict(label='Enrollment Importer', value='enrollment_importers', info="User is allowed to upload enrollments.",
+             exclusive_with=[]),
+        dict(label='Agent', value='agents',
+             info='Allowed to enroll cases to which access is granted. Mutually exclusive with Home Office or Admin rights.',
+             exclusive_with=['admins', 'home_office']),
+        dict(label='Case Creator and Manager', value='case_admins',
+             info="In addition to enrolling, can also create new cases and manage owned cases.",
+             exclusive_with=['admins', 'home_office'],
+             depends_on=['agents']),
+        dict(label='Home Office', value='home_office',
+             info="Create, manage users and cases, and enroll cases. Mutually exclusive with Agent rights.",
+             exclusive_with=['agents', 'case_admins']),
+        dict(label='Admin', value='admins',
+             info='An admin has access to all pages, including some debugging information. Mutually exclusive with Agent rights.',
+             exclusive_with=['agents', 'case_admins']),
+    ]
 
 
 @app.route('/enrollment-import-batches', methods=['GET'])
@@ -257,8 +363,8 @@ def view_submission_logs():
 
 
 def is_email_available(email):
-    accounts = search_stormpath_accounts(filter_email=email)
-    if accounts and len(accounts) > 0:
+    account = search_stormpath_accounts(filter_email=email)
+    if account:
         return False
     return True
 
@@ -267,17 +373,25 @@ def is_email_available(email):
 @groups_required(['admins', 'home_office'], all=False)
 def delete_user():
     user_email = request.args['email']
-    accounts = search_stormpath_accounts(filter_email=user_email)
-    if accounts and len(accounts) > 0:
-        account = accounts[0]
+    account = search_stormpath_accounts(filter_email=user_email)
+    if account:
         agent = agent_service.ensure_agent_in_database(account)
         agent_service.update(agent, **{
             'is_deleted': True
         })
-        account.delete()
+        from taa.services.agents import OktaService
+        OktaService().delete_user(account.id)
         db.session.commit()
         return (json.dumps({'success': True}), 200,
                 {'ContentType': 'application/json'})
     return (json.dumps({'success': False}), 400,
             {'ContentType': 'application/json'})
 
+@app.route('/sync_okta', methods=['POST'])
+@login_required
+@groups_required(['admins', 'home_office'], all=False)
+def sync_okta():
+    from taa.tasks import sync_okta
+    sync_okta.delay(current_user.email)
+
+    return jsonify({})

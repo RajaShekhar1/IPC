@@ -1,7 +1,8 @@
 from flask import Blueprint, request, session
-from flask_stormpath import login_required, groups_required, current_user
+from flask_login import login_required, current_user
 from taa.services.enrollments import EnrollmentApplicationService
 
+from taa import groups_required
 from taa.api import route
 
 bp = Blueprint('envelopes', __name__, url_prefix='/envelopes')

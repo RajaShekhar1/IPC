@@ -3,10 +3,11 @@ AGENT pages and DOCUSIGN inbox
 """
 import os
 
-from flask import render_template, redirect, url_for, flash, send_file, request, session
-from flask_stormpath import login_required, groups_required, current_user
+from flask import json, render_template, redirect, url_for, flash, send_file, request, session
+#from flask_stormpath import login_required, groups_required, current_user
+from flask_login import login_required, current_user
 
-from taa import app, db
+from taa import app, db, groups_required
 from nav import get_nav_menu
 from sqlalchemy import and_
 from taa.services.cases import CaseService, SelfEnrollmentSetup
@@ -73,8 +74,10 @@ def manage_cases():
     if agent:
         user_cases = case_service.search_cases(by_agent=agent.id)
         header_title = ''
-        can_create_case = False
-    else:
+        # Special manager agents (case admins) can create cases.
+        can_create_case = agent_service.is_user_case_admin(current_user)
+    elif (agent_service.is_user_admin(current_user) or
+              agent_service.is_user_home_office(current_user)):
         # Admin or home office user
         user_cases = case_service.search_cases()
         header_title = 'Home Office'
@@ -117,16 +120,18 @@ def manage_case(case_id):
 
         is_agent_case_owner = case_service.is_agent_case_owner(agent, case)
         # No agents can edit cases anymore
-        vars['can_edit_case'] = False
+        # Only an agent that is a "Case Manager/admin" can edit cases, and only if he is also the owner.
+        vars['can_edit_case'] = agent_service.is_user_case_admin(current_user) and is_agent_case_owner
         vars['can_download_enrollments'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
         vars['can_view_report_tab'] = case_service.is_agent_allowed_to_view_full_census(agent, case)
         vars['can_view_case_setup'] = case_service.is_agent_allowed_to_view_case_setup(agent, case)
         # Empty list for privacy of other agent data.
-        vars['active_agents'] = []
+        vars['active_agents'] = [] if not vars['can_edit_case'] else agent_service.get_active_agents()
         agent_name = agent.name()
         agent_id = agent.id
         agent_email = agent.email
-    else:
+    elif (agent_service.is_user_admin(current_user) or
+          agent_service.is_user_home_office(current_user)):
         # Admin or home office
         products = product_service.get_all_enrollable_products()
         vars['is_admin'] = True
@@ -139,6 +144,8 @@ def manage_case(case_id):
         agent_name = ""
         agent_id = None
         agent_email = ""
+    else:
+        raise ValueError("Unknown user type, not agent, home office, or admin")
 
     vars['case_agents'] = case_service.get_agents_for_case(case)
     vars['product_choices'] = products
@@ -217,11 +224,12 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars['generic_link'] = self_enrollment_link_service.get_generic_link(request.url_root, case)
     vars['product_rate_levels'] = product_rate_levels
 
-    vars["current_user_groups"] = [g.group.name for g in current_user.group_memberships]
+    vars["current_user_groups"] = [g.group for g in current_user.groups]
 
-    vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.href)
+    vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.okta_id)
 
     # vars['riders'] = rider_service.get_rider_info_for_case(case)
+    vars['is_afba'] = app.config['IS_AFBA']
 
     return render_template('agent/case.html', **vars)
 
@@ -393,7 +401,7 @@ def get_coverage_for_product(wrapped_data, applicant_type):
                 premium = sum(c.get_annualized_premium() for c in coverage_records)
             else:
                 premium = ''
-            coverage = ', '.join(d['coverage'] for d in data)
+            coverage = ', '.join(str(d['coverage']) for d in data)
         else:
             premium = ''
             coverage = ''
@@ -448,7 +456,8 @@ def view_batch_email_preview(case_id, batch_id=None):
         greeting=build_fake_email_greeting(setup),
         enrollment_url="#",
         company_name=case.company_name,
-        products=case.products
+        products=case.products,
+        host='http://{}/'.format(app.config['HOSTNAME']),
     )
 
 

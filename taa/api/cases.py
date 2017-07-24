@@ -3,9 +3,10 @@ from datetime import datetime
 
 import re
 from flask import Blueprint, request, abort, make_response, Response
-from flask_stormpath import current_user, groups_required, login_required
+from flask_login import current_user, login_required
 from taa import JSONEncoder
 
+from taa import app, groups_required
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
@@ -17,7 +18,6 @@ from taa.services.cases.forms import (
     SelfEnrollmentSetupForm,
     UpdateCaseForm,
 )
-from taa.services.cases import create_census_records_csv, create_enrollment_records_csv
 from taa.services.enrollments.models import EnrollmentApplication
 from taa.services import LookupService
 
@@ -68,7 +68,7 @@ def create_case():
     data = get_posted_data()
 
     # Determine the owning agent
-    if agent_service.can_manage_all_cases(current_user):
+    if (agent_service.can_manage_all_cases(current_user)):
         agent = None
     elif agent_service.is_user_agent(current_user):
         # The creating agent is the owner by default
