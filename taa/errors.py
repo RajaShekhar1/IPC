@@ -1,7 +1,7 @@
 import traceback
 
 from flask import request, Response
-from flask_login import current_user
+from flask_stormpath import current_user
 
 from services import LookupService
 
@@ -11,7 +11,7 @@ error_recipients = []
 
 def init_exception_emails(app, recipients):
     """
-    Rewrote Flask-errormail to use our own mail service
+    Rewrote Flask-errormail to use mandrill module rather than flask-mail
     """
 
     global error_recipients, error_sender
@@ -28,14 +28,13 @@ def email_exception(app, exception):
         # No-op if no recipients.
         return
 
-    if current_user.is_authenticated:
+    if current_user.is_authenticated():
         user_info = [
-
+            u'Username: {}'.format(current_user.username),
             u'Email: {}'.format(current_user.email),
-            u'Name: {}'.format(current_user.name()),
-            u'Groups: {}'.format([g.group for g in current_user.groups]),
-            u'ID: {}'.format(current_user.id),
-            u'Okta ID: {}'.format(current_user.okta_id),
+            u'Full Name: {}'.format(current_user.full_name),
+            u'Groups: {}'.format([g.name for g in current_user.groups]),
+            u'Directory: {}'.format(current_user.directory.name),
         ]
     else:
         user_info = [
@@ -69,12 +68,16 @@ def email_exception(app, exception):
         mailer.send_email(
             from_email=error_sender,
             subject=u'5Star Exception ({hostname})'.format(hostname=app.config.get('HOSTNAME')),
-            to="5star@ipconsultinginc.com",
+            to=["5star@ipconsultinginc.com"],
             text=msg,
             track_clicks=False,
         )
-    except Exception:
-        print "failed to send admin email notification:"
+    except Exception as ex:
+        print "failed to send first admin email notification:"
+        print "from_email = " + error_sender
+        print "subject = " + u'5Star Exception ({hostname})'
+        print "to = [\"5star@ipconsultinginc.com\"]"
+        print ex
 
     try:
         mailer.send_email(
@@ -84,8 +87,13 @@ def email_exception(app, exception):
             text=msg,
             track_clicks=False,
         )
-    except Exception:
-        print "failed to send admin email notification:"
+    except Exception as ex:
+        print "failed to send second admin email notification:"
+        print "from_email = " + error_sender
+        print "subject = " + u'5Star Exception ({hostname})'
+        print "to = "
+        print [e for e in error_recipients]
+        print ex
 
 
     # Make sure the response still registers as 500

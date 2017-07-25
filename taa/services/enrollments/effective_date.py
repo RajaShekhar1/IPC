@@ -57,11 +57,19 @@ def create_rule(settings):
     Based on a dictionary with effective_date_method and two optional parameters,
     return the instantiated matching rule object.
     """
-    rule_class = {
-        'static_date': StaticEffectiveDateRule,
-        'day_of_month': CutoffEffectiveDateRule,
-        'enroller_selects': EnrollerPicksRule,
-        'first_friday': FirstFridayFollowingRule,
+    return {
+        'static_date':
+            lambda:
+                StaticEffectiveDateRule(parse(settings.get('static_date'))),
+        'day_of_month':
+            lambda:
+                CutoffEffectiveDateRule(int(settings.get('day_of_month'))),
+        'enroller_selects':
+            lambda:
+                EnrollerPicksRule(
+                    int(settings['enroller_selects']['default']),
+                    int(settings['enroller_selects']['no_less'])),
+        'first_friday': lambda: FirstFridayFollowingRule(int(settings.get('first_friday'))),
     }[settings['method']]
     info = {}
 
@@ -85,7 +93,7 @@ def create_rule(settings):
         args.append(info['effective_date_param1'])
     if info.get('effective_date_param2'):
         args.append(info['effective_date_param2'])
-    if info.get('enroller_picks_date'):
+    if "":
         args.append(info['enroller_picks_date'])
 
     return rule_class(*args)

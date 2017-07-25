@@ -24,13 +24,6 @@ var agent_inbox = (function() {
     self.existing_insurance = ko.observable(false);
     self.replacing_insurance = ko.observable(false);
 
-    self.agent_split_selection = ko.observable(null);
-    self.agent_split_options = ko.observableArray();
-
-    self.should_show_second_agent_selection = ko.pureComputed(function() {
-      return self.agent_split_options().length > 0;
-    });
-
     self.sign_envelope = function() {
 
       // Get the envelope ID from the button.

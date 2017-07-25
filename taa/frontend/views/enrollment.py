@@ -7,10 +7,8 @@ import json
 
 from flask import (abort, jsonify, render_template, request,
                    send_from_directory, session, url_for, redirect, Response)
-from flask_login import current_user, login_required
-from taa.services.agents import AgentService
-
-from taa.services.users import UserService
+from flask.ext.stormpath import login_required
+from flask_stormpath import current_user
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callcenter_callback_url, \
     build_callback_url
 
@@ -139,7 +137,7 @@ def in_person_enrollment():
         })
 
 
-def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False, error=False, error_message=None):
+def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
     # As part of address debugging, log the user-agent.
     user_agent = request.user_agent
     print(
@@ -692,7 +690,7 @@ def get_declined_response(received_enrollment_data):
 
 
 def are_all_products_declined(standardized_data):
-    return len(standardized_data) == 0 or all(map(lambda data: data.get('did_decline'), standardized_data))
+    return all(map(lambda data: data.get('did_decline'), standardized_data))
 
 
 def get_accepted_product_ids(standardized_data):

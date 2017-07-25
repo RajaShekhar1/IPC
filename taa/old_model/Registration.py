@@ -1,13 +1,12 @@
 """5Star-specific overrides of Flask-Stormpath classes and functions."""
-from flask_wtf import FlaskForm
-from flask_wtf.form import _Auto
-from wtforms.fields import PasswordField, StringField, BooleanField, SelectMultipleField
-from wtforms.validators import InputRequired, Email
 
-from taa.services.products.states import all_states
+from flask.ext.wtf import Form
+from wtforms.fields import PasswordField, StringField, BooleanField
+from wtforms.validators import InputRequired
+from flask.ext.stormpath.forms import RegistrationForm, LoginForm
 
 
-class TAA_RegistrationForm(FlaskForm):
+class TAA_RegistrationForm(RegistrationForm):
     """
     Register a new user.  Adds a couple of needed slots to Stormpath default registration
 
@@ -15,15 +14,6 @@ class TAA_RegistrationForm(FlaskForm):
     repassword:  used to re-enter password for confirmation check
     agent_code:  whatever they enter, but will be admin-edited to be the 5-char 5Star agent code
     """
-    username = StringField('Username')
-    given_name = StringField('First Name')
-    middle_name = StringField('Middle Name')
-    surname = StringField('Last Name')
-    email = StringField('Email', validators=[
-        InputRequired('You must provide an email address.'),
-        Email('You must provide a valid email address.')
-    ])
-    password = PasswordField('Password', validators=[InputRequired('You must supply a password.')])
     signing_name = StringField('Signature Name', validators=[InputRequired()])
     agent_code = StringField('Agent Code', validators=[InputRequired()])
     repassword = PasswordField('Repeat Password', validators=[InputRequired()])
@@ -32,13 +22,11 @@ class TAA_RegistrationForm(FlaskForm):
 
 
 
-class TAA_LoginForm(FlaskForm):
-    login = StringField('Login', validators=[InputRequired('Login identifier required.')])
-    password = PasswordField('Password', validators=[InputRequired('Password required.')])
+class TAA_LoginForm (LoginForm):
     allowForgotPass = False
 
 
-class TAA_UserForm(FlaskForm):
+class TAA_UserForm(Form):
     """
     Form to use for editing existing user accounts from StormPath record.
     Mainly needed in order to edit custom data, including activation.
@@ -53,23 +41,3 @@ class TAA_UserForm(FlaskForm):
     status = StringField('Status')
     activated = BooleanField('activated')
     send_notice = BooleanField('activated', default = False)
-class AdminNewUserForm(FlaskForm):
-    """
-    Form to use for editing existing user accounts from StormPath record.
-    Mainly needed in order to edit custom data, including activation.
-    """
-    fname = StringField('First name')
-    lname = StringField('Last name')
-    email = StringField('Email')
-    signing_name = StringField('Signature Name')
-    agent_code = StringField('Agent Code')
-    agency = StringField('Agency Name')
-    status = StringField('Status')
-    activated = BooleanField('activated')
-    send_notice = BooleanField('activated', default=False)
-    password = PasswordField('Password', validators=[InputRequired('You must supply a password.')])
-    repassword = PasswordField('Repeat Password', validators=[InputRequired()])
-    is_restricted_to_licensed_states = BooleanField(
-        'Restricted to Licensed States', default=False)
-    licensed_states = SelectMultipleField(choices=[[s['statecode'], s['name']]
-                                                   for s in all_states])

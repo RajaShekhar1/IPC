@@ -6,13 +6,10 @@ from datetime import datetime
 import dateutil.parser
 import sqlalchemy as sa
 from flask import abort
-from flask_login import current_user
+from flask_stormpath import current_user
 from sqlalchemy.orm import joinedload, eagerload
 
-from models import (Case, CaseCensus, CaseOpenEnrollmentPeriod, CaseOngoingEnrollmentPeriod,
-                    SelfEnrollmentSetup)
-from taa.core import DBService
-from taa.core import db
+from taa.core import DBService, db
 from taa.services import RequiredFeature, LookupService
 from taa.services.agents.models import Agent
 
@@ -169,8 +166,6 @@ class CaseService(DBService):
 
     def get_case_partner_agents(self, case):
         return [a for a in case.partner_agents if a != case.owner_agent]
-    def get_case_admin(self, case):
-        return case.case_admin if case.case_admin else None
 
     def get_agents_for_case(self, case):
         agents = []
@@ -585,6 +580,7 @@ class CaseService(DBService):
         from taa.services.agents import AgentService
         agent_service = AgentService()
         logged_in_agent = agent_service.get_logged_in_agent()
+        is_case_owner = logged_in_agent and logged_in_agent is self.get_case_owner(case)
 
         if agent_service.can_manage_all_cases(current_user):
             return True
@@ -609,8 +605,7 @@ class CaseService(DBService):
         return case
 
     def is_agent_case_owner(self, agent, case):
-        case_owner = self.get_case_owner(case)
-        return agent is not None and agent.id == case_owner.id
+        return agent is self.get_case_owner(case)
 
     def can_agent_edit_case(self, agent, case):
         return self.is_agent_case_owner(agent, case)

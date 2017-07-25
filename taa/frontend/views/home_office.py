@@ -1,8 +1,8 @@
 
 from flask import render_template, redirect, url_for, flash
-from flask_login import login_required
+from flask_stormpath import login_required, groups_required
 
-from taa import app, groups_required
+from taa import app
 from .nav import get_nav_menu
 from taa.services.products import ProductService
 from taa.services.products.forms import EditProductForm
@@ -14,13 +14,11 @@ product_service = ProductService()
 agent_service = AgentService()
 
 @app.route("/home-office")
-@login_required
 @groups_required(home_office_groups, all=False)
 def home_office_dashboard():
     return render_template('home_office/dashboard.html', nav_menu=get_nav_menu())
 
 @app.route("/manage-products")
-@login_required
 @groups_required(home_office_groups, all=False)
 def manage_custom_products():
 
@@ -35,7 +33,6 @@ def manage_custom_products():
     )
 
 @app.route("/manage-products/<product_id>")
-@login_required
 @groups_required(home_office_groups, all=False)
 def manage_custom_product(product_id):
     product = product_service.get_or_404(product_id)
@@ -62,7 +59,6 @@ def manage_custom_product(product_id):
     )
     
 @app.route("/manage-agents")
-@login_required
 @groups_required(home_office_groups, all=False)
 def manage_agents():
     return redirect('admin')

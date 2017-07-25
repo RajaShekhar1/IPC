@@ -1,7 +1,7 @@
 import decimal
 
 from flask import abort
-from flask_login import current_user
+from flask_stormpath import current_user
 
 from taa.services.products.plan_codes import PLAN_CODES_SIMPLE
 from ..cases import Case, CaseCensus
@@ -114,7 +114,6 @@ class ProductService(DBService):
 
         agent_service = AgentService()
         if (agent_service.is_user_admin(current_user) or
-                agent_service.is_user_case_admin(current_user) or
                 agent_service.is_user_home_office(current_user)):
             return product
         elif agent_service.is_user_agent(current_user):

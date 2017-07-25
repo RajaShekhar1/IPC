@@ -1,7 +1,7 @@
 import os
 
 from flask import render_template, url_for, send_from_directory, redirect
-from flask_login import login_required, current_user
+from flask.ext.stormpath import login_required, user, current_user
 
 from taa import app
 from .nav import get_nav_menu
@@ -43,7 +43,7 @@ def home():
         return render_template('home.html', nav_menu=get_nav_menu())
     elif agent_service.is_user_third_party_enroller(current_user):
         vars = {}
-        vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.okta_id)
+        vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.href)
         vars["nav_menu"] = get_nav_menu()
         return render_template('enrollment/enrollment_importer.html', **vars)
     else:
@@ -51,8 +51,7 @@ def home():
 
 @app.route("/robots.txt")
 def robots():
-    return send_from_directory(
-            os.path.join(app.root_path, 'frontend', 'static'), 'robots.txt')
+    return send_from_directory(os.path.join(app.root_path, 'frontend', 'static'), 'robots.txt')
 
 @app.route("/ping_check.txt")
 def pingcheck():

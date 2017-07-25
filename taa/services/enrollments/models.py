@@ -1,7 +1,7 @@
 import decimal
 
 from sqlalchemy.dialects.postgresql import JSON
-
+from taa.services.agents import ApiTokenService
 
 from taa import db
 from taa.helpers import JsonSerializable
@@ -428,7 +428,6 @@ def get_batch_user(batch):
     if not auth_token:
         return None
 
-    from taa.services.agents import ApiTokenService
     api_token = ApiTokenService().find(api_token=auth_token).first()
     if not api_token:
         return None

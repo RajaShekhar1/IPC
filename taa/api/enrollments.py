@@ -6,12 +6,11 @@ from zipfile import ZipFile
 import traceback
 from flask import Blueprint, request, abort, make_response, send_file
 from flask import session
-from flask_login import current_user
-from flask_login import login_required
+from flask.ext.login import current_user
+from flask_stormpath import login_required, groups_required
 from taa.services.products.plan_codes import PLAN_CODES_SIMPLE
 from taa.tasks import send_admin_error_email
 
-from taa import groups_required
 from taa.api import route
 from taa.services import LookupService
 from taa.services.enrollments.csv_export import export_hi_acc_enrollments
@@ -118,8 +117,11 @@ def delete_batch(batch_id):
 @login_required
 @groups_required(['admins', 'home_office', 'agents'], all=False)
 def get_individual_enrollment_record(enrollment_record_id):
-    return enrollment_application_service.get_or_404(enrollment_record_id)
+    enrollment = enrollment_application_service.get_or_404(enrollment_record_id)
     
+    
+    
+    return enrollment
 
 # Admin delete enrollment record
 @route(bp, '/records/<int:enrollment_record_id>', methods=['DELETE'])
