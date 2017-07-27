@@ -106,6 +106,7 @@
                     {{form.send_notice}}
                     <span class="text-danger">Send activation email?</span>
                   </div>
+
                 {% if config.IS_AGENT_STATE_LICENSING_ENABLED -%}
                 <div class="row licensed-states-section">
                   <div class="col-sm-12">
@@ -117,6 +118,7 @@
                       {{ form.is_restricted_to_licensed_states.label }}
                     </label>
                   </div>
+
                   <div class="col-sm-12 licensed-states">
                     <div class="row">
                       <div class="col-sm-12">
@@ -139,27 +141,31 @@
                   </div>
                 </div>
                 {% endif -%}
-                </fieldset>
+
+              </fieldset>
 
                 <hr>
 
                 <label class="col-sm-3">API Token</label>
-                <div class="col-sm-9">
+                <div class="col-sm-3">
                   <div class="">
                     <label>
                       <input type="checkbox" {% if token and token.activated %}checked="checked"{% endif %} name="groups" value="api_users" class="ace ace-switch ace-switch-7" />
                       <span class="lbl"></span>
                     <strong>
-                      API Access
+                      API Access:
                     </strong>
                     </label>
                   </div>
+                </div>
+                <div class="col-sm-6">
                   <input type="text" onClick="this.select();" id="api_token" disabled='disabled' value="{{token.api_token}}" class="form-control" />
                 </div>
                 <br /><br />
                 <label class="col-sm-3">Access Control</label>
                 <div class="col-sm-9">
 
+                  <!--ko foreach: all_groups-->
                     <div class="row">
                     <div class=" col-sm-12">
 
