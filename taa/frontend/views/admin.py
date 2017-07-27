@@ -17,7 +17,7 @@ from taa.models import db
 from taa.old_model.Registration import TAA_UserForm, AdminNewUserForm
 from taa.old_model.Enrollment import AgentActivationEmail, NotifyAdminEmail
 from taa.services import LookupService
-from taa.services.users.UserService import search_stormpath_accounts, UserService
+from taa.services.users.UserService import search_stormpath_accounts, get_stormpath_application, UserService
 
 agent_service = LookupService('AgentService')
 api_token_service = LookupService('ApiTokenService')
@@ -144,6 +144,7 @@ def updateUser():
 
     # initially pre-populate the form with account values
     if request.method == 'GET':
+
         user = agent_service.find(email=user_email).first()
         if not user:
             flash('Failed to find user ' + user_email)
@@ -166,10 +167,10 @@ def updateUser():
         form.activated.data = user.activated
 
         # Agents only
-        if 'agents' in group_membership:
-            # Load agent-specific items.
-            form.is_restricted_to_licensed_states.data = user.is_restricted_to_licensed_states
-            form.licensed_states.data = user.licensed_states
+        #if 'agents' in group_membership:
+        #    # Load agent-specific items.
+        #    form.is_restricted_to_licensed_states.data = user.is_restricted_to_licensed_states
+        #    form.licensed_states.data = user.licensed_states
 
     if form.validate_on_submit():
         try:
@@ -195,7 +196,8 @@ def updateUser():
                 user.agency = data['agency']
                 user.agent_code = data['agent_code'].upper()
                 user.signing_name = data['signing_name']
-                user.activated = data['activated']           
+                user.activated = data['activated']
+
 
                 groups = request.values.getlist('groups')
                 if 'agents' in groups and ('home_office' in groups or
@@ -230,7 +232,7 @@ def updateUser():
 
                 # For each group name that is in the posted data,
                 #  add a membership link between the account and the group
-                # TODO: See if there is a way to get rid of these list comprehension (something like a .get() function from Stormpath)
+
                 for group in groups:
                     matching_groups = [n
                                        for n in UserService().get_groups()
@@ -286,7 +288,6 @@ def updateUser():
             flash(err.message)
 
 
-
     return render_template('admin/update-user.html',
                            form=form,
                            group_membership=group_membership,
@@ -303,10 +304,10 @@ def get_group_options():
         dict(label='Agent', value='agents',
              info='Allowed to enroll cases to which access is granted. Mutually exclusive with Home Office or Admin rights.',
              exclusive_with=['admins', 'home_office']),
-        dict(label='Case Creator and Manager', value='case_admins',
-             info="In addition to enrolling, can also create new cases and manage owned cases.",
-             exclusive_with=['admins', 'home_office'],
-             depends_on=['agents']),
+        # dict(label='Case Creator and Manager', value='case_admins',
+        #      info="In addition to enrolling, can also create new cases and manage owned cases.",
+        #      exclusive_with=['admins', 'home_office'],
+        #      depends_on=['agents']),
         dict(label='Home Office', value='home_office',
              info="Create, manage users and cases, and enroll cases. Mutually exclusive with Agent rights.",
              exclusive_with=['agents', 'case_admins']),
@@ -391,6 +392,6 @@ def delete_user():
 @groups_required(['admins', 'home_office'], all=False)
 def sync_okta():
     from taa.tasks import sync_okta
-    sync_okta.delay(current_user.email)
+    sync_okta.run(current_user.email)
 
     return jsonify({})
