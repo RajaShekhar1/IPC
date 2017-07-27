@@ -288,6 +288,7 @@
 
 
       <div data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
+
         {# If no one is eligible for any products, we display a message #}
         <div class="error" data-bind="if: product_coverage_viewmodels().length === 0">
           No applicant is eligible for the products being offered, coverage will be waived. Please click "Next" to exit the application.
@@ -327,6 +328,7 @@
           </div>
 
           {# Decline option for product #}
+          <!--ko if: current_product-->
           <div class="row" data-bind="visible: current_product().product.can_decline()">
             <div class="col-xs-12 text-center red">
               <div class="decline-option">
@@ -336,7 +338,7 @@
               </div>
             </div>
           </div>
-
+          <!--/ko-->
         </div>
 
         <div data-bind="if: !has_multiple_products() && current_product()">
@@ -381,7 +383,7 @@
         <div class="pull-right"
              data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && coverage_vm.has_multiple_products()">
           <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> {{ Premium_Noun }} Selected
-            products: <strong data-bind="text: coverage_vm.format_grand_total_premium()"></strong></h4>
+            Products: <strong data-bind="text: coverage_vm.format_grand_total_premium()"></strong></h4>
         </div>
 
         <div class="pull-right"
@@ -431,6 +433,7 @@
             </ul>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -480,6 +483,7 @@
             <div class="widget-main no-padding">
               <ul class="list-unstyled list-striped pricing-table" data-bind="
                 foreach: { data: applicant_coverage_selections, as: 'applicant_coverage'}">
+                <!--ko if: product.should_recommend_coverage_for_applicant(applicant_coverage.applicant) -->
                 <li>
                   <select class="emp-coverage" data-bind="
                           options: applicant_coverage.get_coverage_options,
@@ -489,6 +493,7 @@
                           ">
                   </select>
                 </li>
+                <!--/ko-->
               </ul>
             </div>
           </div>
@@ -766,7 +771,7 @@
         <span data-bind="visible: $root.coverage_vm.has_multiple_products()">Totals:</span>
       </th>
 
-      <!--ko foreach: {data: $parent.products, as: 'product'} -->
+      <!--ko foreach: {data: $root.product_coverage_viewmodels, as: 'pcov'} -->
       <!--ko if: $root.coverage_vm.has_multiple_products()-->
       <th class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(pcov.product)"></th>
       <!--/ko-->
@@ -784,11 +789,11 @@
 <script type="text/html" id="recommendations_template">
   <ul class="list-unstyled list-striped pricing-table"
       data-bind="foreach: {data: $parents[1].applicant_coverage_selections(), as: 'applicant_coverage'}">
-
+    <!--ko if: product.should_recommend_coverage_for_applicant(applicant_coverage.applicant) -->
     <li data-bind="template: {name: 'recommend_coverage_option_template',
                                   data: applicant_coverage}">
     </li>
-
+    <!--/ko-->
   </ul>
   <div class="price" data-bind="visible: get_total_premium($parents[1].valid_applicant_coverage_selections()) > 0.0">
         <span class="label label-lg label-inverse arrowed-in arrowed-in-right">

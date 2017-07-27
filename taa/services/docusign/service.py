@@ -15,6 +15,7 @@ from reportlab.platypus import SimpleDocTemplate
 from urlparse import urljoin
 from dateutil.parser import parse as parse_datetime
 
+
 from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
 
 from taa.services.users import UserService
@@ -25,6 +26,7 @@ from taa.services.agents import AgentService
 from taa.services import RequiredFeature, LookupService
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callback_url, \
     build_callcenter_callback_url
+
 
 
 class DocuSignService(object):
@@ -268,14 +270,14 @@ class DocuSignService(object):
             )
 
             # Fetch additional enrollments for partner agents on cases I own.
-            owned_case_ids = [case.id for case in agent.owned_cases]
+            agent_owned_case_ids = [case.id for case in agent.agent_owned_cases]
 
             partner_enrollments = db.session.query(EnrollmentApplication
                                                    ).filter(EnrollmentApplication.is_preview == False
                                                    ).filter(db.or_(EnrollmentApplication.agent_id != agent.id,
                                                                    EnrollmentApplication.agent_id == None,
                                                                    )
-                                                            ).filter(EnrollmentApplication.case_id.in_(owned_case_ids)
+                                                            ).filter(EnrollmentApplication.case_id.in_(agent_owned_case_ids)
                                                                      ).options(db.joinedload('case')
                                                                                # ).options(db.joinedload('coverages').joinedload('product')
                                                                                ).options(db.joinedload('census_record'))
@@ -309,14 +311,14 @@ class DocuSignService(object):
             enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_ENROLLED
             
             db.session.commit()
-            
+
             # Create submissions for this enrollment
             submission_service = LookupService('EnrollmentSubmissionService')
             submission_service.create_submissions_for_application(enrollment_record)
-        
+
         return errors
-            
-        
+
+
     def get_envelope_signing_url(self, for_user, envelope_id, callback_url):
         "Must be the agent that the envelope was sent to (this user must be the recipient)"
         errors = []
@@ -724,16 +726,16 @@ class FakeDocusignEnvelope(DocusignEnvelope):
     """
     We no longer use docusign; use this wrapper to keep the old code working for now.
     """
-    
+
     def get_envelope_id(self):
         return self.enrollment_record.id
-    
+
     def is_employee_sig_pending(self):
         return self.get_employee_signing_status() == EnrollmentApplication.SIGNING_STATUS_PENDING
-    
+
     def is_agent_sig_pending(self):
         return self.enrollment_record.agent_signing_status == EnrollmentApplication.SIGNING_STATUS_PENDING
-    
+
     def get_employee_signing_status(self):
         return self.enrollment_record.applicant_signing_status
 
@@ -742,7 +744,7 @@ class FakeDocusignEnvelope(DocusignEnvelope):
         self.update_recipient_statuses()
 
         db.session.commit()
-        
+
     def update_recipient_statuses(self):
         # No external system that needs synchronization.
         pass
@@ -756,20 +758,20 @@ class FakeDocusignEnvelope(DocusignEnvelope):
         else:
             self.enrollment_record.application_status = EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT
 
-    
-    
+
+
     def get_agent_signing_status(self):
         return self.enrollment_record.agent_signing_status
-    
+
     def get_completed_pdf(self):
         raise NotImplementedError
-    
+
     def get_completed_view_url(self, callback_url):
         raise NotImplementedError
 
     def get_agent_signing_url(self, callback_url):
         raise NotImplementedError
-    
+
     def get_employee_signing_url(self, callback_url):
         raise NotImplementedError
 
@@ -1346,56 +1348,6 @@ class DocuSignServerTemplate(DocuSignEnvelopeComponent):
     def generate_tabs(self, recipient, purpose):
         tabs = super(DocuSignServerTemplate, self).generate_tabs(recipient, purpose)
 
-
-        # --> No longer including agent tabs in callcenter mode since everything is generated on our side now, including signature
-        #
-        # if purpose == self.DOCUSIGN_TABS and self.data.should_use_call_center_workflow():
-        #     # Find the tab definition
-        #     tab_definitions = self.tab_repository.get_tabs_for_template(self.template_id)
-        #     for tab_def in tab_definitions:
-        #         if tab_def.type_ == "SignHere" and tab_def.recipient_role == "Agent":
-        #             tabs.append(DocuSignSigTab(
-        #                 x=tab_def.x,
-        #                 y=tab_def.y,
-        #                 # Not sure what this is?
-        #                 document_id=1,
-        #                 page_number=tab_def.page,
-        #             ))
-        #         elif tab_def.type_ == "DateSigned" and tab_def.recipient_role == "Agent":
-        #             tabs.append(DocuSignSigDateTab(
-        #                 x=tab_def.x,
-        #                 y=tab_def.y,
-        #                 # Not sure if we will need to generate this?
-        #                 document_id=1,
-        #                 page_number=tab_def.page,
-        #             ))
-        #         # Include all radio button tabs that were not locked, both employee and agent.
-        #         elif tab_def.custom_type == "Radio" and tab_def.custom_tab_locked == False:
-        #             label = tab_def.label.split('.')[0] if len(tab_def.label.split('.')) > 1 else tab_def.label
-        #             tabs.append(DocuSignRadioTab(
-        #                 label,
-        #                 is_selected=False,
-        #                 value=tab_def.name,
-        #                 x=tab_def.x,
-        #                 y=tab_def.y,
-        #                 document_id=1,
-        #                 page_number=tab_def.page))
-        #
-        #         elif tab_def.custom_type == "Text" and tab_def.custom_tab_locked == False:
-        #             tabs.append(
-        #                 DocuSignTextTab(
-        #                     # Tab def label is really the name
-        #                     name=tab_def.label,
-        #                     value="",
-        #                     x=tab_def.x,
-        #                     y=tab_def.y,
-        #                     width=tab_def.width,
-        #                     height=tab_def.height,
-        #                     document_id=1,
-        #                     page_number=tab_def.page,
-        #                     required=tab_def.custom_tab_required,
-        #                 ))
-
         return tabs
 
     def is_recipient_signer(self, recipient):
@@ -1466,6 +1418,8 @@ class BasePDFDoc(DocuSignEnvelopeComponent):
         else:
             # Assume we are still drawing and need the current number of pages.
             return self._doc.page
+
+
 
 
 if __name__ == "__main__":

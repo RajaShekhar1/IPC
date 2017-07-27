@@ -177,7 +177,7 @@ class ProductService(DBService):
 
     def get_all_statecodes(self):
         return all_statecodes
-        
+
     def get_product_states(self, products=None, case=None):
         """Return the mapping of product IDs to statecodes
         where we can enroll that product.
@@ -200,7 +200,7 @@ class ProductService(DBService):
             for product_id, overrides in case.product_settings.get('state_overrides', {}).items():
                 if overrides:
                     product_states[int(product_id)] = overrides
-            
+
         return product_states
 
     def get_soh_labels(self, products):
@@ -317,20 +317,20 @@ class ProductService(DBService):
                                                                          rate_response[applicant_type]['byface'])
 
             product_rates = rate_response
-            
+
         # Some cases limit the returned rates via age-banded max coverage and/or premiums.
         if case_id:
             from taa.services.cases import CaseService
             case = CaseService().get(case_id)
         else:
             case = None
-            
+
         if not case:
             return product_rates
-        
+
         return self.filter_rates_for_case(product_rates, product, demographics, case)
-    
-    
+
+
 
     def get_recommendations(self, product, demographics):
         return recommendations.get_recommendations(product, **demographics)
@@ -482,17 +482,17 @@ class ProductService(DBService):
         # Keep all group-level products (static benefit and group ci)
         # Filter out individual products that are not allowed in this state.
         def is_allowed_in_state(product, state):
-            
+
             if product.is_static_benefit():
                 return True
-            
+
             if product.does_situs_state_determine_form():
                 state_to_use = case.situs_state
             else:
                 state_to_use = state
-                
+
             return state_to_use in product_state_mapping.get(product.id, [])
-            
+
         return filter(lambda p: is_allowed_in_state(p, state), product_options)
 
     def filter_rates_for_case(self, product_rates, product, demographics, case):
@@ -504,7 +504,7 @@ class ProductService(DBService):
             return MaxCoverageLimiter(case, limit_data['max_coverage'], product, demographics).filter_rates(product_rates)
         else:
             return product_rates
-            
+
 
 class MaxCoverageLimiter(object):
     def __init__(self, case, limit_data, product, demographics):
@@ -512,45 +512,45 @@ class MaxCoverageLimiter(object):
         self.limit_data = limit_data
         self.product = product
         self.demographics = demographics
-        
+
     def filter_rates(self, product_rates):
-        
+
         for limit in self.limit_data['applicant_limits']:
             self.filter_rates_if_in_age_band(limit, product_rates)
-        
+
         return product_rates
-    
+
     def filter_rates_if_in_age_band(self, limit, product_rates):
         age_band = AgeBand(limit['min_age'], limit['max_age'])
         if limit['applicant_type'] == 'employee' and age_band.is_included(self.demographics['employee_age']):
-    
+
             product_rates['employee']['byface'] = self.filter_by_limit(product_rates['employee']['byface'], limit)
             product_rates['employee']['bypremium'] = self.filter_by_limit(product_rates['employee']['bypremium'], limit)
-             
+
         elif limit['applicant_type'] == 'spouse' and age_band.is_included(self.demographics['spouse_age']):
-            
+
             product_rates['spouse']['byface'] = self.filter_by_limit(product_rates['spouse']['byface'], limit)
             product_rates['spouse']['bypremium'] = self.filter_by_limit(product_rates['spouse']['bypremium'], limit)
-            
+
         elif limit['applicant_type'] == 'child' and any([age_band.is_included(c['age']) for c in self.demographics['children']]):
             if product_rates.get('children', {}).get('byface'):
                 product_rates['children']['byface'] = self.filter_by_limit(product_rates['children']['byface'], limit)
-            
+
             if product_rates.get('children', {}).get('bypremium'):
                 product_rates['children']['bypremium'] = self.filter_by_limit(product_rates['children']['bypremium'], limit)
 
     def filter_by_limit(self, rate_list, limit):
-        
+
         # Apply max coverage rule
         if limit.get('max_coverage'):
             max_coverage = int(limit['max_coverage'])
             rate_list = filter(lambda c: c['coverage'] <= max_coverage, rate_list)
-            
+
         # Apply max premium rule
         if limit.get('max_premium'):
             max_premium = decimal.Decimal(str(limit['max_premium']))
             rate_list = filter(lambda c: decimal.Decimal(str(c['premium'])) <= self.normalize_max_premium(max_premium, c), rate_list)
-        
+
         return rate_list
 
     def normalize_max_premium(self, max_premium, rate):
@@ -568,7 +568,7 @@ class AgeBand(object):
     def __init__(self, min_age, max_age):
         self.min_age = int(min_age)
         self.max_age = int(max_age)
-        
+
     def is_included(self, age):
         if not age:
             return False

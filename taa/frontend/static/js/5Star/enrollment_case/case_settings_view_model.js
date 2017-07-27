@@ -295,8 +295,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       }).value();
     self.update_product_ordinals();
   };
+
   // Make sure all products have an ordinal when page loads.
   self.update_product_ordinals();
+
   //endregion
 
   //region Product Rate Levels
@@ -1701,6 +1703,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   //endregion
 
   self.serialize_case = function () {
+
+    // Convert these ID strings to ints, the widget returns these as strings.
     var partner_agents = _.map(self.partner_agents(), function (id_str) {
       return parseInt(id_str);
     });
@@ -1937,7 +1941,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       // Update the logo image if it was changed
       var file_select = $("#cover-logo-file-input").get(0);
       if (file_select && file_select.files.length === 1) {
-      var files = file_select.files;
+        var files = file_select.files;
         // Add the file upload to the request.
         var form_data = new FormData();
         form_data.append('cover-logo', files[0], files[0].name);
@@ -2173,11 +2177,13 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
           handle_no_census_data_loaded,
           handle_census_data_loaded
         );
+
       }
 
       function handle_census_data_loaded_first_time(table, data) {
         case_management.init_status_filter(table);
         case_management.init_alphabet_search(table);
+
       }
 
       function handle_census_data_loaded(table, data) {

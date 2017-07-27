@@ -4,6 +4,7 @@ from datetime import datetime
 import re
 from flask import Blueprint, request, abort, make_response, Response
 from flask_login import current_user, login_required
+
 from taa import JSONEncoder
 
 from taa import app, groups_required
@@ -67,7 +68,7 @@ def get_case(case_id):
 def create_case():
     data = get_posted_data()
 
-    # Determine the owning agent
+    # Determine the case admin/owning agent
     if (agent_service.can_manage_all_cases(current_user)):
         agent = None
     elif agent_service.is_user_agent(current_user) or agent_service.is_user_case_admin(current_user):
@@ -87,7 +88,7 @@ def create_case():
     form = NewCaseForm(form_data=data)
     if agent:
         form.agent_id.data = agent.id
-
+    
     if form.validate_on_submit():
         data['created_date'] = datetime.now()
         return case_service.create_new_case(**data)
@@ -107,8 +108,8 @@ def update_case(case_id):
 
     form = UpdateCaseForm()
     data = get_posted_data()
-
-    # Allow the owner agent to be updated only if an admin
+    
+    # 'agent_id' is the owner agent id
     if 'agent_id' in data:
         data['agent_id'] = int(data['agent_id']) if (
             data['agent_id'] and data['agent_id'].isdigit()) else None
@@ -117,6 +118,7 @@ def update_case(case_id):
     if form.validate_on_submit():
         # Update products
         case_service.update_products(case, data['products'])
+        
         # Update partner agents
         case_service.update_partner_agents(
             case, [a for a in agent_service.get_all(
@@ -536,7 +538,7 @@ def update_census_record(case_id, census_record_id):
     census_record = case_service.get_record_if_allowed(census_record_id)
     form = CensusRecordForm(obj=census_record)
     if form.validate_on_submit():
-        return case_service.update_census_record(census_record, form.data)
+        return case_service.update_census_record(census_record, form.data) 
     raise TAAFormError(form.errors)
 
 

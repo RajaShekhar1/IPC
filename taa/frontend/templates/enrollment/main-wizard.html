@@ -114,10 +114,12 @@
                   <div class="wizard-actions">
                     <div class="btn-group pull-left">
                       <button class="btn btn-default btn-xs"
-                            data-bind="click: exit_application, visible: is_in_person_application">
+                              data-bind="click: exit_application, visible: is_in_person_application">
                         <i class="glyphicon glyphicon-remove"></i> Cancel
-                    </button>
-
+                      </button>
+                      <button class="btn btn-warning btn-xs" style="margin-left: 1em;"
+                              data-bind="click: pause_enrollment, visible: can_pause_enrollment">
+                        <i class="glyphicon glyphicon-pause"></i> Save for later</button>
                     </div>
                     {% if error -%}
                     <br><br>
@@ -703,6 +705,8 @@
     </div>
     <!-- /.modal-dialog -->
   </div>
+
+
 
   <div id="smoking-status-dialog" class="modal fade">
     <div class="modal-dialog">

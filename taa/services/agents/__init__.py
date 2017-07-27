@@ -107,6 +107,7 @@ class AgentService(DBService):
             if not existing_agent.is_in_group(g):
                 existing_agent.add_group(g)
 
+
         db.session.commit()
 
         return existing_agent
@@ -175,7 +176,6 @@ class OktaService(object):
     def authenticate_user(self, username, password):
         from okta import AuthClient
         from okta.framework.OktaError import OktaError
-
         auth_client = AuthClient(current_app.config['OKTA_DOMAIN'], current_app.config['OKTA_API_KEY'])
 
         try:

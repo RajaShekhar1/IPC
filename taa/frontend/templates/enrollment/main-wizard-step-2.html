@@ -80,30 +80,32 @@
                             class="text-warning bigger-120">presented</span> and <span
                             class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.</span>
         </div>
+
         <div class="col-xs-12 col-sm-6 btn-group no-padding-right">
           <div class="row" data-bind="foreach: {data: coverage_vm.get_all_covered_applicants_for_replacement_products, as: 'applicant'}">
             <div class="col-xs-12 col-sm-3" data-bind="text: applicant.first"></div>
           </div>
           <div class="row" data-bind="foreach: {data: coverage_vm.get_all_covered_applicants_for_replacement_products, as: 'applicant'}">
             <div class="col-xs-12 col-sm-3">
-          <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+              <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                             question: new GlobalSOHQuestion('existing_insurance_'+applicant._id),
-                            val: 'Yes', 
+                            val: 'Yes',
                             highlight: $root.get_has_existing_question_highlight(),
                             onclick: function() {applicant.has_existing_insurance(true)}
                             }">
-            Yes
-          </button>
-          <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                Yes
+              </button>
+              <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
                                 question: new GlobalSOHQuestion('existing_insurance_'+applicant._id),
-                            val: 'No', 
-                            highlight: 'checkmark',
+                                val: 'No',
+                                highlight: 'checkmark',
                                 onclick: function() {applicant.has_existing_insurance(false)}
-                            }">
-            No
-          </button>
+                                }">
+                No
+              </button>
             </div>
           </div>
+
         </div>
       </div>
 
@@ -138,7 +140,10 @@
               </button>
             </div>
           </div>
+
         </div>
+
+
       </div>
 
     </div>
@@ -183,7 +188,7 @@
 
       <div class="modal-body">
 
-        <!--ko foreach: $root.get_replacement_paragraphs()-->
+        <!--ko foreach: get_replacement_paragraphs()-->
         <p data-bind="html: $data"></p>
         <!--/ko-->
 
@@ -222,7 +227,7 @@
               <strong> Please list each existing policy or contract you are contemplating replacing (include the name of
                 the insurer, the insured, and the contract number if available) and whether each policy will be replaced
                 or used as a source of financing:</strong>
-              <!--ko foreach: $root.replacement_policies-->
+              <!--ko foreach: replacement_policies-->
               <div class="row">
                 <div class="col-sm-6 col-md-3 form-group">
                   <label>Insurer Name</label><br>
@@ -282,8 +287,13 @@
       </div>
     </div>
 
+
+
     {# Loop through each product that we have selected and show its questions #}
     <!--ko foreach: {data: $root.selected_product_health_questions(), as: 'product_health_questions'} -->
+
+
+
     {# Only show questions if there are some for this product. #}
     <div data-bind="visible: product_health_questions.do_any_health_questions_need_answering()">
       <h3 class="lighter block green">Please answer each question below regarding <span
@@ -367,6 +377,7 @@
                   </div>
                 </div>
               </div>
+              <!--ko template: 'soh_explanations_section'--><!--/ko-->
             </td>
           </tr>
           <!--/ko-->
@@ -426,6 +437,8 @@
                   <!--/ko-->
                 </div>
               </div>
+
+              <!--ko template: 'soh_explanations_section'--><!--/ko-->
             </td>
           </tr>
           <!--/ko-->
@@ -433,11 +446,11 @@
         </table>
       </div>
 
+      <!--/ko-->
 
     </div>
     <!--/ko-->
     <div id="health_questions_error" class="error has-error pull-right"></div>
-
 
   </form>
 </div>

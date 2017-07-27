@@ -95,11 +95,13 @@
     "order": [[6, "desc"], [1, "asc"], [0, "asc"]]
   });
   $('#sync-okta').click(function() {
+
       send_json_data("POST", "/sync_okta", {}, function() {
           bootbox.alert("The sync operation has been scheduled. An email will be sent to your account when the sync with Okta has completed.")
       }, function() {
           alert("The sync operation failed.")
       })
+
   })
   </script>
 

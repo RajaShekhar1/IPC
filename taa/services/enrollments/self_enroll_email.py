@@ -1,3 +1,4 @@
+import datetime
 from flask import abort, render_template
 import requests
 
@@ -46,6 +47,7 @@ class SelfEnrollmentEmailService(DBService):
             agent = self.case_service.get_case_owner(case)
 
         batch = self.self_enrollment_batch_service.create(**dict(
+            sent_date=datetime.datetime.now(),
             email_from_address=setup.email_sender_email,
             email_from_name=setup.email_sender_name,
             email_subject=setup.email_subject if setup.email_subject else 'Benefit Enrollment - your action needed',
@@ -154,6 +156,7 @@ class SelfEnrollmentEmailService(DBService):
         success = self._send_email(**kwargs)
 
         email_record = self.create(**dict(
+            sent_date=datetime.datetime.now(),
             link_id=link.id,
             census_id=census.id,
             agent_id=agent.id,
@@ -180,6 +183,7 @@ class SelfEnrollmentEmailService(DBService):
     def create_pending_email(self, agent, link, census, batch, **kwargs):
         # Create a pending record in the database
         return self.create(**dict(
+            sent_date=datetime.datetime.now(),
             link_id=link.id,
             census_id=census.id,
             agent_id=agent.id,

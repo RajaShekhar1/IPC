@@ -286,7 +286,6 @@ def get_product_application_forms():
         # FPP-White (FPP-Gov), FPP-Blue, and FPP-Gray are handled below by copying FPP-TI
 
         'Group CI': [
-
             ApplicationForm('Group CI KY', ['KY'], [
                 group_ci_family_member_history_question,
                 group_ci_alternate_diagnosed_question,

@@ -23,7 +23,7 @@ from taa.services.enrollments.csv_export import *
 #app = celery.Celery('tasks')
 #app.config_from_object('taa.config_defaults')
 
-
+# Patches celery's task to know how to run in a flask context.
 # http://stackoverflow.com/questions/12044776/how-to-use-flask-sqlalchemy-in-a-celery-task
 class FlaskCelery(Celery):
     def __init__(self, *args, **kwargs):
@@ -52,7 +52,7 @@ class FlaskCelery(Celery):
 
             def after_return(self, status, retval, task_id, args, kwargs, einfo):
                 db.session.remove()
-                
+
         self.Task = ContextTask
 
     def init_app(self, app):
@@ -78,7 +78,7 @@ def send_email(email_log_id):
 
 def _send_email_from_batch(email_log):
     self_enrollment_email_service = LookupService('SelfEnrollmentEmailService')
-    
+
     success = self_enrollment_email_service._send_email(
         from_email=email_log.batch.email_from_address,
         from_name=email_log.batch.email_from_name,
@@ -153,7 +153,6 @@ def process_wizard_enrollment(task, enrollment_id):
 
 
 def send_admin_error_email(error_message, error_details):
-
     details = '\n<br>'.join([err.replace('\n', '<br>') for err in error_details])
     body = u"{} <br><br>Errors: <br><br>{}".format(
         error_message, details.replace('<br>', '\n')
@@ -167,7 +166,6 @@ def send_admin_error_email(error_message, error_details):
         subject=u"5Star Processing Error ({})".format(taa_app.config['HOSTNAME']),
         html=body
     )
-
 
 @celery.task(bind=True)
 def sync_okta(task, notify_email):
@@ -230,7 +228,7 @@ def submit_csv_to_dell(task, submission_id):
     log.status = SubmissionLog.STATUS_PROCESSING
     db.session.add(log)
     db.session.commit()
-    
+
     try:
         submitted_filename = submission_service.submit_hi_acc_export_to_dell(submission.data)
         submission.status = EnrollmentSubmission.STATUS_SUCCESS
@@ -266,14 +264,14 @@ def submit_stp_xml_to_dell(task, submission_id):
     log.status = SubmissionLog.STATUS_PROCESSING
     db.session.add(log)
     db.session.commit()
-    
+
     if not xml:
         submission.status = EnrollmentSubmission.STATUS_FAILURE
         log.status = SubmissionLog.STATUS_FAILURE
         log.message = "No XML in data to transmit."
         db.session.commit()
         raise ValueError("Submission ID {}: Attempt to transmit empty XML to Dell, aborting.".format(submission_id))
-    
+
     try:
         result = transmit_stp_xml(xml)
 
@@ -296,11 +294,11 @@ def submit_stp_xml_to_dell(task, submission_id):
 
 def transmit_stp_xml(xml):
     "Make the actual SOAP call to the Dell web service for submitting XML data."
-    
+
     # This ssl monkey-patch is to avoid certificate verification.
     if hasattr(ssl, '_create_unverified_context'):
         ssl._create_default_https_context = ssl._create_unverified_context
-        
+
     # Use a custom transport for the SOAP library code to force it to use the Proximo proxy, if present.
     proxy = None
     if os.environ.get('PROXIMO_URL', '') != '':
@@ -309,19 +307,19 @@ def transmit_stp_xml(xml):
         parsed_url = urlparse(proxy_url)
         proxy = dict(proxy_host=parsed_url.hostname, proxy_user=parsed_url.username,
                                   proxy_pass=parsed_url.password, proxy_port=80)
-        
+
         # Tell pysimplesoap to use the pycurl transport
         set_http_wrapper('pycurl')
-    
+
     if not taa_app.config['IS_STP_SIMULATE']:
         client = SoapClient(wsdl=taa_app.config['STP_URL'], proxy=proxy)
         response_dict = client.TXlifeProcessor(xml)
     else:
         response_dict = None
-    
+
     return parse_stp_response(response_dict)
-        
-        
+
+
 def parse_stp_response(response_dict):
     '''
     Example response:
@@ -329,21 +327,21 @@ def parse_stp_response(response_dict):
     u'<?xml version="1.0"?><TXLife xmlns="http://ACORD.org/Standards/Life/2"><UserAuthResponse xmlns=""><TransResult><ResultCode tc="1">Success</ResultCode></TransResult></UserAuthResponse><TxLifeResponse xmlns=""><TransRefGUID>f63725d5-3530-4ec7-bb46-81c9b48e1389</TransRefGUID><TransType tc="103">New Business Reqeust</TransType><TransExeDate>2016-08-25</TransExeDate><TransExeTime>15:44:46</TransExeTime><TransMode tc="2">Original</TransMode><TransResult><ResultCode tc="5">Failure - lbweb02-01-mo</ResultCode><ResultInfo><ResultInfoCode tc="99001">Error Loading Company[67].</ResultInfoCode><ResultInfoDesc>Required CompanyNumber or ExtensionCode not found.</ResultInfoDesc></ResultInfo></TransResult></TxLifeResponse></TXLife>'
     }
     '''
-    
+
     if not response_dict:
         return dict(
             status='Not Attempted',
             message='IS_STP_SIMULATE is TRUE, no STP transmission attempted',
             guid=None,
             resp=None)
-    
+
     resp = response_dict['TXlifeProcessorResult']
-    
+
     doc = ElementTree.fromstring(resp)
-    
+
     # Get the GUID
     guid = doc.findall('./TxLifeResponse/TransRefGUID')[0].text
-    
+
     # Get the status
     e = doc.findall('./TxLifeResponse/TransResult/ResultCode')[0]
     message = e.text
@@ -358,7 +356,7 @@ def submit_pdf_to_dell_sftp(task, submission_id):
     """
     Task to submit a PDF to Dell for processing using their SFTP dropbox.
     """
-    
+
     submission = db.session.query(EnrollmentSubmission).get(submission_id)
     data = json.loads(submission.data)
     enrollment_id = data['enrollment_id']
@@ -366,7 +364,7 @@ def submit_pdf_to_dell_sftp(task, submission_id):
     product_id = data['product_id']
     product = LookupService('ProductService').get(product_id)
     pdf_bytes = submission.binary_data
-    
+
     # Create log for this attempt at processing
     log = SubmissionLog()
     log.processing_time = datetime.now()
@@ -374,30 +372,30 @@ def submit_pdf_to_dell_sftp(task, submission_id):
     log.status = SubmissionLog.STATUS_PROCESSING
     db.session.add(log)
     db.session.commit()
-    
+
     if not pdf_bytes:
         submission.status = EnrollmentSubmission.STATUS_FAILURE
         log.status = SubmissionLog.STATUS_FAILURE
         log.message = "No PDF in data to transmit."
         db.session.commit()
         raise ValueError("Submission ID {}: Attempt to transmit empty PDF to Dell, aborting.".format(submission_id))
-    
+
     try:
         filename = 'case-{}_enrollment-{}-{}.pdf'.format(enrollment.case_id, enrollment_id, product.get_base_product_code())
         transmit_dell_pdf(filename, pdf_bytes)
-        
+
         # Success
         submission.status = EnrollmentSubmission.STATUS_SUCCESS
         log.status = SubmissionLog.STATUS_SUCCESS
         log.message = "Successfully sent {} to Dell at {}".format(filename, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         db.session.commit()
-    
+
     except Exception as ex:
         submission.status = EnrollmentSubmission.STATUS_FAILURE
         log.status = SubmissionLog.STATUS_FAILURE
         log.message = 'Error sending PDF to Dell SFTP Dropbox with traceback "%s"\n%s' % (ex.message, traceback.format_exc())
         db.session.commit()
-        
+
         send_admin_error_email(
             "Error transmitting PDF to Dell SFTP Dropbox, submission {} enrollment {} product {}".format(submission_id, enrollment_id, product_id),
             [traceback.format_exc()])
@@ -407,6 +405,7 @@ def submit_pdf_to_dell_sftp(task, submission_id):
 def transmit_dell_pdf(filename, pdf_bytes):
     sftp_service = LookupService('SFTPService')
     sftp_service.send_file(sftp_service.get_dell_server(), filename, pdf_bytes)
+
 
 def get_xml_filename(xml_bytes):
     # Extract AFBA form name
@@ -421,7 +420,8 @@ def get_xml_filename(xml_bytes):
     app_id = xml_bytes[app_id_start+len('<TransRefGUID>'):app_id_end]
 
     return '{}_{}.XML'.format(form_name, app_id)
-    
+
+
 
 @celery.task(bind=True, default_retry_delay=ONE_HOUR)
 def process_paylogix_export(task, submission_id):
@@ -440,7 +440,7 @@ def process_paylogix_export(task, submission_id):
         send_admin_error_email(
             "Error generating CSV for Paylogix, submission {}".format(submission_id),
             [traceback.format_exc()])
-        
+
         # No retry on this task since it will likely fail without intervention.
 
 
@@ -467,7 +467,7 @@ def process_paylogix_csv_generation(task, run_now=False):
         send_admin_error_email(
             "Error transmitting CSV to Paylogix",
             [traceback.format_exc()])
-        
+
         task.retry()
 
 
@@ -483,4 +483,3 @@ def export_user_case_enrollments(export_id):
 def schedule_case_report(task, email_address):
     from taa.manage.generate_case_report import generate_case_report
     generate_case_report(email_address)
-    

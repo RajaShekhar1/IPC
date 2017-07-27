@@ -30,6 +30,7 @@ def json_response(status=400, message='Unspecified error', **kwargs):
     # response.headers['Content-Type'] = 'application/json'
     return response
 
+
 # https://github.com/mattupstate/overholt
 class JSONEncoder(FlaskJSONEncoder):
     """Custom :class:`JSONEncoder` which respects objects that include the
@@ -41,9 +42,9 @@ class JSONEncoder(FlaskJSONEncoder):
         # Flask doesn't handle plain dates (it does have datetimes though)
         if isinstance(obj, datetime.date):
             return obj.isoformat()
-        
+
         if isinstance(obj, Decimal):
-            return str(obj) 
+            return str(obj)
 
         # As a last-ditch effort, try a to_json method if it exists.
         if hasattr(obj, 'to_json'):
@@ -51,10 +52,12 @@ class JSONEncoder(FlaskJSONEncoder):
 
         return super(JSONEncoder, self).default(obj)
 
+
 def json_encode(val):
     return json.dumps(val, cls=JSONEncoder)
 
-# https://github.com/mattupstate/overholt    
+
+# https://github.com/mattupstate/overholt
 class JsonSerializable(object):
     """A mixin that can be used to mark a SQLAlchemy model class which
         implements a :func:`to_json` method. The :func:`to_json` method is used
@@ -63,12 +66,12 @@ class JsonSerializable(object):
         in the JSON output. Extend this class to customize which properties are
         public, hidden or modified before being being passed to the JSON serializer.
         """
-    
+
     __json_public__ = None
     __json_hidden__ = None
     __json_modifiers__ = None
     __json_add__ = None
-    
+
     def get_field_names(self):
         if hasattr(self, '__mapper__'):
             # Iterate through SQLAlchemy properties
@@ -103,8 +106,8 @@ class JsonSerializable(object):
                 retv.pop(key)
 
         return retv
-    
-    
+
+
 #
 # SelectWithDisable and SelectFieldWithDisable from http://stackoverflow.com/questions/8463421/how-to-render-my-select-field-with-wtforms
 #

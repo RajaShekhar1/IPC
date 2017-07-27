@@ -4,6 +4,7 @@ import locale
 # Make sure this is set for the whole app for formatting dates, times, currency, etc.
 from flask_login import LoginManager, login_required
 from functools import wraps
+
 locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 
 from flask import Flask, abort
@@ -47,6 +48,7 @@ def create_app(bind=None):
     app.relatedResourcesClient = RelatedResourcesClient(app.config['OKTA_BASEURL'], app.config['OKTA_API_KEY_ID'])
     app.groupsClient = UserGroupsClient(app.config['OKTA_BASEURL'], app.config['OKTA_API_KEY_ID'])
     app.Cache={}
+
     # Exception error handling
     from .errors import init_exception_emails
     init_exception_emails(app, ['david.meyer@ipconsultinginc.com', 'support@ipconsultinginc.com'])
@@ -70,7 +72,6 @@ def create_app(bind=None):
 
     @login_manager.user_loader
     def load_user(user_id):
-
         from taa.services.agents import AgentService
         if not user_id:
             return None
@@ -94,7 +95,7 @@ def create_app(bind=None):
         app.permanent_session_lifetime = datetime.timedelta(minutes=app.config['SESSION_TIMEOUT_MINUTES'])
         flask.session.modified = True
         flask.g.user = flask_login.current_user
-
+    
     # Initialize our model service classes
     from taa.services import initialize_services
     initialize_services()
@@ -143,6 +144,8 @@ def create_app(bind=None):
 
 
 def groups_required(group_list, all=None):
+
+    
     def decorator(f):
         @wraps(f)
         @login_required
@@ -150,7 +153,7 @@ def groups_required(group_list, all=None):
             from flask import session
             from flask_login import current_user
             # If we are not logged in, we always abort
-            if current_user.is_anonymous():
+            if current_user.is_anonymous:
                 # Unauthenticated
                 abort(401)
             if not current_user.is_in_groups(group_list, all):

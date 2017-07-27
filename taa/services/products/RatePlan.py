@@ -579,6 +579,7 @@ class RatePlan(object):
         return coverage_amount < self.max_coverage_amount
 
 
+
 def load_rate_plan_for_base_product(base_product_code):
     if base_product_code == 'FPP-Gov':
         base_product_code = 'fpptig'

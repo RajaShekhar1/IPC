@@ -230,6 +230,7 @@ Please follow the instructions carefully on the next page, stepping through the 
     vars["current_user_token"] = api_token_service.get_token_by_sp_href(current_user.okta_id)
 
     # vars['riders'] = rider_service.get_rider_info_for_case(case)
+
     vars['is_afba'] = app.config['IS_AFBA']
 
     return render_template('agent/case.html', **vars)
@@ -257,7 +258,7 @@ def edit_census_record(case_id, census_record_id):
 
     case = case_service.get_if_allowed(case_id)
     census_record = case_service.get_census_record(case, census_record_id)
-    
+
     """:type: taa.services.cases.models.CaseCensus"""
     record_form = CensusRecordForm(obj=census_record)
     agent = agent_service.get_logged_in_agent()
@@ -282,11 +283,11 @@ def edit_census_record(case_id, census_record_id):
     for enrollment_data in enrollment_records:
         enrollment = enrollment_service.get(int(enrollment_data['enrollment_id']))
         wrapped_data = enrollment_service.get_wrapped_enrollment_data(enrollment)
-        
+
         data = []
         #for product_num in range(1, 6 + 1):
         for product_data in wrapped_data:
-            
+
             formatted = format_enroll_data(enrollment, enrollment_data, product_data)
             if formatted:
                 data.append(formatted)
@@ -315,11 +316,11 @@ def edit_census_record(case_id, census_record_id):
 
 
 def format_enroll_data(enrollment, enrollment_data, wrapped_data):
-    
+
     # Find the product number in the enrollment_data export
     product = wrapped_data.get_product()
     product_name = product.name
-    
+
     effective_date = None
 
     if enrollment.application_status == EnrollmentApplication.APPLICATION_STATUS_PENDING_AGENT:
@@ -328,14 +329,14 @@ def format_enroll_data(enrollment, enrollment_data, wrapped_data):
         status = 'Waived'
     else:
         status = 'Enrolled'
-    
+
     # Coverage types based on census data in enrollment
     coverage_types = [EnrollmentApplicationCoverage.APPLICANT_TYPE_EMPLOYEE]
     if wrapped_data['spouse'] and wrapped_data.get_spouse_name().strip():
         coverage_types.append(EnrollmentApplicationCoverage.APPLICANT_TYPE_SPOUSE)
     if wrapped_data['children']:
         coverage_types.append(EnrollmentApplicationCoverage.APPLICANT_TYPE_CHILD)
-    
+
     return dict(
         id=enrollment.id,
         product_name=product_name,

@@ -37,6 +37,8 @@ function format_enrollment_status_text(status) {
     return "Pending Employee";
   } else if (status === "pending_agent") {
     return "Pending Agent";
+  } else if (status === "paused") {
+    return "Paused";
   } else {
     return "Not Enrolled";
   }
@@ -47,7 +49,9 @@ function format_enrollment_status_html(status) {
   if (status_text === "Not Enrolled") {
     return status_text;
   } else {
-    if (status_text === "Enrolled") {
+    if (status_text === "Paused") {
+      return "<span class='enroll-status paused icon glyphicon glyphicon-pause'></span><span class='enroll-status paused'>" + status_text + "</span>";
+    } else if (status_text === "Enrolled") {
       return "<span class='enroll-status ace-icon glyphicon glyphicon-ok'> </span><span class='enroll-status'> Enrolled</span>";
     } else if (status_text === "Pending Employee" || status_text === "Pending Agent") {
       return "<span class='enroll-status pending icon glyphicon glyphicon-pencil'></span><span class='enroll-status pending'>" + status_text + "</span>";
@@ -57,7 +61,7 @@ function format_enrollment_status_html(status) {
   }
 }
 
-//Specific Date handling
+// Specific Date handling
 function parse_month_date_input(val) {
   return parse_date(val, "MM/DD");
 }
@@ -74,7 +78,7 @@ function today_between(start, end) {
   }
 }
 
-//check if today is before a start date
+// check if today is before a start date
 function today_before(start){
   var today = moment();
   var is_before_start = today.isBefore(moment(start), 'day');
@@ -608,19 +612,19 @@ var HeightViewModel = function (params) {
     self.label = ko.unwrap(params.label);
   }
 
-    self.height_feet_part = ko.observable("" + get_feet_part(self.height()));
-    self.height_inches_part = ko.observable("" + get_inches_part(self.height()));
+  self.height_feet_part = ko.observable("" + get_feet_part(self.height()));
+  self.height_inches_part = ko.observable("" + get_inches_part(self.height()));
 
-    // Update the observed value when one of the selectors changes
-    self.update_height = function () {
-      var feet = parseInt(self.height_feet_part());
-      var inches = parseInt(self.height_inches_part());
-      if (feet === null || isNaN(feet) || inches === null || isNaN(inches)) {
-        self.height(null);
-      } else {
-        self.height((12 * feet) + inches);
-      }
-    };
+  // Update the observed value when one of the selectors changes
+  self.update_height = function () {
+    var feet = parseInt(self.height_feet_part());
+    var inches = parseInt(self.height_inches_part());
+    if (feet === null || isNaN(feet) || inches === null || isNaN(inches)) {
+      self.height(null);
+    } else {
+      self.height((12 * feet) + inches);
+    }
+  };
 
   self.height_feet_part.subscribe(self.update_height);
   self.height_inches_part.subscribe(self.update_height);
@@ -799,7 +803,7 @@ var ProductStatesLimiterViewModel = function (product_statecode_mapping,
   // Based on product selection, change which states are enabled
   self.enabled_states = ko.computed(function () {
     return _.filter(self.available_states, function (state) {
-      // Should be _.all(), but restriction lessened for now to allow multiproduct 
+      // Should be _.all(), but restriction lessened for now to allow multiproduct
       return _.any(self.selected_products(), function (product) {
         return self.is_valid_product_for_state(product, state);
       });

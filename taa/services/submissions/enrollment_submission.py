@@ -41,11 +41,11 @@ class EnrollmentSubmissionService(object):
         if enrollment_application.is_preview:
             # Preview mode only; don't submit the application
             return
-        
+
         # If this enrollment has not finished the signing ceremony, we cannot submit it yet.
         if enrollment_application.is_pending():
             return
-        
+
         # Generate all the submissions that are not queued up in batches.
         self.create_all_submissions(enrollment_application)
 
@@ -54,30 +54,30 @@ class EnrollmentSubmissionService(object):
 
     def search_submissions(self, start_date=None, end_date=None, submission_type=None, submission_status=None):
         q = db.session.query(EnrollmentSubmission)
-        
+
         if start_date:
             q = q.filter(EnrollmentSubmission.created_at >= start_date)
         if end_date:
             q = q.filter(EnrollmentSubmission.created_at <= end_date)
-        
+
         if submission_type:
             q = q.filter(EnrollmentSubmission.submission_type == submission_type)
-        
+
         if submission_status:
             q = q.filter(EnrollmentSubmission.status == submission_status)
-        
+
         q = q.order_by(db.desc(EnrollmentSubmission.created_at))
-        
+
         return q
-    
+
     def get_submission(self, submission_id):
         submission = db.session.query(EnrollmentSubmission).get(submission_id)
         if not submission:
             from flask import abort
             abort(404)
-        
+
         return submission
-            
+
     def get_submission_applications(self, submission_id):
         submission = self.get_submission(submission_id)
         return submission.enrollment_applications
@@ -85,7 +85,7 @@ class EnrollmentSubmissionService(object):
     def get_submission_logs(self, submission_id):
         submission = self.get_submission(submission_id)
         return submission.submission_logs
-    
+
     def get_submission_data(self, submission_id):
         submission = self.get_submission(submission_id)
         if submission.data:
@@ -94,18 +94,19 @@ class EnrollmentSubmissionService(object):
             return submission.binary_data
         else:
             return None
-            
-    
-    def create_all_submissions(self, enrollment_record):
-        "Create a submission records and immediately queue up for submission."
-        
-        # Submit any STP-Enabled products
-        self.submit_STP_to_dell(enrollment_record)
-        
-        # Submit any SFTP transmissions to Dell
-        self.submit_to_dell_SFTP_inbox(enrollment_record)
-        
 
+    def create_all_submissions(self, enrollment_record):
+        """Create a submission records and immediately queue up
+        for submission."""
+
+        if app.config.get('IS_AFBA'):
+            self.submit_to_afba_sftp_inbox(enrollment_record)
+        else:
+            # Submit any STP-Enabled products
+            self.submit_STP_to_dell(enrollment_record)
+
+            # Submit any SFTP transmissions to Dell
+            self.submit_to_dell_SFTP_inbox(enrollment_record)
 
     # def submit_to_docusign(self, enrollment_application):
     #     envelope = self.docusign_service.get_existing_envelope(enrollment_application)
@@ -130,10 +131,10 @@ class EnrollmentSubmissionService(object):
         # Bail out early if this case does not have STP enabled.
         if not enrollment_application.case.is_stp:
             return
-        
+
         # Generate all the XML documents, one for each covered applicant.
         xmls = self.generate_enrollment_xml_docs(enrollment_application)
-        
+
         # Create the submissions and schedule them for delivery.
         for xml, applicant_type, coverage, pdf_bytes in xmls:
             # Create a submission to track the status of this XML submission, include the XML in the data for the submission.
@@ -145,7 +146,7 @@ class EnrollmentSubmissionService(object):
             submission.enrollment_applications = [enrollment_application]
             db.session.add(submission)
             db.session.commit()
-            
+
             # Schedule a task to transmit this submission to Dell
             tasks.submit_stp_xml_to_dell.delay(submission.id)
 
@@ -222,28 +223,28 @@ class EnrollmentSubmissionService(object):
 
     def submit_to_dell_SFTP_inbox(self, enrollment_application):
         # Find each product that used to go to docusign and submit it to the Dell SFTP dropbox.
-        
+
         product_data_list = self.enrollment_application_service.get_wrapped_enrollment_data(enrollment_application)
         for product_data in product_data_list:
-    
+
             product = product_data.get_product()
-            
+
             # Skip if this product is handled by STP and STP is on for the case
             if enrollment_application.case.is_stp and product.can_submit_stp():
                 continue
-                
+
             # Skip if declined
             if product_data.did_decline():
                 continue
-            
+
             # Skip if this product doesn't generate a PDF for submission.
             if not product.does_generate_form():
                 continue
-                
+
             # TODO: combine these conditions into new method, does_submit_pdf_to_dell() ?
             if product.is_static_benefit():
                 continue
-            
+
             # Otherwise, generate the PDF and create a submission and queue it up.
             pdf_bytes = self.render_enrollment_pdf(enrollment_application, is_stp=False, product_id=product.id)
             submission = self.create_dell_sftp_submission(enrollment_application, product, pdf_bytes)
@@ -306,10 +307,10 @@ class EnrollmentSubmissionService(object):
 
         # Generate all the submissions that are not queued up in batches.
         self.create_all_submissions(batch_item.enrollment_record)
-        
+
         # Generate any submissions that are batched.
         self.create_submissions_for_application(batch_item.enrollment_record)
-        
+
         # Success
         self._mark_item_success(batch_item)
 
@@ -317,11 +318,21 @@ class EnrollmentSubmissionService(object):
         """
         Used for viewing enrollments that are generated and signed without using docusign.
         """
-        
+
         submission_processor = EnrollmentSubmissionProcessor()
         # components, data_wrap = submission_processor.generate_envelope_components(enrollment_record)
-        components = submission_processor.generate_document_components(enrollment_record, is_stp, only_product_id=product_id, force_show_all_docs=force_show_all_docs)
+        components = submission_processor.generate_document_components(
+                enrollment_record, is_stp, only_product_id=product_id,
+                force_show_all_docs=force_show_all_docs)
         pdfs = [c.generate_pdf_bytes() for c in components]
+
+        # TODO Cleanup
+        if app.config['IS_AFBA'] and enrollment_record.is_preview:
+            # Add preview-only notices
+            NOTICE_DIR = 'taa/frontend/static/pdfs'
+            notice1_path = os.path.join(NOTICE_DIR, 'eApp AFBA5Star Life Insurance Company Privacy Policy.pdf')
+            with open(notice1_path, 'rb') as notice1file:
+                pdfs.append(notice1file.read())
 
         writer = PdfFileWriter()
         for pdf in pdfs:
@@ -431,13 +442,13 @@ class EnrollmentSubmissionService(object):
         Create or add an application to the next pending csv generation submission if the product should be in the next
         csv generation batch as determined by the applicant having applied for either an HI or ACC products.
         """
-        
+
         data = LookupService('EnrollmentApplicationService').get_wrapped_enrollment_data(application)
         enrolled_products = [d.get_product() for d in data if not d.did_decline()]
-        
+
         if not any(p for p in enrolled_products if p.requires_dell_csv_submission()):
             return None
-        
+
         submission = self.get_pending_csv_submission()
         if submission is None:
             submission = EnrollmentSubmission(
@@ -529,7 +540,7 @@ class EnrollmentSubmissionService(object):
         submission = self.create_dell_csv_generation_submission_for_application(application)
         if submission is not None:
             submissions.append(submission)
-        
+
         submission = self.create_paylogix_csv_generation_submission(application)
         if submission is not None:
             submissions.append(submission)
@@ -543,7 +554,7 @@ class EnrollmentSubmissionService(object):
         sftp_service = LookupService('SFTPService')
         filename = '5Star-HIACC-%s.csv.pgp' % datetime.now().strftime('%Y-%m-%d')
         sftp_service.send_file(sftp_service.get_dell_server(), filename, csv_data)
-        
+
         return filename
 
     def get_submission_by_id(self, submission_id):
@@ -712,7 +723,8 @@ class EnrollmentSubmissionProcessor(object):
                                                                     enrollment_record=enrollment_application),
                                     all_product_data, enrollment_application=enrollment_application)
 
-    def generate_document_components(self, enrollment_application, is_stp=False, only_product_id=None, force_show_all_docs=False):
+    def generate_document_components(self, enrollment_application, is_stp=False, only_product_id=None,
+																	  force_show_all_docs=False):
         """Used for generating PDFs from enrollments signed in the wizard, outside of docusign"""
 
         case = enrollment_application.case
@@ -735,13 +747,13 @@ class EnrollmentSubmissionProcessor(object):
 
         components = []
 
-        # don't include for Dell STP XML
+        # # don't include for Dell STP XML
         if not is_stp and case.include_cover_sheet and not only_product_id:
             from taa.services.docusign.documents.cover_sheet import CoverSheetAttachment
             components.append(CoverSheetAttachment([emp_recip], EnrollmentDataWrap(all_product_data[0], case,
-                                                                               enrollment_record=enrollment_application,
-                                                                               ),
-                                               all_product_data, enrollment_application=enrollment_application))
+                                                                                enrollment_record=enrollment_application,
+                                                                                ),
+                                                all_product_data, enrollment_application=enrollment_application))
 
         for raw_enrollment_data in all_product_data:
             # Wrap the submission with an object that knows how to pull out key info.
@@ -752,7 +764,7 @@ class EnrollmentSubmissionProcessor(object):
 
             if enrollment_data['did_decline']:
                 continue
-            
+
             product = self.product_service.get(enrollment_data.get_product_id())
             if not product.does_generate_form():
                 continue
@@ -760,7 +772,7 @@ class EnrollmentSubmissionProcessor(object):
             # If we only want to generate the document for a particular product, skip all other products.
             if only_product_id and product.id != only_product_id:
                 continue
-                
+
             if product.is_fpp():
                 components += self.docusign_service.create_fpp_envelope_components(enrollment_data, recipients,
                                                                                    should_use_docusign_renderer,

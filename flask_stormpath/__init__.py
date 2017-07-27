@@ -32,7 +32,6 @@ from flask import (
 from flask_login import (
     LoginManager,
     current_user,
-    _get_user,
     login_required,
     login_user,
     logout_user,
@@ -59,7 +58,7 @@ from .views import (
 
 
 # A proxy for the current user.
-user = LocalProxy(lambda: _get_user())
+user = LocalProxy(lambda: current_user)
 
 
 class StormpathManager(object):
@@ -283,6 +282,7 @@ class StormpathManager(object):
 
         :returns: The User object or None.
         """
+        #user = current_app.stormpath_manager.client.accounts.get(account_href)
         from flask import current_app
         try:
             account = current_app.usersClient.get_user(account_href)
@@ -291,3 +291,10 @@ class StormpathManager(object):
             return user
         except :
             return None
+        #try:
+        #    user._ensure_data()
+        #    user.__class__ = User
+        #
+        #    return user
+        #except StormpathError:
+        #    return None

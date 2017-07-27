@@ -41,7 +41,7 @@
                 <th>Raw Timestamp</th>
                 <th>Created</th>
                 <th>Agent</th>
-                <th>Group</th>
+                <th>Case</th>
                 <th>First</th>
                 <th>Last</th>
 {#                <th>Product(s)</th>#}
@@ -69,7 +69,7 @@
                 <th>Raw Timestamp</th>
                 <th>Signed</th>
                 <th>Agent</th>
-                <th>Group</th>
+                <th>Case</th>
                 <th>First</th>
                 <th>Last</th>
 {#                <th>Product(s)</th>#}
@@ -148,6 +148,19 @@
               </label>
             </div>
           </div>
+
+          {# Section for AFBA to select a second agent split on an app-by-app basis #}
+          <!--ko if: should_show_second_agent_selection -->
+            <hr>
+            <div class="form-group">
+              Add a second Agent Split?
+              <select data-bind="
+              value: agent_split_selection,
+              options: agent_split_options,
+              optionsCaption: 'Do not add second agent',
+              optionsText: 'name'"></select>
+            </div>
+          <!--/ko-->
         </div>
 
         <div class="modal-footer">

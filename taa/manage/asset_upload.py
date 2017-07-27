@@ -1,3 +1,4 @@
+
 from flask import current_app
 
 from flask_script import Command, Option
@@ -23,8 +24,9 @@ class AssetUploadCommand(Command):
         
         if aws_secret:
             current_app.config['AWS_SECRET_ACCESS_KEY'] = aws_secret
-        
+            
         if bucket_name:
             current_app.config['FLASKS3_BUCKET_NAME'] = bucket_name
+        
         
         flask_s3.create_all(current_app)

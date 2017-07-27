@@ -1,19 +1,19 @@
 <!--suppress HtmlFormInputWithoutLabel -->
 <div class="step-pane" id="step6" data-step="6">
-    <h3 class="green">Confirmation</h3>
+  <h3 class="green">Confirmation</h3>
 
-    Please review your Summary of Coverage below, and click "I agree..." below to be taken to application for
-    signing.
+  Please review your Summary of Coverage below, and click "I agree..." below to be taken to application for
+  signing.
+  <div class="space-10"></div>
+
+  <div id="CoverageSummary">
+    <h4 class="green center">Summary of Benefits</h4>
+    <div data-bind="with: coverage_vm">
+      <div data-bind="template: 'multi-product-summary-table'">
+      </div>
+    </div>
+
     <div class="space-10"></div>
-
-    <div id="CoverageSummary">
-        <h4 class="green center">Summary of Benefits</h4>
-        <div data-bind="with: coverage_vm">
-            <div data-bind="template: 'multi-product-summary-table'">
-            </div>
-        </div>
-
-        <div class="space-10"></div>
 
         <div id="bank-draft-info" data-bind="if: $root.requires_bank_info">
             <h3 class="green">Payment</h3>

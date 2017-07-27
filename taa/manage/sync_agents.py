@@ -28,7 +28,7 @@ def sync_agents():
 
     db.session.commit()
 
-    # Second pass to mark as deleted accounts that are not in the stormpath database
+    # Second pass to mark as deleted accounts that are not in the external user database
     agents = agent_service.all()
     for agent in agents:
         if agent.okta_id not in valid_account_hrefs:

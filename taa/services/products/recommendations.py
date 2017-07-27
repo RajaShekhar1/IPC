@@ -141,6 +141,7 @@ def init_from_data_files():
                 build(os.path.join(DATA_DIR, 'CIEMP_limited_suggested_rates.csv')),
         }
 
+
 def build(csv_path):
     table = {}
     for line in csv.DictReader(open(csv_path, 'rU')):

@@ -54,13 +54,13 @@ def register_taa():
         # If there are no missing fields (per our settings), continue.
         if not fail:
 
-            # Attempt to create the user's account on Stormpath.
+            # Attempt to create the user's account in Okta.
             try:
                 okta_service = OktaService()
                 if okta_service.get_user_by_email(data['email']):
                     flash("This email is already associated with an account in this organization.")
                     return render_template('user_account/register.html', form=form, nav_menu=get_nav_menu())
-                
+
                 okta_user_data = okta_service.create_user(dict(
                     profile=dict(
                         firstName=data['given_name'],
@@ -80,7 +80,7 @@ def register_taa():
                 if not okta_user_data:
                     flash(okta_service.last_error_message)
                 else:
-                # Add to the agents group
+                    # Create the user account
                     agent = agent_service.create_user(
                         email = data['email'],
                         password = data['password'],
@@ -143,7 +143,6 @@ def reset_password():
 
 @app.route('/login', methods = ['GET', 'POST'])
 def login():
-    print("////////NEW REQUEST//////////")
     agent_service = LookupService("AgentService")
     """
     Log in an existing Stormpath user.
@@ -161,7 +160,8 @@ def login():
             if not account:
                 flash("Invalid username or password")
                 return redirect(url_for('login', next=request.args.get('next')))
-
+                
+                
             # If we're able to successfully retrieve the user's account,
             # we'll log the user in (creating a secure session using
             # Flask-Login), then redirect the user to the ?next=<url>
@@ -222,7 +222,7 @@ def do_login(account):
         session['headername'] += ', Global Administrator'
     elif is_home_office:
         session['headername'] += ', Home Office Administrator'
-
+    
     session['active_case'] = {
         'company_name': "",
         'situs_state': "",
@@ -281,7 +281,7 @@ def taa_logout():
     """
 
     try:
-        if not current_user.is_anonymous():
+        if not current_user.is_anonymous:
             print "LOGOUT: ", current_user.email
     except:
         print "LOGOUT: <error on accessing user object>"
@@ -294,7 +294,7 @@ def taa_logout():
 
 @app.route('/logout')
 def logout2():
-    if not current_user.is_anonymous():
+    if not current_user.is_anonymous:
         print "LOGOUT: ", current_user.email
     logout_user()
     session.pop('username', None)

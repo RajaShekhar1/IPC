@@ -1,4 +1,5 @@
 import sys
+
 from flask_script import Manager
 from flask_assets import ManageAssets
 
@@ -18,7 +19,6 @@ from taa.manage.CaseConversion import CaseConversionCommand
 from taa.manage.flag_paylogix_enrollments import FlagPaylogixEnrollmentsCommand
 from taa.manage.generate_case_report import RunCaseReportCommand
 from taa.manage.transfer_stormpath import TransferStormpathCommand
-from taa.manage.asset_upload import AssetUploadCommand
 
 manager = Manager(app)
 manager.add_command('initialize_db', InitializeDatabaseCommand())
@@ -38,7 +38,6 @@ manager.add_command("convert_cases", CaseConversionCommand())
 manager.add_command("flag_paylogix_enrollments", FlagPaylogixEnrollmentsCommand())
 manager.add_command("run_case_report", RunCaseReportCommand())
 manager.add_command("transfer_stormpath", TransferStormpathCommand())
-manager.add_command('assets_upload', AssetUploadCommand())
 
 if __name__ == "__main__":
     if not app.config['IS_5STAR']:

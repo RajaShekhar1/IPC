@@ -55,8 +55,8 @@ STORMPATH_ENABLE_REGISTRATION = False
 STORMPATH_ENABLE_LOGIN = False
 STORMPATH_ENABLE_FORGOT_PASSWORD = True
 
-OKTA_DOMAIN = env_get_text('OKTA_DOMAIN', 'https://dev-438975.oktapreview.com')
-OKTA_API_KEY = env_get_text('OKTA_API_KEY', '00G296LHRbQE5xXMXZy9fBQHhddmfnQvfJEHJmOylr')
+OKTA_DOMAIN = env_get_text('OKTA_DOMAIN', 'https://5star-sandbox-enroll.oktapreview.com')
+OKTA_API_KEY = env_get_text('OKTA_API_KEY', '00GNdA3s2oh2lV1ezGO_KqqYi9UNOmXBYr-eJLrb5U')
 
 SESSION_TIMEOUT_MINUTES = env_get_int('SESSION_TIMEOUT_MINUTES', 15)
 

@@ -1,6 +1,6 @@
 import os
 
-from flask import render_template, url_for, send_from_directory, redirect, request
+from flask import render_template, url_for, send_from_directory, redirect
 from flask_login import login_required, current_user
 
 from taa import app
@@ -27,16 +27,18 @@ def page_not_found(e):
 
 @app.route("/")
 def index():
+
     if current_user:
         return redirect(url_for('home'))
 
     return redirect(url_for('login'))
 
+
 @app.route("/home")
 @login_required
 def home():
     api_token_service = LookupService("ApiTokenService")
-    if not current_user or current_user.is_anonymous():
+    if not current_user or current_user.is_anonymous:
         return redirect(url_for('login'))
 
     if agent_service.is_user_admin(current_user) or agent_service.is_user_home_office(current_user):
@@ -56,7 +58,6 @@ def home():
 def robots():
     return send_from_directory(
             os.path.join(app.root_path, 'frontend', 'static'), 'robots.txt')
-
 
 
 @app.route("/ping_check.txt")

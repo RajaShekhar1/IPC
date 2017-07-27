@@ -4,9 +4,9 @@
 {% block head %}
  {{ super() }}
 <!-- page-specific header data -->
-    
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    
+
 <!-- ace styles -->
 <link href="{{ url_for('static', filename='css/ace-fonts.css') }}" rel="stylesheet">
 <link href="{{ url_for('static', filename='css/ace.min.css') }}" rel="stylesheet">
@@ -40,12 +40,12 @@
 
 	      <div class="space-6"></div>
 	      <p> Please enter your details: </p>
-	      
-	      
+
+
 	      <!-- <form> -->
               <form class="registration-form form-horizontal sp-form" action="/user_register" role="form" method="post">
 		{{ form.hidden_tag() }}
-              
+
 		<fieldset>
 		  <label class="block clearfix">
 		    <span class="block input-icon input-icon-right">
@@ -53,14 +53,14 @@
 		      <i class="icon-user"></i>
 		    </span>
 		  </label>
-		  
+
 		  <label class="block clearfix">
 		    <span class="block input-icon input-icon-right">
 		      {{ form.surname(class='form-control', placeholder='Last Name', required='true') }}
 		      <i class="icon-user"></i>
 		    </span>
 		  </label>
-		  
+
 		  <label class="block clearfix">
 		    <span class="block input-icon input-icon-right">
 		      {{ form.email(class='form-control', placeholder='Email (will be userid)', required='false', type='email') }}
@@ -103,7 +103,7 @@
 		    </span>
 		  </label>
 
-		  <!-- 
+		  <!--
 		  <label class="block">
 		    <input type="checkbox" class="ace" />
 		    <span class="lbl">
@@ -123,13 +123,13 @@
 
 		    <button type="submit" class="width-65 pull-right btn btn-sm btn-success">
 		      <span class="bigger-110">Register</span>
-		      
+
 		      <i class="icon-arrow-right icon-on-right"></i>
 		    </button>
 		  </div>
 		</fieldset>
 	      </form>
-	      
+
 	      <!--  </form>  -->
 	    </div>
 	    <div class="toolbar center">
@@ -138,11 +138,11 @@
 		Back to login
 	      </a>
 	    </div>
-	    
+
 	  </div><!-- /.widget-body -->
 	</div><!-- /.signup-box -->
       </div><!-- /.position-relative -->
-      
+
     </div>
   </div><!-- /.col -->
 </div><!-- /.row -->

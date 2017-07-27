@@ -42,16 +42,16 @@ var agent_inbox = (function() {
       var app_req = $.getJSON("/enrollments/records/"+self.signing_enrollment_id());
 
       app_req.done(function(resp) {
-        bootbox.hideAll();
+          bootbox.hideAll();
 
-        // Set the data we need for the popup; if any product has marked that we have existing or are replacing, we default the
-        //  agent answer to true.
-        var enrollments = JSON.parse(resp.data.standardized_data);
-        self.existing_insurance(_.any(enrollments, function(e) { return e.existing_insurance;}));
-        self.replacing_insurance(_.any(enrollments, function(e) { return e.replacing_insurance;}));
+          // Set the data we need for the popup; if any product has marked that we have existing or are replacing, we default the
+          //  agent answer to true.
+          var enrollments = JSON.parse(resp.data.standardized_data);
+          self.existing_insurance(_.any(enrollments, function(e) { return e.existing_insurance;}));
+          self.replacing_insurance(_.any(enrollments, function(e) { return e.replacing_insurance;}));
 
-        // Show signing ceremony popup
-        $("#modal-signing-enroller-in-person").modal("show");
+          // Show signing ceremony popup
+          $("#modal-signing-enroller-in-person").modal("show");
 
         }).fail(function() {
           bootbox.hideAll();
@@ -154,6 +154,7 @@ var agent_inbox = (function() {
     self.handle_agent_signing = function() {
       sign_envelope(self.signing_enrollment_id(), {from_inbox: true});
     };
+
 
     self.table_options = {
       order: [[2, "asc"]],

@@ -16,7 +16,7 @@ class TAA_RegistrationForm(FlaskForm):
     agent_code:  whatever they enter, but will be admin-edited to be the 5-char 5Star agent code
     """
 
-
+    # Default stormpath fields
     username = StringField('Username')
     given_name = StringField('First Name')
     middle_name = StringField('Middle Name')
@@ -27,7 +27,7 @@ class TAA_RegistrationForm(FlaskForm):
     ])
     password = PasswordField('Password', validators=[InputRequired('You must supply a password.')])
 
-
+    # Our fields
     signing_name = StringField('Signature Name', validators=[InputRequired()])
     agent_code = StringField('Agent Code', validators=[InputRequired()])
     repassword = PasswordField('Repeat Password', validators=[InputRequired()])
@@ -56,11 +56,12 @@ class TAA_UserForm(FlaskForm):
     agency = StringField('Agency Name')
     status = StringField('Status')
     activated = BooleanField('activated')
-    send_notice = BooleanField('activated', default = False)
+    send_notice = BooleanField('activated', default=False)
     is_restricted_to_licensed_states = BooleanField(
             'Restricted to Licensed States', default=False)
     licensed_states = SelectMultipleField(choices=[[s['statecode'], s['name']]
                                                    for s in all_states])
+
 class AdminNewUserForm(FlaskForm):
     """
     Form to use for editing existing user accounts from StormPath record.

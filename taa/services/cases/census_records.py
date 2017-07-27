@@ -130,12 +130,12 @@ class CensusRecordService(DBService):
             data['case_id'] = None
         if 'is_uploaded_census' not in data:
             data['is_uploaded_census'] = False
-        # TODO: See if there are any other records that need a final "cleaning"
-        # before being saved
+        
         if 'spouse_birthdate' in data and not data['spouse_birthdate']:
             data['spouse_birthdate'] = None
         if not data.get('occupation_class', None):
             data['occupation_class'] = 'Default'
+        
         record = self.new(**data)
         db.session.add(record)
         return record
@@ -179,7 +179,7 @@ class CensusRecordService(DBService):
         employee = data['employee']
         spouse = data['spouse']
         children = data['children']
-        # TODO: See if there are any other records that need a final "cleaning"
+        
         # before being saved
         if 'birthdate' in spouse and not spouse['birthdate']:
             # Ensure date is NULL in DB, not ""

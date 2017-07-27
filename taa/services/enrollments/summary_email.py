@@ -111,7 +111,10 @@ class SummaryEmailService(DBService):
         to_email = wizard_results[0].get('summaryEmail')
         from_name = u'Enrollment - do not reply'
         from_email = u'enrollment-noreply@5starenroll.com'
-        subject = u'5Star Summary of Benefits'
+        if app.config.get("IS_AFBA"):
+            subject = "AFBA Summary of Benefits"
+        else:
+            subject = u'5Star Summary of Benefits'
         enrollment_submission_service = LookupService('EnrollmentSubmissionService')
         pdf = enrollment_submission_service.get_summary_pdf(enrollment_application)
         email_record, status = self.send(enrollment_application, to_email=to_email, to_name=to_name, body=body,

@@ -7,6 +7,7 @@ import json
 
 from flask import (abort, jsonify, render_template, request,
                    send_from_directory, session, url_for, redirect, Response)
+
 from flask_login import current_user, login_required
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callcenter_callback_url, \
     build_callback_url
@@ -109,6 +110,7 @@ def test_wizard2():
         
     )
 
+
 @app.route('/in-person-enrollment', methods=['POST'])
 @login_required
 def in_person_enrollment():
@@ -163,7 +165,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     enroller_selects = False
     if case.effective_date_settings:
         from taa.services.enrollments.effective_date import calculate_effective_date, get_active_method
-        
+
         effective_date = calculate_effective_date(case, datetime.now())
         if get_active_method(case.effective_date_settings, datetime.now()) == 'enroller_selects':
             enroller_selects = True
@@ -303,7 +305,7 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     
     from taa.services.enrollments.enrollment_application_coverages import EnrollmentApplicationCoverageService
     
-    case_data={
+    case_data = {
         'id': case.id,
         'situs_state': state if state != 'XX' else None,
         'situs_city': city,
@@ -379,7 +381,7 @@ def can_show_wizard_agent_split_section(case, is_self_enroll):
     
     # Must have at least one agent available
     return case.dynamic_split_agents.count() > 0
-
+    
 
 def get_product_effective_dates(product_settings, effective_date):
     product_effective_date_list = []
@@ -420,7 +422,7 @@ def serialize_product_for_wizard(product, all_soh_questions, case):
 @app.route('/self-enroll/<string:company_name>/<string:uuid>')
 def self_enrollment(company_name, uuid):
     setup, census_record = self_enrollment_link_service.get_self_enrollment_data_for(uuid,
-                                                                                     current_user.is_anonymous())
+                                                                                     current_user.is_anonymous)
     case = self_enrollment_link_service.get_case_for_link(uuid)
 
     is_self_enrollable = True
@@ -561,20 +563,20 @@ def submit_wizard_data():
 
     try:
         enrollment = process_wizard_submission(case, wizard_results)
-
+        
         if enrollment:
-        # Store the enrollment record ID in the session for now so we can access it on the landing page.
+            # Store the enrollment record ID in the session for now so we can access it on the landing page.
             session['enrollment_application_id'] = enrollment.id
 
         if are_all_products_declined(wizard_results):
             return get_declined_response(wizard_results)
-
+        
         if not is_preview:
             # Submit background tasks for processing
             accepted_products = get_accepted_products(case,
                                                       get_accepted_product_ids(json.loads(enrollment.standardized_data)))
             if any(p for p in accepted_products if p.does_generate_form()):
-            # Queue this call for a worker process to handle.
+                # Queue this call for a worker process to handle.
                 enrollment_submission_service = LookupService('EnrollmentSubmissionService')
                 enrollment_submission_service.submit_wizard_enrollment(enrollment)
 
@@ -704,9 +706,9 @@ def check_submission_status():
                           type='email'
             )
             return jsonify(status='ready', redirect_url=url)
-    
+
     # In-person enrollments and call center.
-    
+
     if are_all_products_declined(received_enrollment_data):
         # Declined enrollment, return redirect to our landing page.
         return get_declined_response(received_enrollment_data)
@@ -731,6 +733,7 @@ def get_declined_response(received_enrollment_data):
     app_type = 'inperson'
     if received_enrollment_data and received_enrollment_data[0]["method"] == EnrollmentApplication.METHOD_INPERSON:
         app_type = 'email'
+        
     redirect_url = url_for('ds_landing_page',
                            event='decline',
                            name=received_enrollment_data[0]['employee']['first'] if received_enrollment_data else 'Applicant',
@@ -760,7 +763,7 @@ def get_accepted_products(case, accepted_product_ids):
 
 
 def get_enrollment_agent(case):
-    if current_user.is_anonymous():
+    if current_user.is_anonymous:
     # For self-enroll situations, the owner agent is used
         agent = case.owner_agent
     else:

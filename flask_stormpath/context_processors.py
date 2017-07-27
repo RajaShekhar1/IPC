@@ -2,7 +2,7 @@
 
 
 from flask import current_app
-from flask_login import _get_user
+from flask_login import current_user
 
 
 def user_context_processor():
@@ -24,4 +24,4 @@ def user_context_processor():
     for more information about Account objects:
     https://github.com/stormpath/stormpath-sdk-python
     """
-    return {'user': _get_user()}
+    return {'user': current_user}

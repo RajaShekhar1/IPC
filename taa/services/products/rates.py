@@ -364,7 +364,6 @@ def initialize_rates_from_files(rates):
 #         raise ValueError("Invalid product options")
 #
 #     rates = product.rate_package.lookup_rates(rate_query)
-#
 
 
 if __name__ == "__main__":

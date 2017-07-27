@@ -1,8 +1,6 @@
 from flask import current_app
 from flask_script import Command, Option
 
-import uuid
-
 from ..services.products import ProductService
 from ..services.agents import ApiTokenService
 from ..models import db
@@ -33,6 +31,7 @@ def init_drop_box():
         token = api_token_service.create_new_token(name=u"DropBox User", sp_href=u"", activated=True)
         print("The Drop Box API token is {}".format(token))
         db.session.commit()
+
 
 def get_drop_box_token():
     user = api_token_service.find(name=u"DropBox User").first()

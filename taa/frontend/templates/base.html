@@ -71,11 +71,9 @@
     {% endblock %}
   </head>
   <body class="no-skin">
-
-
 {% block navbar %}
     <div class="header">
-        {% if include_navmenu |default(True) %}
+        {% if include_navmenu|default(True) %}
             <ul class="nav nav-pills pull-right">
                 {% for menu_item in nav_menu %}
                     <li class=
@@ -104,7 +102,7 @@
                     <img src="{{ logopath }}" alt="{{ company_name }} TAA">
                   {% if link_logo|default(True) and current_user.is_authenticated -%}
                   </a>
-                        {% endif -%}
+                  {% endif -%}
                 </td>
                 <td>
                     <h3 class="text-muted">

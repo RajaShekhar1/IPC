@@ -164,7 +164,6 @@ var CaseEnrollmentPeriod = function CaseEnrollmentPeriod(period, effective_date_
     if (self.is_open) {
         return self.is_valid_date(self.get_start_date()) && self.is_valid_date(self.get_end_date());
     } else {
-      /* return (self.is_valid_month_day(self.start_date()) && self.is_valid_month_day(self.end_date())); */
       return true;
     }
   });

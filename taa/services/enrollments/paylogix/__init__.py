@@ -132,6 +132,7 @@ def create_paylogix_csv(start, end, debug):
     [csv_data.writerow([row[column] for column in headers]) for row in rows]
     return csv_buffer.getvalue()
 
+
 if __name__ == '__main__':
     # assert get_deduction_week('2016-06-01') == 3
     # assert get_deduction_week('2016-06-07') == 3

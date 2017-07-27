@@ -48,7 +48,7 @@ class UserService(object):
         return self.ENROLLMENT_IMPORT_GROUP in self.get_user_groupnames(account)
 
     def get_user_groupnames(self, user):
-        if not user.is_anonymous() and hasattr(user, 'groups'):
+        if not user.is_anonymous and hasattr(user, 'groups'):
             return {g.group for g in user.groups}
         else:
             return set()

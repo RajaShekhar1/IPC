@@ -164,6 +164,7 @@ class ImagedFormGeneratorService(object):
         (This is just some machinery to allow our PDFAttachments to work the same way as the template pages
           derived from docusign.)
         """
+        
         custom_sig_tabs = filter(lambda t: isinstance(t, DocuSignSigTab), enrollment_tabs)
         for tab in custom_sig_tabs:
             # Create an ad-hoc tab definition

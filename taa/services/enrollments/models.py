@@ -1,7 +1,7 @@
 import decimal
 
 from sqlalchemy.dialects.postgresql import JSON
-from taa.services.agents import ApiTokenService
+
 
 from taa import db
 from taa.helpers import JsonSerializable
@@ -32,7 +32,7 @@ class EnrollmentApplication(EnrollmentSerializer, db.Model):
     case = db.relationship('Case', backref=db.backref('enrollment_records',
                                                       lazy='dynamic'))
     case_nonlazy = db.relationship('Case', backref=db.backref('enrollment_applications'))
-    
+
     census_record_id = db.Column(db.Integer, db.ForeignKey('case_census.id'),
                                  nullable=False, index=True)
     census_record = db.relationship('CaseCensus',
@@ -217,11 +217,11 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
     soh_answers = db.Column(db.UnicodeText)
 
     def get_annualized_premium(self):
-        
+
         # Short-circuit here if this is a covered applicant but does not pay premium (included in EE premium, for example)
         if self.is_premium_included():
             return decimal.Decimal('0.00')
-        
+
         if self.annual_premium is not None:
             return self.annual_premium
         elif self.monthly_premium is not None:
@@ -239,7 +239,7 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
         # Short-circuit here if this is a covered applicant but does not pay premium (included in EE premium, for example)
         if self.is_premium_included():
             return decimal.Decimal('0.00')
-        
+
         if self.annual_premium is not None:
             return self.annual_premium
         elif self.monthly_premium is not None:
@@ -257,11 +257,11 @@ class EnrollmentApplicationCoverage(EnrollmentApplicationCoverageSerializer,
         # In HI/ACC products, the employee's premium covers other family members if coverage_selection is a certain value.
         return self.product.is_employee_premium_only() and self.applicant_type in [self.APPLICANT_TYPE_CHILD,
                                                                                    self.APPLICANT_TYPE_SPOUSE]
-    
+
     def did_enroll(self):
         return self.coverage_status == self.COVERAGE_STATUS_ENROLLED
-    
-    
+
+
 class SelfEnrollmentLinkSerializer(JsonSerializable):
     __json_hidden__ = ['census_record', 'case', 'emails', 'self_enrollment_setup']
 
@@ -423,11 +423,12 @@ def get_batch_case_id(batch):
 def get_batch_user(batch):
     if batch.user_href:
         return batch.user_href
-    
+
     auth_token = batch.auth_token
     if not auth_token:
         return None
 
+    from taa.services.agents import ApiTokenService
     api_token = ApiTokenService().find(api_token=auth_token).first()
     if not api_token:
         return None

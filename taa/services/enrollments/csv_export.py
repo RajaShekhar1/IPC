@@ -112,11 +112,11 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
             if data.get('product_id', None) is None:
                 continue
             product = products_service.get(data['product_id'])
-            
+
             # Skip non HI-ACC products
             if product.get_base_product_code() not in export_targets:
                 continue
-            
+
             employee = data.get('employee')
             spouse = data.get('spouse')
             children = data.get('children')
@@ -175,11 +175,11 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
                 return split is not None and split.split_percentage is not None and split.split_percentage > 0
 
             split_agents = filter(is_valid_agent_for_split, agents)
-            
+
             if writing_agent_split.split_percentage:
                 row.extend(get_agent_cells(writing_agent, writing_agent_split, product, case))
                 agent_spaces -= 1
-                
+
             for idx in range(agent_spaces):
                 if idx >= len(split_agents):
                     row.extend(['', '', ''])
@@ -231,10 +231,10 @@ def export_hi_acc_enrollments(enrollments, export_targets=None):
 def escape_phone(phone):
     if not phone:
         return ''
-    
+
     return ''.join([c for c in phone if c.isdigit()])
-    
-        
+
+
 
 def get_agent_cells(agent, split, product, case):
     from taa.services.enrollments.xml_export import get_agent_subcount_code

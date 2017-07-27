@@ -20,9 +20,11 @@ var case_management = (function() {
                 if (row.enrollment_status === "enrolled") {
                     return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+row.id+'"><span class="ace-icon glyphicon glyphicon-plus"></span> Add Coverage</button>';
                 } else if (row.enrollment_status === "pending_employee" || row.enrollment_status === "pending_agent") {
-                    //return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon fa fa-pencil"></span> Sign</button>'
-                    // No button because only the agent who created it can enroll, and we don't have that agent id in this record right now.
-                    return "";//"<a class='btn btn-warning btn-xs' href='/enrollment-case/"+source.case_id+"/census/" + source.id + "'><span class='icon fa fa-pencil'></span> Sign</a>";
+                  //return '<button class="btn btn-primary btn-xs enroll-employee" data-id="'+source.id+'"><span class="ace-icon fa fa-pencil"></span> Sign</button>'
+                  // No button because only the agent who created it can enroll, and we don't have that agent id in this record right now.
+                  return "";//"<a class='btn btn-warning btn-xs' href='/enrollment-case/"+source.case_id+"/census/" + source.id + "'><span class='icon fa fa-pencil'></span> Sign</a>";
+                } else if (row.enrollment_status === "paused") {
+                    return '<button class="btn btn-warning btn-xs enroll-employee" data-id="'+row.id+'"><span class="ace-icon glyphicon glyphicon-play"></span> Resume Enrollment</button>';
                 } else {
                     return '<button class="btn btn-primary btn-sm enroll-employee" data-id="'+row.id+'">Enroll</button>';
                 }
@@ -56,7 +58,6 @@ var case_management = (function() {
         } else {
             table.DataTable().columns.adjust().draw();
         }
-
     }
 
     function refresh_enrollments_table(case_id, url, table_selector, loading_selector, table_options, init_callback) {

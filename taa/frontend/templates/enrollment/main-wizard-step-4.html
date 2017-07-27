@@ -116,26 +116,26 @@
         </div>
       </div>
       <div data-bind="if: should_show_spouse_separate_email">
-      <div class="form-group">
-        <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spEmail">Email Address:</label>
+        <div class="form-group">
+          <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spEmail">Email Address:</label>
 
-        <div class="col-xs-12 col-sm-9">
-          <label>
-            <input type="checkbox" class="ace" data-bind="checked: is_spouse_email_same_as_employee">
-              <span class="lbl padding-8">same as {{ Owner_noun }}</span>
-          </label>
-        </div>
-
-        <div data-bind="slideDownIf: !is_spouse_email_same_as_employee()">
-          <div class="col-xs-12 col-sm-3 no-padding-right"></div>
           <div class="col-xs-12 col-sm-9">
-            <div class="input-group">
-                                <span class="input-group-addon">
-                                  <i class="icon fa fa-envelope"></i>
-                                </span>
+            <label>
+              <input type="checkbox" class="ace" data-bind="checked: is_spouse_email_same_as_employee">
+              <span class="lbl padding-8">same as {{ Owner_noun }}</span>
+            </label>
+          </div>
 
-              <input type="email" name="spEmail" id="spEmail" class="col-xs-12 col-sm-6"
-                     data-bind="textInput: spouse().email"/>
+          <div data-bind="slideDownIf: !is_spouse_email_same_as_employee()">
+            <div class="col-xs-12 col-sm-3 no-padding-right"></div>
+            <div class="col-xs-12 col-sm-9">
+              <div class="input-group">
+                                  <span class="input-group-addon">
+                                    <i class="icon fa fa-envelope"></i>
+                                  </span>
+
+                <input type="email" name="spEmail" id="spEmail" class="col-xs-12 col-sm-6"
+                       data-bind="textInput: spouse().email"/>
               </div>
             </div>
           </div>
@@ -204,7 +204,7 @@
       </ul>
 
       <div class="space-2"></div>
-	    
+
 	     <span class="text-primary bigger-110 ">
 	       <i class="icon fa fa-info-sign"></i>
 	       {{ Owner_noun }} will be the Owner of any child<span data-bind="visible: $root.should_allow_grandchildren">/grandchild</span>  policy(ies)

@@ -50,7 +50,7 @@ def sign_enrollment(enrollment_id):
     from taa.services.docusign import DocuSignService
     docusign_service = DocuSignService()
     enrollment_application_service = EnrollmentApplicationService()
-    
+
     enrollment_record = enrollment_application_service.get(enrollment_id)
 
     # To allow the callback page to know that we may have modified an enrollment, set a session variable.

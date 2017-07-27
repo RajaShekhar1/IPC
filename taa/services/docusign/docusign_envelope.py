@@ -13,14 +13,16 @@ from taa.services.agents import AgentService
 from taa.services.products import ProductService
 from taa.services.products.riders import RiderService
 from taa.services.enrollments import EnrollmentApplication
-
-
 rider_service = RiderService()
 
 
+
 class EnrollmentDataWrap(object):
+    
     product_service = RequiredFeature('ProductService')
     agent_service = RequiredFeature('AgentService')
+    
+    
     def __init__(self, wizard_data, case, enrollment_record=None):
         self.data = wizard_data
         self.case = case
@@ -44,11 +46,14 @@ class EnrollmentDataWrap(object):
 
     def is_afba(self):
         return app.config.get('IS_AFBA', False)
+
     def is_5star(self):
         return app.config.get('IS_5STAR', False)
+
     def is_preview(self):
         return self.data.get('is_preview', False)
-
+    
+    
     def did_decline(self):
         return self.data.get('did_decline', False)
 
@@ -272,7 +277,7 @@ class EnrollmentDataWrap(object):
         elif self.get_product().is_simple_coverage():
             if not 'employee_coverage' in self.data:
                 return False
-                
+
             return self.get_product().is_applicant_covered(
                 'spouse',
                 # This uses employee coverage to determine if spouse is included.
@@ -383,7 +388,7 @@ class EnrollmentDataWrap(object):
             questions = self.data['employee']['soh_questions']
         else:
             questions = self.data['employee_soh_questions']
-
+            
         # Filter out questions only intended for spouse
         return [q for q in questions if not q.get('is_spouse_only')]
 
@@ -405,6 +410,7 @@ class EnrollmentDataWrap(object):
         else:
             questions = self.data['children_soh_questions'][child_index]
 
+        
         # Filter out emp and sp only questions
         return [q for q in questions if not q.get('is_employee_only') and not q.get('is_spouse_only')]
     
@@ -467,7 +473,7 @@ class EnrollmentDataWrap(object):
             date = self.enrollment_record.agent_signing_datetime
         else:
             date = self.enrollment_record.signature_time
-        
+
         # If a date is provided in the enrollment data, it overrides the above date.
         return self.data.get('agent_sig_date', date.strftime('%m/%d/%Y'))
 
@@ -560,6 +566,7 @@ class EnrollmentDataWrap(object):
         return False
 
     def should_include_bank_draft(self):
+        # FIXME: This should be pulling from the data instead of the case
         return self.case.include_bank_draft_form
 
     def should_use_call_center_workflow(self):

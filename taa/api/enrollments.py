@@ -16,6 +16,8 @@ from taa.api import route
 from taa.services import LookupService
 from taa.services.enrollments.csv_export import export_hi_acc_enrollments
 
+
+
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 agent_service = LookupService("AgentService")
 case_service = LookupService("CaseService")
@@ -26,6 +28,7 @@ enrollment_submission_service = LookupService("EnrollmentSubmissionService")
 enrollment_application_service = LookupService("EnrollmentApplicationService")
 user_service = LookupService("UserService")
 product_service = LookupService("ProductService")
+
 
 @route(bp, '/', methods=["POST"])
 def submit_enrollments():
@@ -38,7 +41,7 @@ def submit_enrollments():
     data_format = request.args.get('format') or request.form.get('format', 'flat')
     upload_source = request.args.get('upload_source') or request.form.get('upload_source', 'api')
     filename = request.args.get("filename") or request.form.get('filename', '')
-    
+
     if request.data:
         data = StringIO(request.data)
     elif request.files['api-upload-file']:
@@ -91,6 +94,7 @@ def get_batch_items(batch_id):
 
     return [item for item in enrollment_import_batch_service.get_batch_items(batch)]
 
+
 @route(bp, '/import_batches/<batch_id>/reprocess', methods=['POST'])
 @login_required
 @groups_required(['admins'])
@@ -99,6 +103,7 @@ def reprocess_batch(batch_id):
 
     # Enqueue the batch for processing
     enrollment_submission_service.submit_import_enrollments(batch)
+
 
 @route(bp, '/import_batches/<batch_id>', methods=['DELETE'])
 @login_required
@@ -117,7 +122,7 @@ def delete_batch(batch_id):
 @groups_required(['admins', 'home_office', 'agents'], all=False)
 def get_individual_enrollment_record(enrollment_record_id):
     return enrollment_application_service.get_or_404(enrollment_record_id)
-    
+
 
 # Admin delete enrollment record
 @route(bp, '/records/<int:enrollment_record_id>', methods=['DELETE'])
@@ -192,14 +197,14 @@ def can_user_view_enrollment_pdf(enrollment):
     if agent_service.can_manage_all_cases(current_user):
         return True
     
-    if current_user.is_anonymous():
+    if current_user.is_anonymous:
         # Only allow if this is a preview, and we are in a self-enroll session
         return (session.get('is_self_enroll') is not None and enrollment.is_preview)
         
     agent = agent_service.get_logged_in_agent()
     if not agent:
         return False
-    else:     
+    else:
         can_view = can_agent_view_enrollment(agent, enrollment)
     return can_view
 

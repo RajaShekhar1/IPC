@@ -47,7 +47,7 @@
 {#                    <td><strong data-bind="text: moment('{{ enrollment.effective_date }}').format('MM/DD/YYYY')"></strong></td>#}
                     <td><strong>{{enrollment.product_name}}</strong></td>
                     <td><strong>{{enrollment.status}}</strong></td>
-                    {% if enrollment.status=='declined'%}
+                    {% if enrollment.status == 'declined'%}
                       <td><strong>N/A</strong></td>
                       <td><strong>N/A</strong></td>
                       <td><strong>N/A</strong></td>
@@ -71,6 +71,8 @@
                       {% elif enrollment.status in ["Enrolled"] and (can_edit_case or current_agent_id == enrollment.agent_id) %}
 {#                        <button class="btn btn-primary btn-sm view-enrollment-docs" data-id="{{ enrollment.id }}"><i class="icon fa fa-file"></i> View</button>#}
                           <a target="_blank" href="/enrollments/records/{{ enrollment.id }}/pdf" class="btn btn-primary btn-sm"><i class="icon fa fa-file"></i> View</a>
+                      {% elif enrollment.status in ["Paused"] and (can_edit_case or current_agent_id == enrollment.agent_id) %}
+                        <button class="btn btn-warning btn-sm enroll-employee" data-id="{{census_record.id}}"><i class="fa fa-play"></i> Resume Enrollment</button>
                       {% endif %}
                       </td>
                       <td></td>
@@ -145,6 +147,7 @@
                   {{ render_field_with_errors(form.employee_state) }}
                   {{ render_field_with_errors(form.employee_zip) }}
                   {{ render_field_with_errors(form.occupation_class) }}
+
               </div>
               <div class="col-sm-6 col-xs-12">
                   <h3>Spouse:</h3>
@@ -173,7 +176,8 @@
                   <h3>Children</h3>
                   {% for fields in child_form_fields %}
 
-                      <div class="row">
+                      <div class="row" style="border-top: 1px solid black; padding: 2em">
+
                       {% for field in fields %}
                           <div class="col-sm-4">
                           {{ render_field_with_errors(field) }}

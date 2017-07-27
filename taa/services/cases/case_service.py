@@ -217,6 +217,8 @@ class CaseService(DBService):
         return added
 
     # Census records
+
+
     def get_census_records(self, case, offset=None, num_records=None,
                            search_text=None, text_columns=None,
                            sorting=None, sort_desc=False, include_enrolled=True,
@@ -582,12 +584,12 @@ class CaseService(DBService):
         from taa.services.agents import AgentService
         agent_service = AgentService()
         logged_in_agent = agent_service.get_logged_in_agent()
-
+        
         if agent_service.can_manage_all_cases(current_user):
             return True
         if self.is_agent_case_owner(logged_in_agent, case):
             return True
-
+        
         return False
 
     def create_new_case(self, **kwargs):
@@ -685,8 +687,7 @@ class CaseService(DBService):
             return None
         if not case.product_settings.get('coverage_limits'):
             return None
-        
+
         limit_data = case.product_settings['coverage_limits']
         product_limit_data = limit_data.get(str(product.id))
         return product_limit_data
-        
