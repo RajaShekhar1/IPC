@@ -30,8 +30,7 @@ var CaseReportsViewModel = function(params) {
 
       // Reformat the product data to fit the display better
       var pdata = [];
-      $.each(resp.data.product_report, function() {
-        var data = this;
+      _.each(resp.data.product_report, function(data) {
         pdata.push({
           name: data.product_name,
           num_taken: data.enrolled_count,

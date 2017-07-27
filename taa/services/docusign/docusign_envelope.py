@@ -8,17 +8,19 @@ import re
 from dateutil.parser import parse as dateutil_parse
 
 from taa import app
+from taa.services import RequiredFeature
 from taa.services.agents import AgentService
 from taa.services.products import ProductService
 from taa.services.products.riders import RiderService
 from taa.services.enrollments import EnrollmentApplication
 
-product_service = ProductService()
-agent_service = AgentService()
+
 rider_service = RiderService()
 
 
 class EnrollmentDataWrap(object):
+    product_service = RequiredFeature('ProductService')
+    agent_service = RequiredFeature('AgentService')
     def __init__(self, wizard_data, case, enrollment_record=None):
         self.data = wizard_data
         self.case = case
@@ -40,6 +42,10 @@ class EnrollmentDataWrap(object):
     def get(self, key, default=None):
         return self.data.get(key, default)
 
+    def is_afba(self):
+        return app.config.get('IS_AFBA', False)
+    def is_5star(self):
+        return app.config.get('IS_5STAR', False)
     def is_preview(self):
         return self.data.get('is_preview', False)
 
@@ -122,11 +128,11 @@ class EnrollmentDataWrap(object):
         elif self.is_import():
             return self.case.owner_agent
         elif self.enrollment_record and self.enrollment_record.agent_id is not None:
-            return agent_service.get(self.enrollment_record.agent_id)
-        elif agent_service.get_logged_in_agent():
-            return agent_service.get_logged_in_agent()
+            return self.agent_service.get(self.enrollment_record.agent_id)
+        elif self.agent_service.get_logged_in_agent():
+            return self.agent_service.get_logged_in_agent()
         elif self.data.get('agent_id'):
-            return agent_service.get(self.data['agent_id'])
+            return self.agent_service.get(self.data['agent_id'])
         else:
             # If the logged-in user is not an agent, default to case owner.
             return self.case.owner_agent
@@ -138,7 +144,7 @@ class EnrollmentDataWrap(object):
         return self.get_product().get_base_product_code()
 
     def get_product(self):
-        return product_service.get(self.get_product_id())
+        return self.product_service.get(self.get_product_id())
 
     def get_product_id(self):
         if 'product_data' in self.data:
@@ -172,11 +178,11 @@ class EnrollmentDataWrap(object):
     def get_employee_street(self):
         address = self.data['employee']['address1']
         if self.data['employee']['address2']:
-            address += ' {}'.format(self.data['employee']['address2'])
+            address += u' {}'.format(self.data['employee']['address2'])
         return address
 
     def get_employee_city_state_zip(self):
-        return "{}, {} {}".format(
+        return u"{}, {} {}".format(
             self.data['employee']['city'],
             self.data['employee']['state'],
             self.data['employee']['zip']
@@ -193,7 +199,7 @@ class EnrollmentDataWrap(object):
         email_to = self.data['employee']['email']
         if not email_to:
             # fallback email if none was entered - just need a unique address
-            email_to = '{}@5StarEnroll.com'.format(self.random_email_id())
+            email_to = u'{}@5StarEnroll.com'.format(self.random_email_id())
 
         return email_to
 
@@ -236,7 +242,9 @@ class EnrollmentDataWrap(object):
         return coverage.get('coverage_selection')
 
     def format_coverage(self, coverage):
-        if 'face_value' in coverage:
+        if type(coverage) == int or type(coverage) == float:
+            return format(Decimal(coverage, 'utf-8'), ',.0f')
+        elif 'face_value' in coverage:
             return format(coverage['face_value'], ',.0f')
         elif 'coverage_selection' in coverage:
             coverage_selection = coverage['coverage_selection']
@@ -285,7 +293,7 @@ class EnrollmentDataWrap(object):
         return decimal.Decimal(self.data['spouse_coverage']['premium'])
 
     def format_money(self, amount):
-        return '%.2f' % amount
+        return u'%.2f' % amount
 
     def get_total_children_premium(self):
         if self.get_product().is_fpp():
@@ -422,8 +430,21 @@ class EnrollmentDataWrap(object):
         date = self.enrollment_record.signature_time
         return self.data.get('emp_sig_date', date.strftime('%m/%d/%Y'))
 
-    def get_employee_initials(self):
-        return self.data.get('emp_initials_txt', '')
+    def get_employee_initials(self, auto=False):
+        initials = self.data.get('emp_initials_txt', '')
+
+        if len(initials) == 0 and auto:
+            initials = u''
+
+            name = u'{} {}'.format(self.data['employee'].get('first', '') or u'',
+                                  self.data['employee'].get('last', '') or u'')
+            parts = name.strip().split(' ')
+            if len(parts) > 1:
+                first = parts[0][0]
+                last = parts[-1][0]
+                initials = u'{}{}'.format(first, last).upper()
+
+        return initials
 
     def has_employee_esigned(self):
         return bool(self.get_employee_esignature())
@@ -505,7 +526,7 @@ class EnrollmentDataWrap(object):
         bd = self.data[prefix]['birthdate']
 
         bene_dict = dict(
-                name='{} {}'.format(self.data[prefix]['first'],
+                name=u'{} {}'.format(self.data[prefix]['first'],
                                     self.data[prefix]['last']),
                 ssn=self.data[prefix]['ssn'],
                 relationship=relationship,
@@ -589,9 +610,9 @@ class EnrollmentDataWrap(object):
         effective_date = self.get_effective_date().strftime("%m/%d/%Y")
 
         if self.enrollment_record.payment_mode:
-            payment_mode = "{}".format(self.enrollment_record.payment_mode)
+            payment_mode = u"{}".format(self.enrollment_record.payment_mode)
         else:
-            payment_mode = "{}".format(self.case.payment_mode)
+            payment_mode = u"{}".format(self.case.payment_mode)
         
         if self.did_employee_select_coverage():
             coverage = self.get_employee_coverage()

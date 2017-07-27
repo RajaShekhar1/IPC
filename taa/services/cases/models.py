@@ -54,7 +54,8 @@ class Case(CaseSerializer, db.Model):
     situs_state = db.Column(db.String(2), nullable=True)
     situs_city = db.Column(db.String)
     agent_id = db.Column(db.Integer, db.ForeignKey('agents.id'), nullable=True)
-    owner_agent = db.relationship('Agent', backref='owned_cases')
+    owner_agent = db.relationship('Agent', backref='agent_owned_cases',
+                                  primaryjoin='Case.agent_id==Agent.id')
     active = db.Column(db.Boolean, default=False, index=True)
     created_date = db.Column(db.DateTime)
     is_stp = db.Column(db.Boolean, default=False)

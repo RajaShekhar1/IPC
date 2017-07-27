@@ -1,7 +1,8 @@
 from flask import Blueprint, request
-from flask_stormpath import login_required, groups_required, user
+from flask_login import login_required
 from taa.services.cases import CaseService
 
+from taa import groups_required
 from taa.core import TAAFormError
 from taa.api import route
 from taa.helpers import get_posted_data
@@ -10,9 +11,9 @@ from taa.services.products.riders import RiderService
 from taa.services.products.forms import NewProductForm, EditProductForm
 
 bp = Blueprint('products', __name__, url_prefix='/products')
-read_product_api_groups = ['agents', 'home_office', 'admins']
+read_product_api_groups = ['agents', 'home_office', 'admins', 'case_admins']
 write_product_groups = ['home_office', 'admins']
-read_product_rate_groups = ['agents', 'home_office', 'admins']
+read_product_rate_groups = ['agents', 'home_office', 'admins', 'case_admins']
 
 product_service = ProductService()
 rider_service = RiderService()

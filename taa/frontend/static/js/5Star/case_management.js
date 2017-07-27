@@ -13,7 +13,7 @@ var case_management = (function() {
             "processing": true,
             "pagingType": "full",
             "serverSide": true,
-            "ajax": "/cases/"+case_id+"/census_records",
+            "ajax": {url: "/cases/"+case_id+"/census_records", complete: success_callback},
             "columnDefs":[
               // Show enroll button in first column
               {targets: [0], sortable: false, name: "action", data: function(row) {
@@ -136,7 +136,6 @@ var case_management = (function() {
         }
     }
     function update_table_data(table, data) {
-        table.dataTable().fnAddData(data);
         table.dataTable().fnAddData(data);
         table.DataTable().columns.adjust().draw();
     }

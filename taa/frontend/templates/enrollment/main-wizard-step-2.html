@@ -69,67 +69,81 @@
       <!-- /ko -->
     </div>
 
-    <div data-bind="visible: should_show_other_insurance_questions">
+    <div data-bind="visible: should_show_step_two() && should_show_other_insurance_questions()">
       <h3 class="lighter block green">Other Insurance</h3>
 
       <div class="row form-group">
-        <div class="col-xs-12 col-sm-9">
+        <div class="col-xs-12 col-sm-6">
       <span
-          class="bigger-120">Does anyone on this application have any existing life insurance or annuity contracts?</span><br>
+          class="bigger-120">Does the covered applicant have any existing life insurance or annuity contracts?</span><br>
                         <span id="existing_warning_text" style="display: none;" class=" bigger-120">If yes, and you live in AK, AL, AZ, CO, HI, IA, KY, LA, MD, ME, MS, MT, NH, NJ, NM, NC, OH, OR, RI, TX, UT, VA, VT or WV please complete and sign the Notice: Replacement of Life Insurance and Annuity. The Notice must be <span
                             class="text-warning bigger-120">presented</span> and <span
                             class="text-warning bigger-120">read</span> to you by your agent at the time he/she takes your application.</span>
         </div>
-        <div class="col-xs-12 col-sm-3 btn-group no-padding-right">
+        <div class="col-xs-12 col-sm-6 btn-group no-padding-right">
+          <div class="row" data-bind="foreach: {data: coverage_vm.get_all_covered_applicants_for_replacement_products, as: 'applicant'}">
+            <div class="col-xs-12 col-sm-3" data-bind="text: applicant.first"></div>
+          </div>
+          <div class="row" data-bind="foreach: {data: coverage_vm.get_all_covered_applicants_for_replacement_products, as: 'applicant'}">
+            <div class="col-xs-12 col-sm-3">
           <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('existing_insurance'), 
+                            question: new GlobalSOHQuestion('existing_insurance_'+applicant._id),
                             val: 'Yes', 
                             highlight: $root.get_has_existing_question_highlight(),
-                            onclick: $root.select_has_existing_insurance
+                            onclick: function() {applicant.has_existing_insurance(true)}
                             }">
             Yes
           </button>
           <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('existing_insurance'), 
+                                question: new GlobalSOHQuestion('existing_insurance_'+applicant._id),
                             val: 'No', 
                             highlight: 'checkmark',
-                            onclick: window.reset_existing_insurance_warning
+                                onclick: function() {applicant.has_existing_insurance(false)}
                             }">
             No
           </button>
+            </div>
+          </div>
         </div>
       </div>
 
       <div class="row form-group">
-        <div class="col-xs-12 col-sm-9">
+        <div class="col-xs-12 col-sm-6">
           <span
               class="bigger-120">Will the coverage applied for replace any existing life insurance or annuities?</span><br>
                         <span id="replacement_warning_text" style="display: none;" class="bigger-120"><br>If yes, and you do not live in the above listed states, you will need to complete and sign the applicable state-specific Notice: Replacement of Life Insurance and Annuity, obtainable from your agent or enrollment professional.<br><br> <span
                             class="text-danger bigger-130">You cannot proceed with this online enrollment, and must enroll via paper forms with your agent or enrollment professional.</span></span>
         </div>
-        <div class="col-xs-12 col-sm-3 btn-group no-padding-right" data-toggle="buttons">
-          <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('replace_insurance'), 
-                            val: 'Yes', 
+        <div class="col-xs-12 col-sm-6 btn-group no-padding-right">
+          <div class="row" data-bind="foreach: {data: coverage_vm.get_all_covered_applicants_for_replacement_products, as: 'applicant'}">
+            <div class="col-xs-12 col-sm-3" data-bind="text: applicant.first"></div>
+          </div>
+          <div class="row" data-bind="foreach: {data: coverage_vm.get_all_covered_applicants_for_replacement_products, as: 'applicant'}">
+            <div class="col-xs-12 col-sm-3">
+              <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                            question: new GlobalSOHQuestion('replacing_insurance_'+applicant._id),
+                            val: 'Yes',
                             highlight: $root.get_replacing_question_highlight(),
-                            onclick: $root.select_replacing_insurance
+                            onclick: function() {applicant.is_replacing_insurance(true)}
                             }">
-            Yes
-          </button>
-          <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
-                            question: new GlobalSOHQuestion('replace_insurance'), 
-                            val: 'No', 
-                            highlight: 'checkmark',
-                            onclick: window.reset_replacement_insurance_warning
-                            }">
-            No
-          </button>
+                Yes
+              </button>
+              <button class="btn btn-default btn-sm" type="button" data-bind="flagBtn: {
+                                question: new GlobalSOHQuestion('replacing_insurance_'+applicant._id),
+                                val: 'No',
+                                highlight: 'checkmark',
+                                onclick: function() {applicant.is_replacing_insurance(false)}
+                                }">
+                No
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
     </div>
 
-    <div data-bind="slideDownIf: $root.should_show_NAIC_replacement_notice">
+    <div data-bind="slideDownIf: should_show_NAIC_replacement_notice">
       <div class="row">
         <div class="col-xs-12">
           Your enrollment professional has a copy of the "IMPORTANT NOTICE: REPLACEMENT OF LIFE INSURANCE OR ANNUITY"
@@ -140,21 +154,23 @@
 
     <br>
 
-    <div data-bind="slideDownIf: $root.should_show_replacement_form">
+    <div data-bind="slideDownIf: should_show_replacement_form">
       <div class="modal-header">
         <div class="form-group row">
           <div class="col-xs-12 col-sm-9">
             <small>I want this notice read aloud to me
               &nbsp;&nbsp;
               <label class="blue">
-                <input name="replacement_read_aloud" value="Y" type="radio" class="inline ace"
-                       data-bind="checked: $root.replacement_read_aloud, checkedValue: true, disable: $root.is_self_enroll()"/>
+                <input value="Y" type="radio" class="inline ace"
+                       data-bind="checked: replacement_read_aloud, checkedValue: true, disable: $root.is_self_enroll(),
+                          attr: {name: 'replacement_read_aloud'}"/>
                 <span class="lbl"> Y &nbsp; </span>
               </label>
 
               <label class="blue">
                 <input name="replacement_read_aloud" value="N" type="radio" class="inline ace"
-                       data-bind="checked: $root.replacement_read_aloud, checkedValue: false, disable: $root.is_self_enroll()"/>
+                       data-bind="checked: replacement_read_aloud, checkedValue: false, disable: $root.is_self_enroll(),
+                            attr: {name: 'replacement_read_aloud'}"/>
                 <span class="lbl"> N</span>
               </label>
             </small>
@@ -177,11 +193,13 @@
               <div class="form-group col-xs-12">
                 1. Are you considering discontinuing making premium payments, surrendering, forfeiting, assigning to the
                 insurer, or otherwise terminating your existing policy or contract?
-                <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="Y"
-                       data-bind='checked: $root.replacement_is_terminating, checkedValue: true'> <span
+                <input type="radio" class="replacement-question inline ace" value="Y"
+                       data-bind='checked: replacement_is_terminating, checkedValue: true,
+                                attr: {name: "replacement_is_terminating"}'> <span
                   class="lbl"> Y</span>
                 <input type="radio" class="replacement-question inline ace" name="replacement_is_terminating" value="N"
-                       data-bind='checked: $root.replacement_is_terminating, checkedValue: false'> <span
+                       data-bind='checked: replacement_is_terminating, checkedValue: false,
+                                attr: {name: "replacement_is_terminating"}'> <span
                   class="lbl"> N</span>
               </div>
             </div>
@@ -189,16 +207,18 @@
               <div class="form-group col-xs-12">
                 2. Are you considering using funds from your existing policies or contracts to pay premiums due on the
                 new policy or contract?
-                <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="Y"
-                       data-bind='checked: $root.replacement_using_funds, checkedValue: true'> <span
+                <input type="radio" class="replacement-question inline ace" value="Y"
+                       data-bind='checked: replacement_using_funds, checkedValue: true,
+                                attr: {name: "replacement_using_funds"}'> <span
                   class="lbl"> Y</span>
-                <input type="radio" class="replacement-question inline ace" name="replacement_using_funds" value="N"
-                       data-bind='checked: $root.replacement_using_funds, checkedValue: false'> <span
+                <input type="radio" class="replacement-question inline ace" value="N"
+                       data-bind='checked: replacement_using_funds, checkedValue: false,
+                                attr: {name: "replacement_using_funds"}'> <span
                   class="lbl"> N</span>
               </div>
             </div>
 
-            <div data-bind="slideDownIf: $root.should_show_replacement_details_form">
+            <div data-bind="slideDownIf: should_show_replacement_details_form">
               <strong> Please list each existing policy or contract you are contemplating replacing (include the name of
                 the insurer, the insured, and the contract number if available) and whether each policy will be replaced
                 or used as a source of financing:</strong>
@@ -234,8 +254,8 @@
                     <span class="lbl">Financing</span>
                   </label>
 
-                  <div class="pull-right" data-bind="if: $root.replacement_policies().length > 1">
-                    <button class="btn btn-xs btn-danger" data-bind="click: $root.remove_replacement_policy">
+                  <div class="pull-right" data-bind="if: $parent.replacement_policies().length > 1">
+                    <button class="btn btn-xs btn-danger" data-bind="click: $parent.remove_replacement_policy">
                       <i class="icon fa fa-trash"></i>
                     </button>
                   </div>
@@ -251,7 +271,7 @@
               </div>
               <!--/ko-->
               <br>
-              <button class="btn btn-success btn-sm" data-bind="click: $root.add_replacement_policy">Add Another Policy
+              <button class="btn btn-success btn-sm" data-bind="click: add_replacement_policy">Add Another Policy
               </button>
             </div>
 
@@ -277,21 +297,25 @@
           <div class="col-sm-6">
             <div class="row">
 
-              <!--ko if: product_health_questions.product_coverage.did_select_employee_coverage -->
-                <div class="col-sm-3 text-center">
-                  <span data-bind="text: $root.employee().name"></span>
-                </div>
+{#              <div class="col-sm-3 text-center"#}
+{#                   data-bind="if: product_health_questions.product_coverage.did_select_employee_coverage">#}
+{#                <span data-bind="text: $root.employee().name"></span>#}
+{#              </div>#}
+{#                <!--ko if: product_health_questions.product_coverage.did_select_spouse_coverage -->#}
+{#              <div class="col-sm-3 text-center">#}
+{#                <span data-bind="text: $root.spouse().name"></span>#}
+{#              </div>#}
+{#                <!--/ko-->#}
+{#              <!--ko foreach: product_health_questions.product_coverage.get_covered_children -->#}
+{#              <div class="col-sm-3 text-center">#}
+{#                <span data-bind="text: $data.name"></span>#}
+{#              </div>#}
+{#              <!--/ko-->#}
+
+              <!--ko foreach: product_health_questions.product_coverage.get_covered_applicants() -->
+                <div class="col-sm-3 text-center"><span data-bind="text: $data.name()"></span></div>
               <!--/ko-->
-              <!--ko if: product_health_questions.product_coverage.did_select_spouse_coverage -->
-                <div class="col-sm-3 text-center">
-                  <span data-bind="text: $root.spouse().name"></span>
-                </div>
-              <!--/ko-->
-              <!--ko foreach: product_health_questions.product_coverage.get_covered_children -->
-                <div class="col-sm-3 text-center">
-                  <span data-bind="text: $data.name"></span>
-                </div>
-              <!--/ko-->
+
             </div>
           </div>
         </div>
@@ -352,7 +376,7 @@
       </div>
 
       {# This section is the same as above, but reformatted for small screens. #}
-      <div class="visible-xs visible-sm" data-bind="">
+      <div class="visible-xs visible-sm">
 
         <table class="table table-striped">
           <tbody>

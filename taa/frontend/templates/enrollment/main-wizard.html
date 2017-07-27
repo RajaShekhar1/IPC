@@ -1,7 +1,13 @@
 {% extends "base_ace_latest.html" %}
 {% set active_page = 'nav_enroll' -%}
+{% set Owner_noun = 'Sponsor' if config.IS_AFBA else 'Employee' -%}
+{% set owner_noun = 'sponsor' if config.IS_AFBA else 'employee' -%}
+{% set Owner_nouns = 'Sponsors' if config.IS_AFBA else 'Employees' -%}
+{% set owner_nouns = 'sponsors' if config.IS_AFBA else 'employees' -%}
+{% set is_show_help_text = config.IS_AFBA -%}
+{% set premium_noun = 'contribution' if config.IS_AFBA else 'premium' -%}
 
-{% block title %} - Employee Application {% endblock %}
+{% block title %} - {{ Owner_noun }} Application {% endblock %}
 
 {% block page_css %}
   <link href="{{ url_for('static', filename='css/five_star.css') }}" rel="stylesheet">
@@ -20,10 +26,10 @@
 
 
 {% block content %}
-
+  <div class="page-content loading" data-bind="visible: is_loading_enrollment">Loading enrollment data...</div>
   <div class="page-content"
       {# Prevent flash of unstyled content #}
-       style="display: none;" data-bind="visible: true">
+       style="display: none;" data-bind="visible: !is_loading_enrollment()">
 
     <div class="row">
       <div class="col-xs-12">
@@ -32,7 +38,7 @@
           <div class="span12">
             <div class="widget-box">
               <div class="widget-header widget-header-blue widget-header-flat">
-                <h4 class="lighter">5Star Life Enrollment:&nbsp;&nbsp;<span
+                <h4 class="lighter">{{ company_name }} Life Enrollment:&nbsp;&nbsp;<span
                     data-bind="text: enrollment_case.company_name"></span></h4>
 
                 <div class="grey smaller-80 pull-right">
@@ -46,6 +52,14 @@
                 <div class="widget-main">
 
                   <div id="enrollment-wizard">
+                    {% if error -%}
+                    <p class="alert alert-danger bigger-130">
+                      Unable to enroll
+                    </p>
+                    <ul class="error bigger-130">
+                      <li>{{ error_message }}</li>
+                    </ul>
+                    {% else -%}
                     <ul class="steps">
                       <li data-step="1" class="active">
                         <span class="step">1</span>
@@ -59,7 +73,7 @@
 
                       <li data-step="3">
                         <span class="step">3</span>
-                        <span class="title">Employee Info</span>
+                        <span class="title">{{ Owner_noun }} Info</span>
                       </li>
 
                       <li data-step="4">
@@ -88,6 +102,7 @@
                       {% include 'enrollment/main-wizard-step-5.html' %}
                       {% include 'enrollment/main-wizard-step-6.html' %}
                     </div>
+                    {% endif -%}
 
                   </div>
 
@@ -97,11 +112,16 @@
 
                   <hr/>
                   <div class="wizard-actions">
-                    <button class="btn btn-default btn-xs pull-left"
+                    <div class="btn-group pull-left">
+                      <button class="btn btn-default btn-xs"
                             data-bind="click: exit_application, visible: is_in_person_application">
-                      Cancel
+                        <i class="glyphicon glyphicon-remove"></i> Cancel
                     </button>
 
+                    </div>
+                    {% if error -%}
+                    <br><br>
+                    {% else -%}
                     <button class="btn btn-prev">
                       <i class="icon-arrow-left"></i>
                       Prev
@@ -112,6 +132,7 @@
                       Next
                       <i class="icon-arrow-right icon-on-right"></i>
                     </button>
+                    {% endif -%}
                   </div>
                   <!-- /Wizard actions -->
                 </div>
@@ -123,7 +144,7 @@
           </div>
         </div>
 
-        <div id="modal-auto-increase-rider" class="modal">
+        <div id="modal-auto-increase-rider" class="modal"  data-bind="if: $root.coverage_vm.current_product()">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -179,7 +200,7 @@
           </div>
         </div>
 
-        <div id="modal-qol3-rider" class="modal">
+        <div id="modal-qol3-rider" class="modal" data-bind="if: $root.coverage_vm.current_product()">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -189,7 +210,7 @@
               <div class="modal-body" data-bind="with: $root.coverage_vm.current_product().shown_rider">
                 <p>
                   This Qualify of Life Rider accelerates a portion of the insured’s death benefit on a monthly basis, 3%
-                  each month, and payable directly to the employee on a tax favored basis. An employee can receive up
+                  each month, and payable directly to the {{ owner_noun }} on a tax favored basis. An {{ owner_noun }} can receive up
                   to 75% of the current face amount of the life benefit following a diagnosis of either a chronic
                   illness or cognitive impairment that requires substantial assistance. Benefits are paid for the
                   following:
@@ -214,7 +235,7 @@
           </div>
         </div>
 
-        <div id="modal-qol4-rider" class="modal">
+        <div id="modal-qol4-rider" class="modal" data-bind="if: $root.coverage_vm.current_product()">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -224,7 +245,7 @@
               <div class="modal-body" data-bind="with: $root.coverage_vm.current_product().shown_rider">
                 <p>
                   This Qualify of Life Rider accelerates a portion of the insured’s death benefit on a monthly basis, 4%
-                  each month, and payable directly to the employee on a tax favored basis. An employee can receive up
+                  each month, and payable directly to the {{ owner_noun }} on a tax favored basis. An {{ owner_noun }} can receive up
                   to 75% of the current face amount of the life benefit following a diagnosis of either a chronic
                   illness or cognitive impairment that requires substantial assistance. Benefits are paid for the
                   following:
@@ -249,7 +270,7 @@
           </div>
         </div>
 
-        <div id="modal-wop-rider" class="modal">
+        <div id="modal-wop-rider" class="modal" data-bind="if: $root.coverage_vm.current_product()">
           <div class="modal-dialog">
             <div class="modal-content">
               <div class="modal-header">
@@ -289,7 +310,7 @@
               </div>
 
               <div class="modal-body">
-                "Actively at work" means that you are an eligible employee/member of the employee/affiliation through
+                "Actively at work" means that you are an eligible {{ owner_noun }}/member of the {{ owner_noun }}/affiliation through
                 which you are applying for this individual insurance; you are able to work and to perform the normal
                 activities of a person of like age and gender; and you are not confined in a hospital, at home or
                 elsewhere due to injury or sickness on the date you signed this application.
@@ -524,7 +545,7 @@
                       After clicking the Review Application Documents button, check the box below
                     </div>
                     <label style="margin-right: 15px;">
-                      <input class="ace" data-bind="checked: applicant_sig_check_1, enable: applicant_sig_check_1_once"
+                      <input class="ace" data-bind="checked: applicant_sig_check_1, enable: applicant_has_viewed_preview"
                              name="app_sig_check1" type="checkbox">
                     <span class="lbl padding-16" id="applicant_sig_check_1">
                       I acknowledge I have reviewed the documents related to this enrollment

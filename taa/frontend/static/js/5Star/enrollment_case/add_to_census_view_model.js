@@ -33,6 +33,7 @@ var AddToCensusViewModel = function AddToCensusViewModel(case_id) {
     self.current_panel(self.PANEL_FORM);
     self.ssn("");
     self.ssn.error("");
+    $('.enrollment-state-error').html("").hide();
 
     self.selected_employee(null);
   };
@@ -64,9 +65,14 @@ var AddToCensusViewModel = function AddToCensusViewModel(case_id) {
   self.find_matches = function() {
     // Clear errors
     self.ssn.error("");
+    $('.enrollment-state-error').html("").hide();
 
     if (!self.is_valid_ssn()) {
       self.ssn.error("A valid SSN is required");
+      return;
+    }
+    if (!self.is_valid_state()) {
+      $('.enrollment-state-error').html("Enrollment state must be selected").show();
       return;
     }
 
@@ -100,6 +106,10 @@ var AddToCensusViewModel = function AddToCensusViewModel(case_id) {
   self.is_valid_ssn = ko.computed(function() {
     var ssn_regex = /^\d\d\d-\d\d-\d\d\d\d$/;
     return ssn_regex.test(self.ssn());
+  });
+
+  self.is_valid_state = ko.computed(function() {
+    return window.case_settings.get_enrollment_state_override() != '';
   });
 
   self.add_to_census = function() {

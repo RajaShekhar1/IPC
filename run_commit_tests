@@ -1,3 +1,4 @@
 #!/bin/sh -e
+export TARGET_PLATFORM=TAA
 behave tests/unit/acceptance_features
 nosetests -c nose.cfg --with-xunit

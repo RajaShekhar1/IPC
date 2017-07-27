@@ -6,15 +6,15 @@ from zipfile import ZipFile
 import traceback
 from flask import Blueprint, request, abort, make_response, send_file
 from flask import session
-from flask.ext.login import current_user
-from flask_stormpath import login_required, groups_required
+from flask_login import current_user
+from flask_login import login_required
 from taa.services.products.plan_codes import PLAN_CODES_SIMPLE
 from taa.tasks import send_admin_error_email
 
+from taa import groups_required
 from taa.api import route
 from taa.services import LookupService
 from taa.services.enrollments.csv_export import export_hi_acc_enrollments
-
 
 bp = Blueprint('enrollments', __name__, url_prefix='/enrollments')
 agent_service = LookupService("AgentService")
@@ -110,18 +110,14 @@ def delete_batch(batch_id):
     enrollment_import_batch_service.delete_batch(batch)
 
 
-
 # For convenience, allow lookup of enrollment records without case id for admin only
 #  (if this is opened up to other users, add case permission checking)
 @route(bp, '/records/<int:enrollment_record_id>', methods=['GET'])
 @login_required
 @groups_required(['admins', 'home_office', 'agents'], all=False)
 def get_individual_enrollment_record(enrollment_record_id):
-    enrollment = enrollment_application_service.get_or_404(enrollment_record_id)
+    return enrollment_application_service.get_or_404(enrollment_record_id)
     
-    
-    
-    return enrollment
 
 # Admin delete enrollment record
 @route(bp, '/records/<int:enrollment_record_id>', methods=['DELETE'])
@@ -167,16 +163,13 @@ def render_batch_item_xml(batch_id, item_id):
     with ZipFile(zipstream, 'w') as zip:
         for form_for in enrollment_submission_service.get_enrollees(item.enrollment_record):
             # TODO: This is not called correctly anymore.
-            xml = enrollment_submission_service.render_enrollment_xml(
-                item.enrollment_record, form_for, pdf_bytes)
+            xml = enrollment_submission_service.render_enrollment_xml(item.enrollment_record, form_for, pdf_bytes)
             if xml is not None:
                 fn = 'enrollment_{}-{}.xml'.format(item.enrollment_record_id, form_for)
                 zip.writestr(fn, xml.encode('latin-1'))
     zipstream.seek(0)
     return send_file(zipstream, attachment_filename='enrollment_{}.zip'.format(
         item.enrollment_record_id), as_attachment=True)
-
-
 
 
 @route(bp, '/records/<int:enrollment_record_id>/pdf', methods=['GET'])
@@ -199,12 +192,14 @@ def can_user_view_enrollment_pdf(enrollment):
     if agent_service.can_manage_all_cases(current_user):
         return True
     
+    if current_user.is_anonymous():
+        # Only allow if this is a preview, and we are in a self-enroll session
+        return (session.get('is_self_enroll') is not None and enrollment.is_preview)
+        
     agent = agent_service.get_logged_in_agent()
     if not agent:
-        # Only allow if this is a preview, and we are in a self-enroll session
-        can_view = (session.get('is_self_enroll') is not None and enrollment.is_preview)
-    else:
-        
+        return False
+    else:     
         can_view = can_agent_view_enrollment(agent, enrollment)
     return can_view
 
@@ -235,8 +230,7 @@ def generate_xml(enrollment_record, form_for='employee'):
     pdf_bytes = enrollment_submission_service.render_enrollment_pdf(
             enrollment_record)
 
-    return enrollment_submission_service.render_enrollment_xml(
-            enrollment_record, form_for, pdf_bytes)
+    return enrollment_submission_service.render_enrollment_xml(enrollment_record, form_for, pdf_bytes)
 
 
 @route(bp, '/export/acchi/csv/<from_>/<to_>', methods=['GET'])

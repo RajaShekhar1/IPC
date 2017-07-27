@@ -3,6 +3,10 @@
 {% from "form_macros.html" import render_switch %}
 {% set active_page = "nav_manage_cases" -%}
 {% block title %} - Agent Manage Case{% endblock %}
+{% set Owner_noun = 'Sponsor' if config.IS_AFBA else 'Employee' -%}
+{% set owner_noun = 'sponsor' if config.IS_AFBA else 'employee' -%}
+{% set Owner_nouns = 'Sponsors' if config.IS_AFBA else 'Employees' -%}
+{% set owner_nouns = 'sponsors' if config.IS_AFBA else 'employees' -%}
 
 {% block content %}
   <flash-messages params="messages: flash_messages"></flash-messages>
@@ -39,7 +43,7 @@
           </li>
           <li class="" data-bind="visible: email_batches().length > 0">
             <a href="#history">
-              <i class="orange ace-icon fa fa-clock-o bigger-120"></i>
+              <i class="purple ace-icon fa fa-clock-o bigger-120"></i>
               Email History
             </a>
           </li>
@@ -112,11 +116,26 @@
                               </div>
 
                               <div class="form-group">
-                                <label class="col-md-3 control-label" for="groupNumber">Group Number: </label>
+                                <label class="col-md-3 control-label" for="groupNumber">
+                                  {% if config.IS_AFBA -%}
+                                  Department Code
+                                  {% else -%}
+                                  Group Number:
+                                  {% endif -%}
+                                </label>
                                 <div class="col-md-9">
-                                  <input id="groupNumber" type="text" data-bind="value: group_number">
+                                  <input id="groupNumber" type="text" data-bind="value: department_code">
                                 </div>
                               </div>
+
+                              {% if config.IS_AFBA -%}
+                              <div class="form-group">
+                                <label class="col-md-3 control-label" for="sourceCode">Source Code</label>
+                                <div class="col-md-9">
+                                  <input id="sourceCode" type="text" data-bind="value: source_code">
+                                </div>
+                              </div>
+                              {% endif %}
 
                               {# Restore multi-product selection when multi-product enrollment is working #}
                               {#                          {{ render_field_with_errors(case_setup_form.products, **{'data-bind': 'options: product_choices, optionsText: "name", optionsValue: "id", selectedOptions: products, multiSelect: {#}
@@ -189,10 +208,47 @@
                                 <label class="col-md-3 control-label" for="enrollmentState">State</label>
                                 <div class="col-md-9">
                                   <limited-state-select
-                                      params="limiter: state_product_limiter, disabled: !can_edit_case"></limited-state-select>
+                                      params="limiter: state_product_limiter, disable: !can_edit_case"></limited-state-select>
                                 </div>
                               </div>
 
+                              {% if config.IS_AFBA -%}
+                              <div class="form-group">
+                                <label class="col-md-3 control-label" for="contributionMode">Allowed Contribution Modes</label>
+                                <div class="col-md-9">
+                                  <ul id="contributionMode" class="list-unstyled" data-bind="foreach: contribution_mode_options">
+                                    <li>
+                                      <label data-bind="">
+                                        <input type="checkbox" data-bind="
+                                          enable: $parent.is_contribution_mode_allowed($data),
+                                          checkedValue: $data,
+                                          checked: $parent.selected_contribution_modes"> <span data-bind="text: label"></span>
+                                      </label>
+                                    </li>
+                                  </ul>
+                                </div>
+                              </div>
+                              <!--ko if: should_show_tpa_code-->
+                              <div class="form-group">
+                                <label class="col-md-3 control-label" for="tpaCode">TPA Code</label>
+                                <div class="col-md-9">
+                                  <input id="tpaCode" type="text" data-bind="value: tpa_code" maxlength="2" size="2">
+                                </div>
+                              </div>
+                              <!--/ko-->
+
+                              <!--ko if: should_show_employer_tax_id-->
+                              <div class="form-group">
+                                <label class="col-md-3 control-label" for="employerTaxID">Employer Tax ID</label>
+                                <div class="col-md-9">
+                                  <input id="employerTaxID" type="text" data-bind="value: employer_tax_id, maskedInput: '99-9999999'" size="10">
+                                </div>
+                              </div>
+                              <!--/ko-->
+
+                              {% endif -%}
+
+                              {% if not config.IS_AFBA -%}
                               <div class="form-group">
                                 <label class="col-md-3 control-label" for="paymentMode">Payment</label>
                                 <div class="col-md-9">
@@ -200,6 +256,17 @@
                                           data-bind="value: payment_mode, options: payment_mode_choices, optionsText: 'name', optionsCaption: '(Select Payment Type)'"></select>
                                 </div>
                               </div>
+                              {% endif -%}
+
+                              {% if config.IS_AFBA -%}
+                              <div class="form-group">
+                                <label class="col-md-3 control-label" for="eligibilityCode">Eligibility</label>
+                                <div class="col-md-9">
+                                  <select id="eligibilityCode" name="eligibilityCode"
+                                          data-bind="value: eligibility_code, options: eligibility_code_choices, optionsCaption: '(Select Default Eligibility)'"></select>
+                                </div>
+                              </div>
+                              {% endif -%}
                             </div>
                             <div class="enrollment-section col-md-5 col-md-offset-1 col-xs-12">
                               <h3 class="header lighter blue">Enrollment Option</h3>
@@ -208,38 +275,40 @@
                                 <div class="panel form-group">
                                   <div class="panel-heading">
                                     <label>
-                                        <select name="enrollment_option" data-bind="options: enrollmentOptions, optionsText: function (object) { return object.text }, value: selectedEnrollment"></select>
+                                        <select name="enrollment_option" data-bind="options: enrollmentOptions, optionsText: 'text', optionsCaption: '(Select Enrollment Option)',
+                                                value: selectedEnrollment"></select>
                                     </label>
                                       <br>
-                                    <small data-bind="visible: !open_enrollment_status() && !ongoing_enrollment_status()">
+                                    <small data-bind="visible: !selectedEnrollment">
                                       <em class="text-danger">An Enrollment Option must be selected</em>
                                     </small>
                                     </div>
                                 </div>
-                                <div data-bind="visible: open_enrollment_status">
-                                    <h3 class="header lighter blue" data-bind="slideDownIf: open_enrollment_status() && !ongoing_enrollment_status()">Open Enrollment</h3>
-                                    <h3 class="header lighter blue" data-bind="slideDownIf: open_enrollment_status() && ongoing_enrollment_status()">Open Enrollment with Ongoing</h3>
-                                <div class="panel form-group">
-                                  <div class="panel-heading">
-                                    <label>
-                                        <span class="lbl padding-6">
-                                            From:
-                                            <input data-bind="textInput: parent_start_date" type="text"
-                                                   placeholder="MM/DD/YYYY" class="input-small input-mask-date"
-                                                   name="open_enrollment_start_date">
-                                            &nbsp;&nbsp;To:
-                                            <input data-bind="textInput: parent_end_date" type="text"
-                                                   placeholder="MM/DD/YYYY" class="input-small input-mask-date"
-                                                   name="open_enrollment_end_date">
-                                        </span>
-                                        <br>
-                                        <small
-                                            data-bind="visible: check_between_or_before() ">
-                                            <em class="text-danger">Currently not active since outside date range</em>
-                                        </small>
-                                    </label>
+                                {# Show inputs for start and end date if there is a defined period #}
+                                <div data-bind="visible: did_select_open() || did_select_open_with_ongoing()">
+                                  <h3 class="header lighter blue" data-bind="visible: did_select_open">Open Enrollment</h3>
+                                  <h3 class="header lighter blue" data-bind="visible: did_select_open_with_ongoing">Open Enrollment with Ongoing</h3>
+                                  <div class="panel form-group" data-bind="with: open_period">
+                                    <div class="panel-heading">
+                                      <label>
+                                          <span class="lbl padding-6">
+                                              From:
+                                              <input data-bind="textInput: start_date" type="text"
+                                                     placeholder="MM/DD/YYYY" class="input-small input-mask-date"
+                                                     name="open_enrollment_start_date">
+                                              &nbsp;&nbsp;To:
+                                              <input data-bind="textInput: end_date" type="text"
+                                                     placeholder="MM/DD/YYYY" class="input-small input-mask-date"
+                                                     name="open_enrollment_end_date">
+                                          </span>
+                                          <br>
+                                          <small
+                                              data-bind="visible: check_between_or_before() ">
+                                              <em class="text-danger">Currently not active since outside date range</em>
+                                          </small>
+                                      </label>
+                                    </div>
                                   </div>
-                                </div>
                                 </div>
                               </div>
                               <div data-bind="slideDownIf: ongoing_enrollment_status() || open_enrollment_status()">
@@ -351,7 +420,7 @@
                             </div>
                           </div>
                           <div class="row">
-                            {% if is_admin %}
+                            {% if can_edit_case %}
                               <div class="col-md-6">
                                 <div class="row">
                                   <div class="form-group">
@@ -379,6 +448,7 @@
                                     </label>
                                   </div>
                                 </div>
+                                {% if not config.IS_AFBA -%}
                                 <div class="row">
                                   <div class="form-group">
                                     <label class="col-xs-9 col-xs-offset-3">
@@ -397,6 +467,29 @@
                                     </label>
                                   </div>
                                 </div>
+                                {% endif -%}
+                                <div class="row">
+                                  <div class="form-group">
+                                    <label class="col-xs-9 col-xs-offset-3">
+                                      <input type="checkbox" class="ace"
+                                             data-bind="checked: should_use_call_center_workflow" id="should_use_call_center_workflow"
+                                             name="should_use_call_center_workflow">
+                                      <span class="lbl"> Use Call Center Workflow</span>
+                                    </label>
+                                  </div>
+                                </div>
+                                {% if not config.IS_AFBA -%}
+                                <div class="row">
+                                  <div class="form-group">
+                                    <label class="col-xs-9 col-xs-offset-3">
+                                      <input type="checkbox" class="ace"
+                                             data-bind="checked: is_stp" id="is_stp"
+                                             name="is_stp">
+                                      <span class="lbl"> Use Straight-through-Processing (STP)</span>
+                                    </label>
+                                  </div>
+                                </div>
+                                {% endif -%}
                                 <div class="row">
                                   <div class="form-group">
                                     <label class="col-xs-9 col-xs-offset-3">
@@ -420,26 +513,7 @@
                                     </label>
                                   </div>
                                 </div>
-                                <div class="row">
-                                  <div class="form-group">
-                                    <label class="col-xs-9 col-xs-offset-3">
-                                      <input type="checkbox" class="ace"
-                                             data-bind="checked: should_use_call_center_workflow" id="should_use_call_center_workflow"
-                                             name="should_use_call_center_workflow">
-                                      <span class="lbl"> Use Call Center Workflow</span>
-                                    </label>
-                                  </div>
-                                </div>
-                                <div class="row">
-                                  <div class="form-group">
-                                    <label class="col-xs-9 col-xs-offset-3">
-                                      <input type="checkbox" class="ace"
-                                             data-bind="checked: is_stp" id="is_stp"
-                                             name="is_stp">
-                                      <span class="lbl"> Use Straight-through-Processing (STP)</span>
-                                    </label>
-                                  </div>
-                                </div>
+
                               </div>
                             {% endif %}
                             {% if not case_has_enrollments %}
@@ -455,6 +529,7 @@
                                 </button>
                               </div>
                             {% endif %}
+                            {# Case managers or agents can't delete when there are enrollments. #}
                             {% if case_has_enrollments and not is_admin %}
                                 <br>
                                 <br>
@@ -487,6 +562,7 @@
                             {% endif %}
                           </div>
                           {# Product configuration - riders, rates, etc. #}
+                          {% if not config.IS_AFBA -%}
                           <div class="row">
                             <div class="col-sm-12">
                               <h4 class="header lighter blue">Product Configuration</h4>
@@ -652,13 +728,14 @@
                               </div>
                             </div>
                           </div>
+                          {% endif -%}
 
                           <div class="row">
                             <div class="col-sm-12">
                               <h4 class="header lighter blue">Partner Agents</h4>
                               <div class="row">
                                 <div class="col-sm-10 col-md-offset-1">
-                                  {% if is_admin %}
+                                  {% if can_edit_case %}
                                     <select data-bind="selectedOptions: partner_agents"
                                             multiple="multiple" class="form-control"
                                             id="partner-agents"
@@ -715,6 +792,7 @@
                 </div>
               </div>
 
+              {% if not config.IS_AFBA or config.IS_SELF_ENROLL_ENABLED -%}
               <div class="row">
                 <div class="col-md-12 self-enrollment-section">
                   <form class="form-horizontal" id="edit-self-enrollment-form">
@@ -842,9 +920,9 @@
                   </form>
 
                 </div>
-
-
               </div>
+              {% endif -%}
+
               <div class="row">
                 <div class="col-md-12 agent-splits-section">
                   <form class="form-horizontal" id="edit-agent-splits-form">
@@ -879,6 +957,7 @@
                                       <strong><i class="ace-icon fa fa-exclamation-triangle"></i></strong>
                                       Failed to save agent split settings.
                                     </div>
+
                                     <div class="row">
                                       <div class="col-xs-12">
                                         <h2 class="header lighter blue">Current Splits</h2>
@@ -936,6 +1015,7 @@
                                                data-bind="click: add_agent_split">Add Agent Split</a>
                                           </div>
                                         </div>
+                                        {% if not config.IS_AFBA -%}
                                         <h2 class="header lighter blue">Subcounts</h2>
                                         <div class="col-xs-12">
                                           <div class="row"
@@ -1002,6 +1082,7 @@
                                             </div>
                                           </div>
                                         </div>
+                                        {% endif -%}
                                       </div>
                                       <hr>
                                     </div>
@@ -1055,13 +1136,13 @@
                             Download Census
                           </a>
                         {% endif %}
-                        <a id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: is_active() && !check_between_or_before()">
+                        <a id="add-to-census-btn" class="btn btn-primary pull-right" data-bind="visible: can_enroll">
                           <i class="ace-icon glyphicon glyphicon-plus"></i>
                           New Enrollment
                         </a>
                         <button
                             data-bind="visible: is_self_enrollment() && is_active() && has_census_data() && self_enrollment_type() == 'case-targeted'"
-                            type="button" class="btn btn-warning pull-right" data-toggle="modal"
+                            type="button" class="btn btn-purple pull-right" data-toggle="modal"
                             data-target="#email-target-links-modal">
                           <i class="ace-icon fa fa-envelope"></i>
                           Email Enroll
@@ -1258,7 +1339,8 @@ we load from the server using ajax at run time (helps with performance, needs to
                             <div class="col-xs-6"><h4 class="bigger-150">Enrollment Records</h4></div>
                             {% if can_download_enrollments %}
                               <div class="col-xs-6">
-                                <a id="export-enrollments-btn" class="btn btn-default pull-right export-enrollments-btn" data-bind="click: get_download_enrollments_dates">
+
+                                <a id="export-enrollments-btn" class="btn btn-default pull-right export-enrollments-btn" data-bind="click: download_enrollments">
                                   <i class="ace-icon glyphicon glyphicon-download-alt"></i>
                                   Download Enrollments
                                 </a>
@@ -1562,9 +1644,9 @@ we load from the server at run time for page speed
                   </div>
                   <div class="col-sm-9">
                     <select class="form-control" data-bind="value: send_type" id="send_type" name="send_type">
-                      <option value="not-sent">Employees who have not been sent a link</option>
-                      <option value='not-enrolled'>Employees who have neither enrolled nor declined</option>
-                      <option value='declined'>Employees who have declined</option>
+                      <option value="not-sent">{{ Owner_nouns }} who have not been sent a link</option>
+                      <option value='not-enrolled'>{{ Owner_nouns }} who have neither enrolled nor declined</option>
+                      <option value='declined'>{{ Owner_nouns }} who have declined</option>
                     </select>
                   </div>
                 </div>
@@ -1619,7 +1701,7 @@ we load from the server at run time for page speed
     </form>
 
 
-    {# Confirm that an employee is not in the census using SSN. #}
+    {# Confirm that an employee/sponsor is not in the census using SSN. #}
     <div id="add-to-census-modal" class="modal fade">
       <div class="modal-dialog">
         <div class="modal-content">
@@ -1635,7 +1717,7 @@ we load from the server at run time for page speed
                   <div class="col-xs-12 ">
                     <div class="form-group">
                       <label for="add-census-ssn-input">
-                        Employee SSN:
+                        {{ Owner_noun }} SSN:
                       </label>
                       <input type="text" id="add-census-ssn-input" name="ssn"
                              data-bind="value: ssn, maskedInput: '999-99-9999', valueUpdate: 'afterkeydown'">
@@ -1651,7 +1733,7 @@ we load from the server at run time for page speed
                       <label>Enrollment State:</label>
                       <limited-state-select
                           params="limiter: case_settings.state_product_override_limiter"></limited-state-select>
-
+                      <div class="enrollment-state-error error"></div>
                     </div>
 
 
@@ -1668,11 +1750,11 @@ we load from the server at run time for page speed
             </div>
 
             <div class="no-matches-panel modal-panel" data-bind="if: no_matches_found">
-              <h3 class="header lighter green">No employee with that SSN was found.</h3>
-              <p>Click 'Begin Enrollment' to create new employee</p>
+              <h3 class="header lighter green">No {{ owner_noun }} with that SSN was found.</h3>
+              <p>Click 'Begin Enrollment' to create new {{ owner_noun }}</p>
             </div>
             <div class="one-match-panel modal-panel" data-bind="if: one_match_found">
-              <h3 class="header lighter green">We found a matching employee record:</h3>
+              <h3 class="header lighter green">We found a matching {{ owner_noun }} record:</h3>
               <strong>
                 <span data-bind="text: matched_employee().first"></span>
                 <span data-bind="text: matched_employee().last"></span>,
@@ -1681,7 +1763,7 @@ we load from the server at run time for page speed
             </div>
             <div class="error-panel modal-panel" data-bind="if: multiple_matches_found">
               <h3 class="header lighter">
-                Matched Employees:
+                Matched {{ Owner_nouns }}:
               </h3>
 
               <div class="row">
@@ -1724,17 +1806,17 @@ we load from the server at run time for page speed
               </button>
 
               <button type="button" class="btn btn-success"
-                      data-bind="click: enroll_from_match, visible: one_match_found">Enroll this employee
+                      data-bind="click: enroll_from_match, visible: one_match_found">Enroll this {{ owner_noun }}
               </button>
-              <button type="button" class="btn btn-warning"
-                      data-bind="click: add_to_census, visible: one_match_found">Enroll new employee
+              <button type="button" class="btn btn-primary"
+                      data-bind="click: add_to_census, visible: one_match_found">Enroll new {{ owner_noun }}
               </button>
 
               <button type="button" class="btn btn-success"
-                      data-bind="click: enroll_from_match, visible: multiple_matches_found">Enroll selected employee
+                      data-bind="click: enroll_from_match, visible: multiple_matches_found">Enroll selected {{ owner_noun }}
               </button>
-              <button type="button" class="btn btn-warning"
-                      data-bind="click: add_to_census, visible: multiple_matches_found">Enroll new employee
+              <button type="button" class="btn btn-primary"
+                      data-bind="click: add_to_census, visible: multiple_matches_found">Enroll new {{ owner_noun }}
               </button>
             </div>
 
@@ -1779,7 +1861,7 @@ we load from the server at run time for page speed
                       </label>
                       <div class="row">
                         <p class="col-xs-10 col-xs-offset-1">
-                          This option adds new records to any existing employee records without updating any existing
+                          This option adds new records to any existing {{ owner_noun }} records without updating any existing
                           data.
                         </p>
                       </div>
@@ -1792,7 +1874,7 @@ we load from the server at run time for page speed
                       </label>
                       <div class="row">
                         <p class="col-xs-10 col-xs-offset-1">
-                          This option adds new records to any existing employee records and also updates existing
+                          This option adds new records to any existing {{ owner_noun }} records and also updates existing
                           records whose SSN match the uploaded data.
                         </p>
                       </div>
@@ -1805,7 +1887,7 @@ we load from the server at run time for page speed
                       </label>
                       <div class="row">
                         <p class="col-xs-10 col-xs-offset-1">
-                          This option first removes all existing employee records in this case, then adds the new
+                          This option first removes all existing {{ owner_noun }} records in this case, then adds the new
                           uploaded data.
                         </p>
                       </div>
@@ -1998,6 +2080,7 @@ we load from the server at run time for page speed
     $(document).ready(function () {
       // Initialize settings viewmodel
       var settings = {
+        is_afba: "{{ is_afba }}",
         default_email_message: "{{ default_email_message|replace('\n', '\\n')|safe }}",
         default_email_subject: "{{ default_email_subject|replace('\n', '\\n')|safe }}",
         default_page_text: "{{ default_page_text|replace('\n', '\\n')|safe }}",

@@ -1,3 +1,4 @@
+import sys
 from flask_script import Manager
 from flask_assets import ManageAssets
 
@@ -40,4 +41,9 @@ manager.add_command("transfer_stormpath", TransferStormpathCommand())
 manager.add_command('assets_upload', AssetUploadCommand())
 
 if __name__ == "__main__":
+    if not app.config['IS_5STAR']:
+        print("This command is only for management of 5Star")
+        if app.config['IS_AFBA']:
+            print("For AFBA, run `manage-afba.py` instead")
+        sys.exit(1)
     manager.run()

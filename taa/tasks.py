@@ -23,6 +23,7 @@ from taa.services.enrollments.csv_export import *
 #app = celery.Celery('tasks')
 #app.config_from_object('taa.config_defaults')
 
+
 # http://stackoverflow.com/questions/12044776/how-to-use-flask-sqlalchemy-in-a-celery-task
 class FlaskCelery(Celery):
     def __init__(self, *args, **kwargs):
@@ -37,6 +38,8 @@ class FlaskCelery(Celery):
         TaskBase = self.Task
         _celery = self
 
+        # This base class for tasks ensures that tasks run inside a proper flask context, which allows sqlalchemy sessions
+        #   to get set up properly when using flask_sqlalchemy.
         class ContextTask(TaskBase):
             abstract = True
 
@@ -162,7 +165,22 @@ def send_admin_error_email(error_message, error_details):
         to=[e for e in errors.error_recipients],
         from_email=u"TAA Error <{}>".format(taa_app.config.get('EMAIL_FROM_ADDRESS', 'errors@5StarEnroll.com')),
         subject=u"5Star Processing Error ({})".format(taa_app.config['HOSTNAME']),
-        html=body,
+        html=body
+    )
+
+
+@celery.task(bind=True)
+def sync_okta(task, notify_email):
+
+    from taa.manage.sync_agents import sync_agents
+    sync_agents()
+
+    mailer = LookupService('MailerService')
+    mailer.send_email(
+        to=[notify_email],
+        from_email=u"eApp Notifications <{}>".format(taa_app.config['EMAIL_FROM_ADDRESS']),
+        subject=u"Sync with Okta Complete ({})".format(taa_app.config['HOSTNAME']),
+        html="The sync with the Okta user data has finished successfully.",
     )
 
 
@@ -389,6 +407,20 @@ def submit_pdf_to_dell_sftp(task, submission_id):
 def transmit_dell_pdf(filename, pdf_bytes):
     sftp_service = LookupService('SFTPService')
     sftp_service.send_file(sftp_service.get_dell_server(), filename, pdf_bytes)
+
+def get_xml_filename(xml_bytes):
+    # Extract AFBA form name
+    form_app_start = xml_bytes.find('<FormInstance id="Form_App')
+    form_name_start = xml_bytes.find('<FormName>', form_app_start)
+    form_name_end = xml_bytes.find('</FormName>', form_name_start)
+    form_name = xml_bytes[form_name_start+len('<FormName>'):form_name_end]
+
+    # Extract unique ID
+    app_id_start = xml_bytes.find('<TransRefGUID>')
+    app_id_end = xml_bytes.find('</TransRefGUID>', app_id_start)
+    app_id = xml_bytes[app_id_start+len('<TransRefGUID>'):app_id_end]
+
+    return '{}_{}.XML'.format(form_name, app_id)
     
 
 @celery.task(bind=True, default_retry_delay=ONE_HOUR)

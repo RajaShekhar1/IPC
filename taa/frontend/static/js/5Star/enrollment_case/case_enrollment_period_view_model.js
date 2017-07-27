@@ -174,14 +174,38 @@ var CaseEnrollmentPeriod = function CaseEnrollmentPeriod(period, effective_date_
       return {
         period_type: self.period_type,
         case_id: self.case_id,
-        start_date: self.get_start_date(),
-        end_date: self.get_end_date()
+        start_date: normalize_date(self.get_start_date()),
+        end_date: normalize_date(self.get_end_date())
       }
     } else {
       return {
         period_type: self.period_type,
-        case_id: self.case_id,
+        case_id: self.case_id
       }
     }
   };
+
+  self.today_between = ko.pureComputed(function () {
+    if (!self.is_open) {
+      return false;
+    }
+
+    return today_between(self.start_date(), self.end_date());
+  });
+
+  self.today_before = ko.pureComputed(function(){
+    if (!self.is_open){
+      return false;
+    }
+
+    return today_before(self.start_date());
+  });
+
+  self.check_between_or_before = ko.pureComputed(function() {
+    return (
+        (self.is_open && !self.is_ongoing && !self.today_between() ) ||
+        (self.is_open && self.is_ongoing && self.today_before())
+    )
+  });
+
 };

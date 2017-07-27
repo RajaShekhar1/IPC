@@ -302,6 +302,12 @@ ko.bindingHandlers.modal = {
   }
 };
 
+ko.bindingHandlers.tooltip = {
+  init: function(element, valueAccessor) {
+    $(element).tooltip(valueAccessor());
+  }
+};
+
 // Simple DataTable binding using a javascript data source (usually observable)
 ko.bindingHandlers.dataTable = {
 
@@ -590,15 +596,17 @@ ko.components.register('loading-modal', {
   '
 });
 
-// Height select
-ko.components.register('height-select', {
-  viewModel: function (params) {
-    var self = this;
+var HeightViewModel = function (params) {
+  var self = this;
 
-    // Data: value is an observable that can be null or an int (inches)
-    self.height = params.value;
-    self.required = params.required || false;
-    self.name_suffix = params.name_suffix || null;
+  // Data: value is an observable that can be null or an int (inches)
+  self.height = params.value;
+  self.name_suffix = ko.unwrap(params.name_suffix) || null;
+  if (ko.unwrap(params.label) === undefined) {
+    self.label = "Height:";
+  } else {
+    self.label = ko.unwrap(params.label);
+  }
 
     self.height_feet_part = ko.observable("" + get_feet_part(self.height()));
     self.height_inches_part = ko.observable("" + get_inches_part(self.height()));
@@ -614,17 +622,26 @@ ko.components.register('height-select', {
       }
     };
 
-    self.height_feet_part.subscribe(self.update_height);
-    self.height_inches_part.subscribe(self.update_height);
-  },
+  self.height_feet_part.subscribe(self.update_height);
+  self.height_inches_part.subscribe(self.update_height);
+};
+
+// Height select
+ko.components.register('height-select', {
+  viewModel: HeightViewModel,
   template: '\
   <label>\
-  Height:\
+  <span data-bind="html: label"></span>\
   <select data-bind="value: height_feet_part, attr: {name: \'height_feet_\'+name_suffix}">\
   <option></option>\
+  <option>0</option>\
+  <option>1</option>\
+  <option>2</option>\
+  <option>3</option>\
   <option>4</option>\
   <option>5</option>\
   <option>6</option>\
+  <option>7</option>\
   </select> Feet\
   </label>\
   <label>\

@@ -20,13 +20,14 @@ def env_get_int(env_name, default_val=None):
     val = os.environ.get(env_name, default_val)
     return int(val) if val is not None else None
 
-
 # production should have DEBUG=False
 DEBUG = env_get_bool('DEBUG', True)
 ALLOW_DUPLICATE_SUBMISSION = env_get_bool('ALLOW_DUPLICATE_SUBMISSION', True)
 ASSETS_DEBUG = env_get_bool('ASSETS_DEBUG', True)
 ASSETS_AUTO_BUILD = env_get_bool('ASSETS_AUTO_BUILD', True)
 SECRET_KEY = env_get_text('SECRET_KEY', 'sSYpq8m5vL68/1VKLQwst6II0PjAIP0cYQ31mzdA')
+
+TARGET_PLATFORM = '5STAR'
 
 # Flask-S3 configuration for uploading static assets to S3
 FLASK_ASSETS_USE_S3 = env_get_bool('FLASK_ASSETS_USE_S3', not ASSETS_DEBUG)
@@ -40,7 +41,7 @@ FLASKS3_FORCE_MIMETYPE = env_get_bool('FLASKS3_FORCE_MIMETYPE', True)
 WTF_CSRF_ENABLED = False
 
 IS_SSL = env_get_bool('IS_SSL', False)
-HOSTNAME = SERVER_NAME = env_get_text('HOSTNAME', "taa.local:5000")
+HOSTNAME = SERVER_NAME = env_get_text('HOSTNAME', "0.0.0.0:5000")
 PREFERRED_URL_SCHEME = 'https' if IS_SSL else 'http'
 
 # Stormpath config
@@ -53,6 +54,16 @@ STORMPATH_COOKIE_DURATION = timedelta(minutes=env_get_int('STORMPATH_COOKIE_DURA
 STORMPATH_ENABLE_REGISTRATION = False
 STORMPATH_ENABLE_LOGIN = False
 STORMPATH_ENABLE_FORGOT_PASSWORD = True
+
+OKTA_DOMAIN = env_get_text('OKTA_DOMAIN', 'https://dev-438975.oktapreview.com')
+OKTA_API_KEY = env_get_text('OKTA_API_KEY', '00G296LHRbQE5xXMXZy9fBQHhddmfnQvfJEHJmOylr')
+
+SESSION_TIMEOUT_MINUTES = env_get_int('SESSION_TIMEOUT_MINUTES', 15)
+
+
+# Okta config
+OKTA_BASEURL = env_get_text('OKTA_BASEURL', 'https://dev-438975.oktapreview.com')
+OKTA_API_KEY_ID = env_get_text('OKTA_API_KEY_ID', '00G296LHRbQE5xXMXZy9fBQHhddmfnQvfJEHJmOylr')
 
 # DocuSign credentials - this is a test account.
 DOCUSIGN_INTEGRATOR_KEY = env_get_text('DOCUSIGN_INTEGRATOR_KEY', 'DELM-0d0ee159-7e61-499f-81ec-5c03bec86ec3')
@@ -80,16 +91,18 @@ else:
 EMAIL_SMTP_SERVER = "smtp.sparkpostmail.com"
 EMAIL_SMTP_PORT = 587
 EMAIL_SMTP_USERNAME = env_get_text('EMAIL_SMTP_USERNAME', "SMTP_Injection")
-EMAIL_SMTP_PASSWORD = env_get_text('EMAIL_SMTP_PASSWORD', "0785e8d2791fd5d23076765cc25de75023aa9620")
-EMAIL_FROM_ADDRESS = env_get_text('EMAIL_FROM_ADDRESS', "enrollment@afba.com")
+EMAIL_FROM_ADDRESS = env_get_text('EMAIL_FROM_ADDRESS', "enrollment@5starenroll.com")
 EMAIL_FROM_NAME = env_get_text('EMAIL_FROM_NAME', '5Star Enrollment')
+ADMIN_EMAIL = env_get_text('ADMIN_EMAIL', "david.meyer@ipconsultinginc.com")
 
-SPARKPOST_API_KEY = env_get_text("SPARKPOST_API_KEY", "0785e8d2791fd5d23076765cc25de75023aa9620")
+
+SPARKPOST_API_KEY = env_get_text("SPARKPOST_API_KEY", "b587ca1bb2181f54e95b5961609fa8a68d2eceab")
 # MANDRILL_API_KEY = env_get_text('MANDRILL_API_KEY', "-h0QL63ppE05jaU3aWvRjg")
 # MANDRILL_DEFAULT_FROM = env_get_text('MANDRILL_DEFAULT_FROM', "enrollment@5StarEnroll.com")
 
 # Celery message broker (background task runner)
-BROKER_URL = env_get_text('CELERY_BROKER_URL', "amqp://")
+
+BROKER_URL = "amqp://jciojlqn:9B4n16392QPRfyG6_fsq-x97BYos6BQG@owl.rmq.cloudamqp.com/jciojlqn" #production
 if env_get_text('CLOUDAMQP_URL'):
     BROKER_URL = env_get_text('CLOUDAMQP_URL')
 # See for config settings for CloudAMQP: https://www.cloudamqp.com/docs/python.html
@@ -102,9 +115,11 @@ CELERY_TIMEZONE = 'US/Eastern'
 CELERY_ACKS_LATE = True
 
 # Database
-DATABASE_NAME = env_get_text('DATABASE_NAME', 'taa')
 SQLALCHEMY_DATABASE_URI = env_get_text('DATABASE_URL',
-                                       u"postgresql://taa:fQj9lJTFbOQUBYo@localhost/{}".format(DATABASE_NAME))
+                                       u"postgresql://taa:TaaTest@0.0.0.0/taa_dev"
+                                       #u"postgresql://ufh747043q25b0:p68e1162ed53cba66b0ec5b1c5862773f5b3020ff1a1e4f25b338520356ae9eee@ec2-34-206-188-162.compute-1.amazonaws.com:5432/dfrasi3di0qauk" #production
+                                    )
+
 SQLALCHEMY_ECHO = env_get_bool('SQLALCHEMY_ECHO', True)
 SQLALCHEMY_TRACK_MODIFICATIONS = env_get_bool('SQLALCHEMY_TRACK_MODIFICATIONS', False)
 SQLALCHEMY_POOL_SIZE = env_get_int('SQLALCHEMY_POOL_SIZE', 5)
@@ -179,10 +194,16 @@ QdjfBCCs5u9F8N/9nkVvk7Lig8QyTiHyhxwI211Q5hrC6AhrMBk=
 -----END PGP PUBLIC KEY BLOCK-----""")
 
 # Paylogix FTP Information
-PAYLOGIX_FTP_HOSTNAME = env_get_text('PAYLOGIX_FTP_HOSTNAME', 'delmarsd.com')
-PAYLOGIX_FTP_USERNAME = env_get_text('PAYLOGIX_FTP_USERNAME', 'testftp')
-PAYLOGIX_FTP_PASSWORD = env_get_text('PAYLOGIX_FTP_PASSWORD', 'wRIu75P12PzVv8JqVVNLh4Nr')
-PAYLOGIX_FTP_DIRECTORY = env_get_text('PAYLOGIX_FTP_DIRECTORY', '')
+# PAYLOGIX_FTP_HOSTNAME = env_get_text('PAYLOGIX_FTP_HOSTNAME', 'paylogix.com')
+# PAYLOGIX_FTP_USERNAME = env_get_text('PAYLOGIX_FTP_USERNAME', 'Star')
+# PAYLOGIX_FTP_PASSWORD = env_get_text('PAYLOGIX_FTP_PASSWORD', 'ZgV52e3E')
+
+PAYLOGIX_FTP_HOSTNAME = env_get_text('PAYLOGIX_FTP_HOSTNAME', 'Bam.ipconsultinginc.com')
+PAYLOGIX_FTP_USERNAME = env_get_text('PAYLOGIX_FTP_USERNAME', 'David.Meyer@ipconsultinginc.com')
+PAYLOGIX_FTP_PASSWORD = env_get_text('PAYLOGIX_FTP_PASSWORD', 'FlipixFlipix2!')
+
+
+PAYLOGIX_FTP_DIRECTORY = env_get_text('PAYLOGIX_FTP_DIRECTORY', 'ToPaylogix')
 PAYLOGIX_PGP_KEY_ID = env_get_text('PAYLOGIX_PGP_KEY_ID', '140A693259BBE0C8')
 PAYLOGIX_PGP_KEY = env_get_text('PAYLOGIX_PGP_KEY', """-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: PGP 7.1
@@ -215,6 +236,10 @@ Sls=
 =tuZL
 -----END PGP PUBLIC KEY BLOCK-----""")
 
+
+
+
+
 # Electronic signature discloure link
 ESIGN_DISCLOSURE_URI = env_get_text('ESIGN_DISCLOSURE_URI', 'http://5starlifeinsurance.com/esign_disclosure')
 
@@ -229,3 +254,4 @@ IS_STP_SIMULATE = env_get_bool('IS_STP_SIMULATE', True)
 STP_URL = env_get_text('STP_URL', 'https://extranetapps-mo.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL')
 #STP_LIVE_URL = env_get_text('STP_LIVE_URL', 'https://extranetapps.tagtpa.com/TxLifeImport/TxLife.asmx?WSDL')
 #STP_URL = STP_DEBUG_URL if IS_STP_DEBUG else STP_LIVE_URL
+IS_AGENT_STATE_LICENSING_ENABLED = False

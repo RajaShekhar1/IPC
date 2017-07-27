@@ -5,12 +5,11 @@ import json
 from decimal import Decimal
 
 import codecs
-from flask import request
+from flask import make_response, request
 from flask.json import JSONEncoder as FlaskJSONEncoder
 from wtforms.fields import SelectField
 from wtforms.widgets import html_params, HTMLString
 from jinja2 import escape
-
 
 
 def get_posted_data():
@@ -18,8 +17,18 @@ def get_posted_data():
     Allows for either JSON or form-encoded requests
     """
     form_data = request.form or request.get_json()
+    if form_data is None:
+        return None
     return {k: form_data[k] for k in form_data}
-    
+
+
+def json_response(status=400, message='Unspecified error', **kwargs):
+    data = {'status': status, 'message': message}
+    data.update(**kwargs)
+    response = make_response(json_encode(data), status,
+                             {'Content-Type': 'application/json'})
+    # response.headers['Content-Type'] = 'application/json'
+    return response
 
 # https://github.com/mattupstate/overholt
 class JSONEncoder(FlaskJSONEncoder):
@@ -107,7 +116,7 @@ class SelectWithDisable(object):
     rendering to make the field useful.
 
     The field must provide an `iter_choices()` method which the widget will
-    call on rendering; this method must yield tuples of 
+    call on rendering; this method must yield tuples of
     `(value, label, selected, disabled)`.
     """
     def __init__(self, multiple=False):

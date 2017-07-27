@@ -5,7 +5,7 @@ from werkzeug.datastructures import MultiDict
 
 from ..services.agents import AgentService
 from ..models import db
-from taa.services.users.UserService import search_stormpath_accounts
+from taa.services.agents import OktaService
 
 agent_service = AgentService()
 
@@ -18,20 +18,20 @@ class SyncAgentsCommand(Command):
 
 
 def sync_agents():
-    all_accounts = search_stormpath_accounts()
+    all_accounts = OktaService().get_all_users()
 
     valid_account_hrefs = set()
 
     for account in all_accounts:
         agent_service.ensure_agent_in_database(account)
-        valid_account_hrefs.add(account.href)
+        valid_account_hrefs.add(account.id)
 
     db.session.commit()
 
     # Second pass to mark as deleted accounts that are not in the stormpath database
     agents = agent_service.all()
     for agent in agents:
-        if agent.stormpath_url not in valid_account_hrefs:
+        if agent.okta_id not in valid_account_hrefs:
             agent.is_deleted = True
 
     db.session.commit()

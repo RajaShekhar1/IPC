@@ -1,3 +1,4 @@
+from collections import defaultdict
 from .states import all_statecodes
 
 from taa.helpers import JsonSerializable

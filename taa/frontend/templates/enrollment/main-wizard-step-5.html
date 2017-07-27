@@ -9,7 +9,7 @@
 
       <div id="eeBeneficiaryBlock" data-bind="visible: did_select_employee_coverage()">
         <h4 class="lighter block green">
-          Employee Beneficiary
+          {{ Owner_noun }} Beneficiary
         </h4>
 
         <div class="row form-group" id="eeHasSpouseAsBeneficiaryOption"
@@ -18,7 +18,7 @@
                             <span data-bind="visible: $root.should_show_contingent_beneficiary">
                                 Primary
                             </span>
-            Beneficiary of Employee Coverage is
+            Beneficiary of {{ Owner_noun }} Coverage is
           </label>
 
           <div class="col-xs-12 col-sm-7">
@@ -97,12 +97,12 @@
       </div>
       <!-- /eeBeneficiaryBlock -->
 
-      {# Employee contingent beneficiary #}
+      {# Employee/sponsor contingent beneficiary #}
       <div id="eeContingentBeneficiaryBlock"
            data-bind="visible: did_select_employee_coverage() && should_show_contingent_beneficiary()">
 
         <div class="row form-group">
-          <label class="control-label col-xs-12 col-sm-5 no-padding-right">Contingent Beneficiary of Employee Coverage
+          <label class="control-label col-xs-12 col-sm-5 no-padding-right">Contingent Beneficiary of {{ Owner_noun }} Coverage
             is </label>
 
           <div class="col-xs-12 col-sm-7">
@@ -204,7 +204,7 @@
               <input value="spouse" type="radio"
                      class="inline ace"
                      data-bind="checked: spouse_beneficiary_type, attr: {name: 'spBeneficiary'+$index()}"/>
-              <span class="lbl"> Employee (<span
+              <span class="lbl"> {{ Owner_noun }} (<span
                   data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
             </label>
 
@@ -292,7 +292,7 @@
               <input value="spouse" type="radio"
                      class="inline ace"
                      data-bind="checked: spouse_contingent_beneficiary_type, attr: {name: 'spContBeneficiary'+$index()}"/>
-              <span class="lbl"> Employee (<span
+              <span class="lbl"> {{ Owner_noun }} (<span
                   data-bind="text: $root.employee().first"></span>)&nbsp;&nbsp;&nbsp; </span>
             </label>
 
@@ -360,11 +360,12 @@
       </div>
       <!-- /spContBeneficiaryBlock -->
 
-      <div id="onlyChildCoverageBeneficiaryStmt" data-bind="visible: did_select_children_coverage()">
+
+      <div id="onlyChildCoverageBeneficiaryStmt" data-bind="visible: !product.can_children_have_beneficiaries() && did_select_children_coverage()">
         <h4 class="lighter block green">Child Beneficiary</h4>
                     <span class="text-primary bigger-110 center">
                       <i class="icon-info-sign"></i>
-                      Beneficiary of Child coverage will be designated as the Employee unless otherwise noted via separate written communication with 5Star's Administrative office.
+          Beneficiary of Child coverage will be designated as the {{ Owner_noun }} unless otherwise noted via separate written communication with {{ company_name }}'s Administrative office.
                     </span>
       </div>
 
@@ -374,7 +375,7 @@
     </div>
     <!--/ko-->
 
-    <div data-bind="visible: !should_show_step_5()">
+    <div data-bind="visible: !$root.should_show_step_5()">
       <h3 class="lighter block green text-center">This step does not apply to this enrollment.</h3>
     </div>
 

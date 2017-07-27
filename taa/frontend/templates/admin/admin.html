@@ -24,6 +24,13 @@
 {% set base_url =   url_for('updateUser') + "?user=" %}
 
 <div class="col-xs-12">
+  <div class="row">
+      <div class="col-xs-12">
+          <button id="sync-okta" class="pull-right btn btn-default btn-sm" style="margin-left: 1em"><i class="fa fa-refresh"></i> Sync User data from Okta</button>
+          <a href="/new-user" class="pull-right btn btn-primary btn-sm"><i class="fa fa-plus"></i> New User</a>
+      </div>
+  </div>
+      <br>
   <div class="table-responsive">
     <table id='admin-agents-list' class="table table-striped table-bordered table-hover">
       <thead>
@@ -42,17 +49,17 @@
 	{% for acc in accounts %}
 	<tr>
 	  <td>
-      <a href={{base_url + acc['email']}}>{{ acc['fname']}}</a>
+      <a href={{base_url + acc['email_url']}}>{{ acc['fname']}}</a>
 	  </td>
     <td>
-      <a href={{base_url + acc['email']}}>{{ acc['lname']}}</a>
+      <a href={{base_url + acc['email_url']}}>{{ acc['lname']}}</a>
     </td>
 	  <td>{{acc['agency']}}</td>
 	  <td class="hidden-480">{{acc['email']}}</td>
 	  <td>{{acc['agent_code']}}</td>
 	  <td class="hidden-480">{{acc['signing_name']}}</td>
 	  <td>
-          <a href={{base_url + acc['email']}}>
+          <a href={{base_url + acc['email_url']}}>
             {% if acc['status']=='Activated' %}
               <span class="label label-success">Activated</span>
             {% elif acc['status'] == 'Not Activated' %}
@@ -87,6 +94,13 @@
     // Should be "Status desc", "Last", "First" by default
     "order": [[6, "desc"], [1, "asc"], [0, "asc"]]
   });
+  $('#sync-okta').click(function() {
+      send_json_data("POST", "/sync_okta", {}, function() {
+          bootbox.alert("The sync operation has been scheduled. An email will be sent to your account when the sync with Okta has completed.")
+      }, function() {
+          alert("The sync operation failed.")
+      })
+  })
   </script>
 
 <!-- page-specific footer scripts -->

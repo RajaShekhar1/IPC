@@ -3,6 +3,7 @@
   Enrolling:
   <ul>
       {% for product in products -%}
+        {% if product.get_brochure_name() %}
         <li>
             {% if product.get_brochure_url() -%}
               <a href="{{ product.get_brochure_url() }}" target="_blank">
@@ -12,6 +13,7 @@
               </a>
             {% endif -%}
         </li>
+        {% endif %}
       {% endfor -%}
   </ul>
 </div>

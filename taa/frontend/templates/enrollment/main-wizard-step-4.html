@@ -21,8 +21,8 @@
         </label>
 
         <div class="col-xs-12 col-sm-10">
-          <input type="text" id="spFName2" data-bind="textInput: spouse().first" placeholder="First Name"/>
-          <input type="text" id="spLName2" data-bind="textInput: spouse().last" placeholder="Last Name"/>
+          <input type="text" id="spFName2" data-bind="textInput: spouse().first, maxlength: 'SP-FNAME'" placeholder="First Name"/>
+          <input type="text" id="spLName2" data-bind="textInput: spouse().last, maxlength: 'SP-LNAME'" placeholder="Last Name"/>
         </div>
       </div>
 
@@ -58,7 +58,7 @@
       <div class="space-2"></div>
       <div class="clearfix"></div>
 
-      <div>
+      <div data-bind="if: should_show_spouse_separate_address">
         <div class="form-group">
 
           <label class="control-label col-xs-12 col-sm-2 no-padding-right">Mailing Address</label>
@@ -66,7 +66,7 @@
           <div class="col-xs-12 col-sm-9">
             <label>
               <input type="checkbox" class="ace" data-bind="checked: is_spouse_address_same_as_employee">
-              <span class="lbl padding-8">same as Employee</span>
+              <span class="lbl padding-8">same as {{ Owner_noun }}</span>
             </label>
           </div>
         </div>
@@ -115,14 +115,14 @@
           </div>
         </div>
       </div>
-
+      <div data-bind="if: should_show_spouse_separate_email">
       <div class="form-group">
         <label class="control-label col-xs-12 col-sm-2 no-padding-right" for="spEmail">Email Address:</label>
 
         <div class="col-xs-12 col-sm-9">
           <label>
             <input type="checkbox" class="ace" data-bind="checked: is_spouse_email_same_as_employee">
-            <span class="lbl padding-8">same as Employee</span>
+              <span class="lbl padding-8">same as {{ Owner_noun }}</span>
           </label>
         </div>
 
@@ -136,6 +136,7 @@
 
               <input type="email" name="spEmail" id="spEmail" class="col-xs-12 col-sm-6"
                      data-bind="textInput: spouse().email"/>
+              </div>
             </div>
           </div>
         </div>
@@ -158,9 +159,9 @@
             </label>
 
             <div class="col-xs-12 col-sm-6">
-              <input type="text" data-bind="textInput: first, attr: {id: 'child-first-'+$index()}"
+              <input type="text" data-bind="textInput: first, attr: {id: 'child-first-'+$index()}, maxlength: 'INSURED-FNAME'"
                      placeholder="First Name"/>
-              <input type="text" data-bind="textInput: last" placeholder="Last Name"/>
+              <input type="text" data-bind="textInput: last, maxlength: 'INSURED-LNAME'" placeholder="Last Name"/>
             </div>
           </div>
 
@@ -170,9 +171,9 @@
               SSN
             </label>
 
-            <div class="col-xs-12 col-sm-9">
-              <input type="text" class="col-xs-12 col-sm-5" data-bind="textInput: ssn, maskedInput: '999-99-9999',
-										attr: {id: 'child-ssn-'+$index()}
+            <div class="col-xs-12 col-sm-10">
+              <input type="text" class="child-ssn error-after" data-bind="textInput: ssn, maskedInput: '999-99-9999',
+										attr: {id: 'child-ssn-'+$index(), name: 'child-ssn-'+$index()}
 										"/>
             </div>
           </div>
@@ -206,7 +207,7 @@
 	    
 	     <span class="text-primary bigger-110 ">
 	       <i class="icon fa fa-info-sign"></i>
-	       Employee will be the Owner of any child<span data-bind="visible: $root.should_allow_grandchildren">/grandchild</span>  policy(ies)
+	       {{ Owner_noun }} will be the Owner of any child<span data-bind="visible: $root.should_allow_grandchildren">/grandchild</span>  policy(ies)
 	     </span>
 
     </div>

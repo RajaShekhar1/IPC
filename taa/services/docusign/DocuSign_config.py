@@ -1,23 +1,16 @@
-from flask.ext.stormpath import user
 
 from taa.services import LookupService
-from taa.config_defaults import (
-    DOCUSIGN_API_ACCOUNT_ID,
-    DOCUSIGN_API_ENDPOINT,
-    DOCUSIGN_API_PASSWORD,
-    DOCUSIGN_API_USERNAME,
-    DOCUSIGN_INTEGRATOR_KEY,
-)
+from taa import app
 from taa.services.products.product_forms import ProductFormService
 
 # Docusign credential info - currently only used by Group CI with the older code.
-apiUserName = DOCUSIGN_API_USERNAME
-apiPassword = DOCUSIGN_API_PASSWORD
-apiAccountID = DOCUSIGN_API_ACCOUNT_ID
+apiUserName = app.config['DOCUSIGN_API_USERNAME']
+apiPassword = app.config['DOCUSIGN_API_PASSWORD']
+apiAccountID = app.config['DOCUSIGN_API_ACCOUNT_ID']
 # dsServer = "demo.docusign.net"
-integratorKey = DOCUSIGN_INTEGRATOR_KEY
+integratorKey = app.config['DOCUSIGN_INTEGRATOR_KEY']
 # Strip off the trailing slash for compatibility with TAA 1.0 code
-baseUrl = DOCUSIGN_API_ENDPOINT[:-1]
+baseUrl = app.config['DOCUSIGN_API_ENDPOINT'][:-1]
 
 
 # "https://" + dsServer + "/restapi/v2/accounts/" + apiAccountID

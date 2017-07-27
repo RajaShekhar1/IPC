@@ -7,8 +7,7 @@ import json
 
 from flask import (abort, jsonify, render_template, request,
                    send_from_directory, session, url_for, redirect, Response)
-from flask.ext.stormpath import login_required
-from flask_stormpath import current_user
+from flask_login import current_user, login_required
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap, build_callcenter_callback_url, \
     build_callback_url
 
@@ -102,6 +101,13 @@ def enroll_start():
 #         enrollment_riders=enrollment_riders,
 #     )
 
+@app.route('/wizard2', methods=['POST'])
+def test_wizard2():
+    
+    return render_template(
+        'enrollment/wizard/main.html',
+        
+    )
 
 @app.route('/in-person-enrollment', methods=['POST'])
 @login_required
@@ -137,7 +143,7 @@ def in_person_enrollment():
         })
 
 
-def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False):
+def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=False, error=False, error_message=None):
     # As part of address debugging, log the user-agent.
     user_agent = request.user_agent
     print(
@@ -291,31 +297,39 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
     product_options = product_service.filter_products_by_enrollment_state(product_options, state, case)
     product_settings = case.product_settings if case.product_settings else {}
     product_effective_date_list = get_product_effective_dates(product_settings, effective_date)
+
+    # Include minimal agent data
+    case_agents = get_agent_split_options(case)
+    
+    from taa.services.enrollments.enrollment_application_coverages import EnrollmentApplicationCoverageService
+    
+    case_data={
+        'id': case.id,
+        'situs_state': state if state != 'XX' else None,
+        'situs_city': city,
+        'enroll_city': city,
+        'company_name': company_name,
+        'group_number': group_number,
+        'payment_mode': payment_mode,
+        'product_settings': product_settings,
+        'product_effective_date_list': product_effective_date_list,
+        'account_href': current_user.get_id(),
+        'record_id': record_id,
+        'product_height_weight_tables': height_weight_tables,
+        'occupations': occupations,
+        'omit_actively_at_work': case.omit_actively_at_work,
+        'include_bank_draft_form': case.include_bank_draft_form,
+        'include_cover_sheet': case.include_cover_sheet,
+        'is_call_center': case.should_use_call_center_workflow,
+        'effective_date_settings': case.effective_date_settings,
+        'effective_date': effective_date,
+        'enroller_selects': enroller_selects,
+    }
+
     wizard_data = dict(
-        is_in_person=not is_self_enroll,
         is_self_enroll=is_self_enroll,
-        case_data={
-            'id': case.id,
-            'situs_state': state if state != 'XX' else None,
-            'situs_city': city,
-            'enroll_city': city,
-            'company_name': company_name,
-            'group_number': group_number,
-            'payment_mode': payment_mode,
-            'product_settings': product_settings,
-            'product_effective_date_list': product_effective_date_list,
-            'account_href': current_user.get_id(),
-            'record_id': record_id,
-            'product_height_weight_tables': height_weight_tables,
-            'occupations': occupations,
-            'omit_actively_at_work': case.omit_actively_at_work,
-            'include_bank_draft_form': case.include_bank_draft_form,
-            'include_cover_sheet': case.include_cover_sheet,
-            'is_call_center': case.should_use_call_center_workflow,
-            'effective_date_settings': case.effective_date_settings,
-            'effective_date': effective_date,
-            'enroller_selects': enroller_selects,
-        },
+        is_in_person=not is_self_enroll,
+        case_data=case_data,
         applicants=applicants,
         products=[serialize_product_for_wizard(p, soh_questions, case) for p in
                   product_options],
@@ -336,7 +350,35 @@ def _setup_enrollment_session(case, record_id=None, data=None, is_self_enroll=Fa
         states=get_states(),
         nav_menu=get_nav_menu(),
         esign_disclosure_uri=app.config.get('ESIGN_DISCLOSURE_URI'),
+        error=error,
+        error_message=error_message,
+        should_show_second_agent_selection=can_show_wizard_agent_split_section(case, wizard_data['is_self_enroll']),
     )
+
+
+def get_agent_split_options(case):
+    "Show the agents that should show down in the app-level agent split."
+    
+    sorted_agents = sorted(case.dynamic_split_agents, key=lambda a: a.last)
+    
+    return [dict(id=agent.id, name=u'{} - {}'.format(agent.name(), agent.agent_code), code=agent.agent_code)
+            for agent in sorted_agents]
+    
+
+
+def can_show_wizard_agent_split_section(case, is_self_enroll):
+    
+    # Not availabale for 5Star or self-enroll use
+    if not app.config['IS_AFBA'] or is_self_enroll:
+        return False
+    
+    # Must have dynamic splits turned on
+    from taa.services.cases import Case
+    if case.agent_split_method != Case.SPLIT_METHOD_DYNAMIC:
+        return False
+    
+    # Must have at least one agent available
+    return case.dynamic_split_agents.count() > 0
 
 
 def get_product_effective_dates(product_settings, effective_date):
@@ -520,18 +562,21 @@ def submit_wizard_data():
     try:
         enrollment = process_wizard_submission(case, wizard_results)
 
+        if enrollment:
         # Store the enrollment record ID in the session for now so we can access it on the landing page.
-        session['enrollment_application_id'] = enrollment.id
+            session['enrollment_application_id'] = enrollment.id
 
         if are_all_products_declined(wizard_results):
             return get_declined_response(wizard_results)
 
-        accepted_products = get_accepted_products(case,
-                                                  get_accepted_product_ids(json.loads(enrollment.standardized_data)))
-        if any(p for p in accepted_products if p.does_generate_form()):
+        if not is_preview:
+            # Submit background tasks for processing
+            accepted_products = get_accepted_products(case,
+                                                      get_accepted_product_ids(json.loads(enrollment.standardized_data)))
+            if any(p for p in accepted_products if p.does_generate_form()):
             # Queue this call for a worker process to handle.
-            enrollment_submission_service = LookupService('EnrollmentSubmissionService')
-            enrollment_submission_service.submit_wizard_enrollment(enrollment)
+                enrollment_submission_service = LookupService('EnrollmentSubmissionService')
+                enrollment_submission_service.submit_wizard_enrollment(enrollment)
 
         result = {
             'error': False,
@@ -589,6 +634,9 @@ def fix_missing_address_bug(wizard_results):
 
 
 def process_wizard_submission(case, wizard_results):
+    if not wizard_results:
+        return
+    
     # Standardize the wizard data for submission processing
     standardized_data = enrollment_import_service.standardize_wizard_data(wizard_results)
     enrollment_data = EnrollmentDataWrap(standardized_data[0], case)
@@ -680,17 +728,18 @@ def check_submission_status():
 
 
 def get_declined_response(received_enrollment_data):
+    app_type = 'inperson'
+    if received_enrollment_data and received_enrollment_data[0]["method"] == EnrollmentApplication.METHOD_INPERSON:
+        app_type = 'email'
     redirect_url = url_for('ds_landing_page',
                            event='decline',
-                           name=received_enrollment_data[0]['employee']['first'],
-                           type='inperson' if received_enrollment_data[0][
-                                                  "method"] == EnrollmentApplication.METHOD_INPERSON else 'email',
-                           )
+                           name=received_enrollment_data[0]['employee']['first'] if received_enrollment_data else 'Applicant',
+                           type=app_type)
     return jsonify(status="declined", redirect_url=redirect_url)
 
 
 def are_all_products_declined(standardized_data):
-    return all(map(lambda data: data.get('did_decline'), standardized_data))
+    return len(standardized_data) == 0 or all(map(lambda data: data.get('did_decline'), standardized_data))
 
 
 def get_accepted_product_ids(standardized_data):
@@ -711,10 +760,11 @@ def get_accepted_products(case, accepted_product_ids):
 
 
 def get_enrollment_agent(case):
+    if current_user.is_anonymous():
     # For self-enroll situations, the owner agent is used
-    agent = agent_service.get_logged_in_agent()
-    if agent is None:
         agent = case.owner_agent
+    else:
+        agent = agent_service.get_logged_in_agent()
     return agent
 
 

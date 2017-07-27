@@ -78,7 +78,7 @@
                     <ApplicationInfo>
                         <SignatureInfo>
                             <SignatureRoleCode tc="18">Owner</SignatureRoleCode>
-                            <SignatureDate>{{ primary_agent.signature_date.strftime('%Y-%m-%d') }}</SignatureDate>
+                            <SignatureDate>{{ enrollee.signature_date.strftime('%Y-%m-%d') }}</SignatureDate>
                             <SignatureCity>{{ policy.enroll_city }}</SignatureCity>
                             <SignatureState tc="{{ policy.enroll_state_code }}">{{ policy.enroll_state }}</SignatureState>
                             <SignatureOK tc="1">True</SignatureOK>
@@ -341,7 +341,7 @@
             <FormInstance>
                 <FormName>Application</FormName>
                 <Attachment>
-                    <AttachmentData>{{ encoded_pdf }}</AttachmentData>
+                    <AttachmentData>{{ encoded_attachment }}</AttachmentData>
                     <ImageType tc="1">PDF</ImageType>
                 </Attachment>
             </FormInstance>

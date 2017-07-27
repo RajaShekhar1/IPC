@@ -3,10 +3,10 @@ from datetime import datetime
 
 import re
 from flask import Blueprint, request, abort, make_response, Response
-from flask_stormpath import current_user, groups_required, login_required
+from flask_login import current_user, login_required
 from taa import JSONEncoder
-from taa.api.api_helpers import parse_dates_as_str_from_request
 
+from taa import app, groups_required
 from taa.core import TAAFormError, db
 from taa.helpers import get_posted_data
 from taa.api import route
@@ -22,7 +22,6 @@ from taa.services.cases import create_enrollment_records_csv
 from taa.services.enrollments.models import EnrollmentApplication
 from taa.services import LookupService
 
-
 bp = Blueprint('cases', __name__, url_prefix='/cases')
 
 case_service = LookupService('CaseService')
@@ -34,7 +33,7 @@ self_enrollment_link_service = LookupService('SelfEnrollmentLinkService')
 enrollment_application_service = LookupService('EnrollmentApplicationService')
 """:type: taa.services.enrollments.EnrollmentApplicationService"""
 
-api_groups = ['agents', 'home_office', 'admins']
+api_groups = ['agents', 'home_office', 'admins', 'case_admins']
 
 
 # Case management endpoints
@@ -69,9 +68,9 @@ def create_case():
     data = get_posted_data()
 
     # Determine the owning agent
-    if agent_service.can_manage_all_cases(current_user):
+    if (agent_service.can_manage_all_cases(current_user)):
         agent = None
-    elif agent_service.is_user_agent(current_user):
+    elif agent_service.is_user_agent(current_user) or agent_service.is_user_case_admin(current_user):
         # The creating agent is the owner by default
         agent = agent_service.get_logged_in_agent()
         data['agent_id'] = agent.id
@@ -88,6 +87,7 @@ def create_case():
     form = NewCaseForm(form_data=data)
     if agent:
         form.agent_id.data = agent.id
+
     if form.validate_on_submit():
         data['created_date'] = datetime.now()
         return case_service.create_new_case(**data)
@@ -110,21 +110,17 @@ def update_case(case_id):
 
     # Allow the owner agent to be updated only if an admin
     if 'agent_id' in data:
-        if not is_admin:
-            del data['agent_id']
-        else:
-            data['agent_id'] = int(data['agent_id']) if (
-                data['agent_id'] and data['agent_id'].isdigit()) else None
-            form.agent_id.data = data['agent_id']
+        data['agent_id'] = int(data['agent_id']) if (
+            data['agent_id'] and data['agent_id'].isdigit()) else None
+        form.agent_id.data = data['agent_id']
     form.products.data = [p['id'] for p in data['products']]
     if form.validate_on_submit():
         # Update products
         case_service.update_products(case, data['products'])
         # Update partner agents
-        if is_admin:
-            case_service.update_partner_agents(
-                case, [a for a in agent_service.get_all(
-                    *data['partner_agents'])])
+        case_service.update_partner_agents(
+            case, [a for a in agent_service.get_all(
+                *data['partner_agents'])])
 
         # Update the product settings
         case_service.update_product_settings(case, data['product_settings'])

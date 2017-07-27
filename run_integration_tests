@@ -1,4 +1,5 @@
 #!/bin/bash -e
+export TARGET_PLATFORM=TAA
 export SQLALCHEMY_ECHO=False
 DATABASE_NAME=taa-test behave tests/integration_features/api
 DATABASE_NAME=taa-test nosetests tests/integration_tests

@@ -42,7 +42,7 @@ class CensusRecordService(DBService):
                 for field in CensusRecordParser.all_possible_fields]
 
     def get_csv_row_from_db_row(self, census_record):
-        return [getattr(census_record, field.database_name)
+        return [getattr(census_record, field.database_name) if getattr(census_record, field.database_name) is not None else u''
          for field in CensusRecordParser.all_possible_fields
         ]
 

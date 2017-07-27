@@ -2,7 +2,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   var self = this;
 
   _.defaults(case_data, {
-    omit_actively_at_work: false,
+    omit_actively_at_work: settings.is_afba,
     requires_paylogix_export: false
   });
 
@@ -10,6 +10,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   self.case_token = case_data.case_token;
   self.product_rate_levels = product_rate_levels || {};
   self.state_override_view_models = ko.observableArray([]);
+
+  self.is_afba = settings.is_afba;
 
   self.product_state_mapping = ko.computed(function () {
     // Start with the default product-state map.
@@ -57,8 +59,11 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       return _.includes(_.map(case_data.products, "id"), p.id);
     })
     .value();
-  initially_selected_products = _.sortBy(initially_selected_products, function (product) {
-    return product.ordinal;
+
+  var initially_selected_products = _.map(case_data.products, function(product) {
+    return _.find(product_choices, function(pc) {
+      return pc.id === product.id;
+    })
   });
 
   self.products = ko.observableArray(initially_selected_products);
@@ -169,11 +174,9 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
   });
 
   self.unselected_products = ko.pureComputed(function () {
-      var sorted_unselected_productes = _.sortBy(_.difference(self.product_choices(), self.products()), function (product) {
-          //return product.ordinal;
-          return product.name;
-      });
-      return sorted_unselected_productes;
+    return _.sortBy(_.difference(self.product_choices(), self.products()), function (product) {
+      return product.ordinal;
+    });
   });
 
   self.selected_product = ko.observable(null);
@@ -292,6 +295,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
       }).value();
     self.update_product_ordinals();
   };
+  // Make sure all products have an ordinal when page loads.
+  self.update_product_ordinals();
   //endregion
 
   //region Product Rate Levels
@@ -316,7 +321,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
 
   self.situs_city = ko.observable(case_data.situs_city);
-
 
   self.state_choices = settings.all_states;
   self.situs_state = ko.observable(get_state_from_statecode(case_data.situs_state));
@@ -485,10 +489,10 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   };
 
-  self.partner_agents = ko.observable(
-    (case_data.partner_agents) ? _.map(_.pluck(case_data.partner_agents, "id"), function (id) {
-      return id + "";
-    }) : []);
+  self.partner_agents = ko.observableArray( (case_data.partner_agents) ? _.map(_.pluck(case_data.partner_agents, "id"), function(id) {
+    // widget requires strings
+    return ""+id;
+  }) : []);
 
   // Disable bad combos of states and products
   self.state_product_limiter = new ProductStatesLimiterViewModel(self.product_state_mapping, self.situs_state, self.state_choices, self.products, self.product_choices);
@@ -1020,28 +1024,6 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return data;
   };
 
-  // Creates and removes viewmodels as self.products() changes, retaining existing viewmodels,
-  // so that data remains consistent
-  // self.update_state_override_view_models = ko.computed(function () {
-  //   var viewmodels = self.state_override_view_models();
-  //
-  //   _.each(self.products(), function (product) {
-  //     var vm_ids = _.map(self.state_override_view_models(), function (vm) {
-  //       return  _.get(vm, 'id')
-  //     });
-  //     if (vm_ids.indexOf(product.id) !== -1) {
-  //       viewmodels.push(new ProductOverrideViewModel(product, case_data, settings.state_overrides));
-  //     }
-  //   });
-  //
-  //   viewmodels = _.filter(viewmodels, function (vm) {
-  //     return _.find(self.products(), function (prod) {
-  //       return prod.id == vm.id;
-  //     });
-  //   });
-  //
-  //   self.state_override_view_models(viewmodels);
-  // });
 
   self.get_state_override_view_model = function (product) {
     var vm = _.find(self.state_override_view_models(), function (view) {
@@ -1133,6 +1115,12 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     };
   }
 
+  self.case_admin = ko.pureComputed(function () {
+    return _.find(settings.active_case_admins, function (elem) {
+      return elem.id === parseInt(self.case_admin_id(), 10);
+    });
+  });
+
   self.owner_agent = ko.pureComputed(function () {
     return _.find(settings.active_agents, function (elem) {
       return elem.id === parseInt(self.owner_agent_id(), 10);
@@ -1141,7 +1129,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
   self.partner_agent_list = ko.pureComputed(function () {
     return settings.active_agents.filter(function (elem) {
-      return self.partner_agents().indexOf(String(elem.id)) !== -1;
+      return self.partner_agents.indexOf(""+elem.id) !== -1;
     });
   });
 
@@ -1876,6 +1864,7 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
     return htmlstr;
   }
 
+
   self.serialize_self_enroll = function () {
     self.emailSettings.message(removeHarmfulEmailTags(self.emailSettings.message()));
     var settings = $.extend({}, self.emailSettings, self.landing);
@@ -1947,8 +1936,8 @@ var CaseViewModel = function CaseViewModel(case_data, product_choices, can_edit_
 
       // Update the logo image if it was changed
       var file_select = $("#cover-logo-file-input").get(0);
+      if (file_select && file_select.files.length === 1) {
       var files = file_select.files;
-      if (files.length === 1) {
         // Add the file upload to the request.
         var form_data = new FormData();
         form_data.append('cover-logo', files[0], files[0].name);

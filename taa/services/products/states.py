@@ -62,5 +62,7 @@ states_by_statecode = {s['statecode']: s for s in all_states}
 statecodes_by_state = {s['name']: s for s in all_states}
 
 
-def get_all_states():
-    return all_states
+def get_all_states(only_include_states=None):
+    if only_include_states is None:
+        return all_states
+    return filter(lambda s: s['statecode'] in only_include_states, all_states)

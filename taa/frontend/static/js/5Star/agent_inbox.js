@@ -24,6 +24,13 @@ var agent_inbox = (function() {
     self.existing_insurance = ko.observable(false);
     self.replacing_insurance = ko.observable(false);
 
+    self.agent_split_selection = ko.observable(null);
+    self.agent_split_options = ko.observableArray();
+
+    self.should_show_second_agent_selection = ko.pureComputed(function() {
+      return self.agent_split_options().length > 0;
+    });
+
     self.sign_envelope = function() {
 
       // Get the envelope ID from the button.
@@ -46,6 +53,10 @@ var agent_inbox = (function() {
         // Show signing ceremony popup
         $("#modal-signing-enroller-in-person").modal("show");
 
+        }).fail(function() {
+          bootbox.hideAll();
+          bootbox.alert("There was a problem fetching the application data from the server.");
+        });
       }).fail(function() {
         bootbox.hideAll();
         bootbox.alert("There was a problem fetching the application data from the server.");
@@ -309,7 +320,8 @@ var agent_inbox = (function() {
     if (options && options.from_inbox) {
       url += "?from=inbox";
     }
-    var req = $.post(url
+    var req = $.ajax({url:url, method: 'POST', processData: false, contentType: 'application/json',
+          data: JSON.stringify(options)}
       ).success(function(data) {return handle_signing_redirect(envelope_id, data)}
       ).error(handle_signing_failure);
 

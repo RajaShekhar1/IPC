@@ -1,3 +1,4 @@
+from collections import defaultdict
 import json
 
 from taa import db
@@ -6,6 +7,7 @@ from taa.services.products.plan_codes import PLAN_CODE_STATIC_BENEFIT, PLAN_CODE
     PLAN_CODES_GENERATES_FORM
 from taa.services.products.product_forms import ProductFormService
 from taa.services.products.riders import RiderService
+from decimal import Decimal
 
 product_form_service = ProductFormService()
 
@@ -107,7 +109,11 @@ class Product(ProductJsonSerializable, db.Model):
 
     def can_submit_stp(self):
         # FPP is currently the only product that supports STP to Dell
-        return self.is_fpp()
+        return self.is_fpp() or self.is_afba()
+
+    def is_afba(self):
+        return self.get_base_product_code() in ['ESP', 'FedTerm', 'Child LT16', 'LT121',
+                                                'Member 2K', 'Member 5K']
 
     def is_group_ci(self):
         return self.get_base_product_code() == PLAN_CODE_GROUP_CI

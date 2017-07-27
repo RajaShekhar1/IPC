@@ -2,18 +2,21 @@ from datetime import datetime, time
 from io import BytesIO
 import json
 import traceback
+from datetime import datetime
+from io import BytesIO
 from zipfile import ZipFile
 
+import os
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
-from taa import db, tasks
+from taa import db, tasks, app
 from taa.config_defaults import DOCUSIGN_CC_RECIPIENTS
+from taa.services import LookupService
 from taa.services import RequiredFeature
 from taa.services.docusign.docusign_envelope import EnrollmentDataWrap
 from taa.services.docusign.service import AgentDocuSignRecipient, EmployeeDocuSignRecipient, CarbonCopyRecipient
 from taa.services.enrollments.models import EnrollmentImportBatchItem, EnrollmentSubmission, SubmissionLog, \
     EnrollmentApplication
-from taa.services import LookupService
 
 
 class EnrollmentSubmissionService(object):
@@ -75,7 +78,6 @@ class EnrollmentSubmissionService(object):
         
         return submission
             
-    
     def get_submission_applications(self, submission_id):
         submission = self.get_submission(submission_id)
         return submission.enrollment_applications
@@ -206,8 +208,19 @@ class EnrollmentSubmissionService(object):
         zipstream.seek(0)
         return zipstream
 
+    def create_pdf_bytes_from_components(self, pdf_components):
+        pdfs = [c.generate_pdf_bytes() for c in pdf_components]
+
+        writer = PdfFileWriter()
+        for pdf in pdfs:
+            reader = PdfFileReader(BytesIO(pdf))
+            writer.appendPagesFromReader(reader)
+
+        output = BytesIO()
+        writer.write(output)
+        return output.getvalue()
+
     def submit_to_dell_SFTP_inbox(self, enrollment_application):
-        
         # Find each product that used to go to docusign and submit it to the Dell SFTP dropbox.
         
         product_data_list = self.enrollment_application_service.get_wrapped_enrollment_data(enrollment_application)

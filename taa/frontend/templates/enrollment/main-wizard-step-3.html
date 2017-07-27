@@ -2,7 +2,7 @@
 <div class="step-pane" id="step3"  data-step="3">
   <form class="form-horizontal" id="step3-form">
 
-    <h3 class="lighter block green">Employee information</h3>
+    <h3 class="lighter block green">{{ Owner_noun }} information</h3>
 
     <div class="form-group">
       <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="companyName">Company Name</label>
@@ -19,14 +19,14 @@
 
     <div class="row form-group">
       <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeFName2">
-        Employee Name
+        {{ Owner_noun }} Name
       </label>
 
       <div class="col-xs-12 col-sm-9">
         <input type="text" id="eeFName2" name="eeFName2"
-               data-bind="textInput: employee().first" placeholder="First Name"/>
+               data-bind="textInput: employee().first, maxlength: 'MBR-FNAME'" placeholder="First Name"/>
         <input type="text" id="eeLName2" name="eeLName2"
-               data-bind="textInput: employee().last" placeholder="Last Name"/>
+               data-bind="textInput: employee().last, maxlength: 'MBR-LNAME'" placeholder="Last Name"/>
       </div>
     </div>
 
@@ -34,7 +34,7 @@
 
     <div class="form-group">
       <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eessn">
-        Employee SSN
+        {{ Owner_noun }} SSN
       </label>
 
       <div class="col-xs-12 col-sm-5">
@@ -71,7 +71,7 @@
       <div class="col-xs-12 col-sm-9">
         <div class="clearfix">
           <input type="text" id="eeStreet1" name="eeStreet1" class="col-xs-12 col-sm-9"
-                 data-bind="textInput: employee().address1"/>
+                 data-bind="textInput: employee().address1, maxlength: 'MBR-ADDR1'"/>
         </div>
       </div>
     </div>
@@ -82,7 +82,7 @@
       <div class="col-xs-12 col-sm-9">
         <div class="clearfix">
           <input type="text" id="eeStreet2" name="eeStreet2" class="col-xs-12 col-sm-9"
-                 data-bind="textInput: employee().address2"/>
+                 data-bind="textInput: employee().address2, maxlength: 'MBR-ADDR2'"/>
         </div>
       </div>
     </div>
@@ -93,7 +93,7 @@
       <label class="control-label col-xs-12 col-sm-3 no-padding-right" for="eeCity">City, ST Zip</label>
 
       <div class="col-xs-12 col-sm-9">
-        <input type="text" id="eeCity" name="eeCity" placeholder="City" data-bind="textInput: employee().city"/>
+        <input type="text" id="eeCity" name="eeCity" placeholder="City" data-bind="textInput: employee().city, maxlength: 'MBR-CITY'"/>
 
         <select id="eeState" name="eeState" class="select1"
                 data-bind="value: employee().state">
@@ -118,7 +118,7 @@
           </span>
 
           <input type="email" name="email" id="email" class="col-xs-12 col-sm-6"
-                 data-bind="textInput: employee().email"/>
+                 data-bind="textInput: employee().email, maxlength: 'MBR-EMAIL'"/>
         </div>
       </div>
     </div>

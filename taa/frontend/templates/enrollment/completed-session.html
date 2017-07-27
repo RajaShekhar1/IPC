@@ -32,7 +32,7 @@
       <div class="well">
         <h3 class="center text-primary">
           {{ name }},
-          {% if not declined %}thank you for choosing 5Star Life Insurance!<br><br>{% endif %}
+          {% if not declined %}thank you for choosing {{ company_name_long }}!<br><br>{% endif %}
           {% if success %}
             {# We don't want to show this due to legal issues (not really submitted until agent signs, etc) #}
 {#            Your application has been submitted.#}

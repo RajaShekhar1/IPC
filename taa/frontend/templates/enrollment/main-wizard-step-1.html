@@ -1,21 +1,22 @@
+{% set Premium_Noun = 'Contribution' if config.IS_AFBA else 'Premium' -%}
 <div class="step-pane active" id="step1" data-step="1">
   <form id="step1-form">
 
     <h4 class="lighter block green">Initial information required to select a benefit plan</h4>
 
     <div data-bind="visible: is_applicant_editor_visible">
-      {# Employee Section #}
+      {# Employee/sponsor Section #}
       <div>
         <div class="row">
           <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="eeBenefitFName">
-            Employee
+            {{ Owner_noun }}
           </label>
 
           <div class="form-group col-xs-12 col-sm-10">
             <input type="text" style="width: 45%" id="eeBenefitFName" name="eeBenefitFName"
-                   data-bind="value: employee().first" placeholder="First Name">
+                   data-bind="value: employee().first, maxlength: 'MBR-FNAME'" placeholder="First Name">
             <input type="text" style="width: 45%" id="eeBenefitLName" name="eeBenefitLName"
-                   data-bind="value: employee().last" placeholder="Last Name">
+                   data-bind="value: employee().last, maxlength: 'MBR-LNAME'" placeholder="Last Name">
           </div>
         </div>
 
@@ -78,9 +79,9 @@
 
           <div class="form-group col-xs-12 col-sm-10">
             <input type="text" style="width: 45%" id="spFName" name="spFName"
-                   data-bind="textInput: spouse().first" placeholder="First Name">
+                   data-bind="textInput: spouse().first, maxlength: 'SP-FNAME'" placeholder="First Name">
             <input type="text" style="width: 45%" id="spLName" name="spLName"
-                   data-bind="textInput: spouse().last" placeholder="Last Name">
+                   data-bind="textInput: spouse().last, maxlength: 'SP-LNAME'" placeholder="Last Name">
           </div>
         </div>
 
@@ -167,11 +168,11 @@
 
             <div class="form-group col-xs-12 col-sm-10">
               <input type="text" style="width: 45%" class="child_first"
-                     data-bind="textInput: first, attr: {id: 'child-first-'+$index(), name: 'child-first-' + $index() }"
+                     data-bind="textInput: first, maxlength: 'INSURED-FNAME', attr: {id: 'child-first-'+$index(), name: 'child-first-' + $index() }"
                      placeholder="First Name"/>
 
               <input type="text" style="width: 45%" class="child_last"
-                     data-bind="textInput: last, attr: { id: 'child-last-'+$index(), name: 'child-last-' + $index() }"
+                     data-bind="textInput: last, maxlength: 'INSURED-LNAME', attr: { id: 'child-last-'+$index(), name: 'child-last-' + $index() }"
                      placeholder="Last Name"/>
 
               <div class="pull-right">
@@ -211,7 +212,7 @@
       </div>
 
       {# Payment Mode Selection #}
-      <div style="margin-top: 1.5em;" data-bind="visible: coverage_vm.can_change_payment_mode">
+      <div style="margin-top: 1.5em;" data-bind="visible: !coverage_vm.should_show_contribution_mode() && coverage_vm.can_change_payment_mode()">
         <div class="row">
           <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="paymentMode">
             Payment Mode
@@ -227,6 +228,21 @@
           </div>
         </div>
       </div>
+
+      {# "Source Code" text field #}
+      <div style="margin-top: 1.5em;" data-bind="visible: coverage_vm.should_show_source_code">
+        <div class="row">
+          <label class="col-xs-12 col-sm-2 text-right no-padding-right" for="sourceCode">
+            Source Code
+          </label>
+
+          <div class="form-group col-xs-12 col-sm-10">
+            <input type="text" name="sourceCode" id="sourceCode"
+                    data-bind="textInput: coverage_vm.source_code">
+          </div>
+        </div>
+      </div>
+
     </div>
 
     {# Change applicant data button #}
@@ -257,8 +273,7 @@
     </div>
 
     {#  Rates/Recommended Coverage and Selected Plan Table #}
-    <div class="center recommended-coverage-table" data-bind="visible: is_coverage_selection_visible,
-        css: {'ci-recommendations': should_show_critical_illness_styling}">
+    <div class="center recommended-coverage-table" data-bind="visible: is_coverage_selection_visible">
 
 
       <h4 class="lighter block green text-left">Select Coverage</h4>
@@ -273,6 +288,10 @@
 
 
       <div data-bind="visible: !is_rate_table_loading(), with: coverage_vm">
+        {# If no one is eligible for any products, we display a message #}
+        <div class="error" data-bind="if: product_coverage_viewmodels().length === 0">
+          No applicant is eligible for the products being offered, coverage will be waived. Please click "Next" to exit the application.
+        </div>
 
         <div class="multi-widget" data-bind="if: has_multiple_products">
 
@@ -289,7 +308,7 @@
             </div>
 
 
-            <div class="col-xs-10 ">
+            <div class="col-xs-10 " data-bind="if: current_product">
 
               <h3 data-bind="text: current_product().format_product_name()"></h3>
               <div data-bind="slideDownIf: !current_product().did_decline()">
@@ -318,10 +337,9 @@
             </div>
           </div>
 
-
         </div>
 
-        <div data-bind="if: !has_multiple_products()">
+        <div data-bind="if: !has_multiple_products() && current_product()">
 
           <div class="row">
             <div class="col-xs-12 ">
@@ -341,7 +359,7 @@
             <div class="col-xs-12 text-center red" data-bind="if: $root.can_decline">
               <div class="decline-option">
                 <label><input type="checkbox" value="declined" data-bind="checked: $root.did_decline"> I waive enrollment in any of the
-                  5Star
+                  {{ company_name }}
                   products at this time</label>
               </div>
             </div>
@@ -356,13 +374,13 @@
     <br/>
 
 
-    <div class="row">
+    <div class="row" data-bind="if: product_coverage_viewmodels().length > 0">
       <div class="col-xs-12">
 
         {# Total Modal Premium for All Products #}
         <div class="pull-right"
              data-bind="if: is_coverage_selection_visible() && coverage_vm.payment_mode() && coverage_vm.has_multiple_products()">
-          <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> premium all
+          <h4 class="light">Total <span data-bind="text: coverage_vm.payment_mode().display()"></span> {{ Premium_Noun }} Selected
             products: <strong data-bind="text: coverage_vm.format_grand_total_premium()"></strong></h4>
         </div>
 
@@ -379,7 +397,7 @@
       <div class="col-xs-12">
         {# Error message #}
         <div id="benefit_required" class="error pull-right" data-bind="visible: is_selection_error_visible">
-          You must make a selection for each product before advancing.
+          You must make a selection for each product (or else waive enrollment in that product) before advancing
         </div>
 
       </div>
@@ -569,7 +587,7 @@
                 <label>
                   <span data-bind="text: $root.employee().first"></span>
                   <br>
-                  <input type="radio" name="coverage-type" checked>
+                  <input type="radio" name="coverage-type" checked="1">
                 </label>
               </li>
             </ul>
@@ -647,7 +665,7 @@
       <th class="text-center selectable" data-bind="
               click: $root.coverage_vm.select_product,
               css: {'active-product': $root.coverage_vm.current_product() === $data},
-              attr: {style: 'width: '+((100-10-6)/($root.products.length))+'%', id: 'coverage-header-' + $data.product.product_type }
+              attr: {style: 'width: '+((100-10-6)/($root.product_coverage_viewmodels().length))+'%', id: 'coverage-header-' + $data.product.product_data.id }
               ">
         <div class="circled-number" data-bind="text: $index()+1"></div>
         <span data-bind="text: product.product_data.name"></span>
@@ -733,6 +751,7 @@
     </tbody>
     {# Totals #}
     <tfoot>
+    <!--ko if: $root.does_any_product_show_effective_dates -->
     <tr>
         <th class="text-center">Effective Dates:</th>
         <!--ko foreach: {data: product_coverages, as: 'product_coverage'} -->
@@ -740,6 +759,7 @@
         <!--/ko-->
         <th></th>
     </tr>
+    <!--/ko-->
     <tr>
 
       <th class="text-center">
@@ -748,7 +768,7 @@
 
       <!--ko foreach: {data: $parent.products, as: 'product'} -->
       <!--ko if: $root.coverage_vm.has_multiple_products()-->
-      <th class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(product)"></th>
+      <th class="text-center" data-bind="text: $parents[1].format_total_premium_for_product(pcov.product)"></th>
       <!--/ko-->
       <!--ko if: !$root.coverage_vm.has_multiple_products()-->
       <th></th>
@@ -764,9 +784,11 @@
 <script type="text/html" id="recommendations_template">
   <ul class="list-unstyled list-striped pricing-table"
       data-bind="foreach: {data: $parents[1].applicant_coverage_selections(), as: 'applicant_coverage'}">
+
     <li data-bind="template: {name: 'recommend_coverage_option_template',
                                   data: applicant_coverage}">
     </li>
+
   </ul>
   <div class="price" data-bind="visible: get_total_premium($parents[1].valid_applicant_coverage_selections()) > 0.0">
         <span class="label label-lg label-inverse arrowed-in arrowed-in-right">

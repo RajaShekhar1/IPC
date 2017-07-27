@@ -90,12 +90,20 @@ class AgentActivationEmail(object):
     This perhaps should go elsewhere, but wanted to send a near-identical email as EnrollmentEmail above.  Probably should abstract the functions, but we can do that in Phase N+1
     """
     def send_activation_notice(self, to_email, agent_name, url):
-        
-        body = render_template(
-            "emails/activation_email.html",
-            agent_name=agent_name,
-            landing_url=url
-        )
+        if app.config.get("IS_AFBA"):
+            body = render_template(
+                "emails/activation_email_AFBA.html",
+                agent_name=agent_name,
+                landing_url=url,
+                host=app.config['HOSTNAME'],
+                schema=app.config.get('PREFERRED_URL_SCHEME', 'https'),
+            )
+        else:
+            body = render_template(
+                "emails/activation_email.html",
+                agent_name=agent_name,
+                landing_url=url
+            )
 
         print "url is ", url
         
