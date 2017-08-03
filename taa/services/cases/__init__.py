@@ -254,13 +254,13 @@ SELECT
   coalesce(enrollment_applications.spouse_beneficiary_birthdate,
            'None')                                                                        AS "Spouse Beneficiary Birthdate",
   enrollment_applications.spouse_beneficiary_ssn                                          AS "Spouse Beneficiary SSN",
-  (coalesce(coverage_1.total_modal_premium, 0) +
+  to_char((coalesce(coverage_1.total_modal_premium, 0) +
    coalesce(coverage_2.total_modal_premium, 0) +
    coalesce(coverage_3.total_modal_premium, 0) +
    coalesce(coverage_4.total_modal_premium, 0) +
    coalesce(coverage_5.total_modal_premium, 0) +
    coalesce(coverage_6.total_modal_premium, 0)) *
-  enrollment_applications.payment_mode
+  enrollment_applications.payment_mode, '999,999,999.99')
                                                                                           AS "Total Annual Premium",
 
 
