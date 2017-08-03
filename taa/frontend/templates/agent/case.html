@@ -1503,9 +1503,9 @@ we load from the server at run time for page speed
                       <label for="add-census-ssn-input">
                           Please select Signature Dates:&nbsp;
                       </label>
-                      <input type="date" id="add-enrollment-date-range" name="enrollment_download_start_date"
+                      <input data-provide="datepicker" data-date-format="yyyy-mm-dd" id="add-enrollment-date-range-start" name="enrollment_download_start_date"
                              data-bind="value: enrollment_download_start_date, valueUpdate: 'input'">
-                      <input type="date" id="add-enrollment-date-range" name="enrollment_download_end_date"
+                      <input data-provide="datepicker" data-date-format="yyyy-mm-dd" id="add-enrollment-date-range-end" name="enrollment_download_end_date"
                              data-bind="value: enrollment_download_end_date, valueUpdate: 'input'">
                       <div data-bind="text: enrollment_download_date_error.error" class="error"></div>
                     </div>
@@ -2054,4 +2054,5 @@ we load from the server at run time for page speed
       });
     });
   </script>
+<script src="/static/ace-v1.3.3/js/date-time/bootstrap-datepicker.min.js"></script>
 {% endblock %}
