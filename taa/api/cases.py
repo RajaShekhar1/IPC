@@ -6,6 +6,7 @@ from flask import Blueprint, request, abort, make_response, Response
 from flask_login import current_user, login_required
 
 from taa import JSONEncoder
+from taa.api.api_helpers import parse_dates_as_str_from_request
 
 from taa import app, groups_required
 from taa.core import TAAFormError, db
